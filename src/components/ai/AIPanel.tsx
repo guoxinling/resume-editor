@@ -11,20 +11,21 @@ export default function AIPanel() {
   const closePanel = useAIStore((s) => s.closePanel)
   const activeTab = useAIStore((s) => s.activeTab)
 
-  if (!isOpen) return null
-
   return (
     <>
-      {/* Backdrop */}
+      {/* Backdrop — fades in/out */}
       <div
-        className="fixed inset-0 bg-black/30 z-40"
+        className={`fixed inset-0 bg-black/30 z-40 transition-opacity duration-300 ${
+          isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+        }`}
         onClick={closePanel}
       />
 
-      {/* Panel */}
+      {/* Panel — slides in/out. On large screens pushes layout; on mobile overlays */}
       <div
-        className="fixed top-0 right-0 bottom-0 w-[520px] bg-white shadow-xl z-50 flex flex-col"
-        style={{ animation: 'slideIn 0.25s ease-out' }}
+        className={`fixed top-0 right-0 bottom-0 w-[520px] max-w-[100vw] bg-white shadow-xl z-50 flex flex-col transition-transform duration-300 ease-out ${
+          isOpen ? 'translate-x-0' : 'translate-x-full'
+        }`}
       >
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200">
@@ -57,13 +58,6 @@ export default function AIPanel() {
           </div>
         )}
       </div>
-
-      <style>{`
-        @keyframes slideIn {
-          from { transform: translateX(40px); opacity: 0; }
-          to { transform: translateX(0); opacity: 1; }
-        }
-      `}</style>
     </>
   )
 }

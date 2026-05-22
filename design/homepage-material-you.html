@@ -1,0 +1,1315 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>简历鸭首页效果图 - Material You</title>
+  <link rel="icon" href="../public/favicon.svg" type="image/svg+xml" />
+  <style>
+    :root {
+      --md-primary: #6750a4;
+      --md-on-primary: #ffffff;
+      --md-primary-container: #eaddff;
+      --md-on-primary-container: #21005d;
+      --md-secondary: #625b71;
+      --md-secondary-container: #e8def8;
+      --md-tertiary: #7d5260;
+      --md-tertiary-container: #ffd8e4;
+      --md-surface: #fffbfe;
+      --md-surface-dim: #f4eff4;
+      --md-surface-container-low: #f7f2fa;
+      --md-surface-container: #f3edf7;
+      --md-surface-container-high: #ece6f0;
+      --md-on-surface: #1c1b1f;
+      --md-on-surface-variant: #49454f;
+      --md-outline: #79747e;
+      --md-outline-variant: #cac4d0;
+      --md-success: #1b873f;
+      --md-success-container: #d2f2e0;
+      --md-warning: #b06d00;
+      --md-warning-container: #fff3d6;
+      --md-error: #b3261e;
+      --radius-sm: 12px;
+      --radius-md: 16px;
+      --radius-lg: 24px;
+      --radius-xl: 32px;
+      --radius-full: 999px;
+      --shadow-1: 0 1px 2px rgba(28, 27, 31, 0.08), 0 1px 3px rgba(28, 27, 31, 0.06);
+      --shadow-2: 0 8px 24px rgba(28, 27, 31, 0.08);
+      --shadow-3: 0 18px 48px rgba(103, 80, 164, 0.16);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Noto Sans SC", "Microsoft YaHei", "PingFang SC", Arial, sans-serif;
+      color: var(--md-on-surface);
+      background:
+        linear-gradient(180deg, #fffbfe 0%, #f8f3fb 44%, #fffbfe 100%);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    button {
+      font: inherit;
+    }
+
+    .page {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .top-bar {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      border-bottom: 1px solid rgba(202, 196, 208, 0.58);
+      background: rgba(255, 251, 254, 0.86);
+      backdrop-filter: blur(18px);
+    }
+
+    .nav {
+      width: min(1180px, calc(100% - 40px));
+      height: 72px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      min-width: max-content;
+      font-weight: 700;
+      letter-spacing: 0;
+    }
+
+    .brand-mark {
+      width: 40px;
+      height: 40px;
+      border-radius: 14px;
+      display: grid;
+      place-items: center;
+      color: var(--md-on-primary);
+      background: var(--md-primary);
+      box-shadow: 0 8px 18px rgba(103, 80, 164, 0.24);
+    }
+
+    .brand-mark svg,
+    .brand-mark img {
+      width: 22px;
+      height: 22px;
+      display: block;
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--md-on-surface-variant);
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .nav-links a {
+      padding: 10px 14px;
+      border-radius: var(--radius-full);
+      transition: background 180ms ease, color 180ms ease;
+    }
+
+    .nav-links a:hover {
+      color: var(--md-primary);
+      background: rgba(103, 80, 164, 0.08);
+    }
+
+    .nav-action {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      height: 40px;
+      padding: 0 18px;
+      border-radius: var(--radius-full);
+      color: var(--md-on-primary);
+      background: var(--md-primary);
+      font-size: 14px;
+      font-weight: 700;
+      box-shadow: var(--shadow-1);
+      transition: transform 180ms ease, box-shadow 180ms ease, background 180ms ease;
+    }
+
+    .nav-action:hover {
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-2);
+      background: #5f479e;
+    }
+
+    .container {
+      width: min(1180px, calc(100% - 40px));
+      margin: 0 auto;
+    }
+
+    .hero {
+      min-height: calc(100vh - 72px);
+      display: grid;
+      grid-template-columns: minmax(0, 0.94fr) minmax(440px, 1.06fr);
+      gap: 46px;
+      align-items: center;
+      padding: 72px 0 68px;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      width: fit-content;
+      padding: 8px 14px;
+      border-radius: var(--radius-full);
+      color: var(--md-primary);
+      background: var(--md-primary-container);
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 22px;
+    }
+
+    .eyebrow-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--md-primary);
+      box-shadow: 0 0 0 5px rgba(103, 80, 164, 0.12);
+    }
+
+    h1 {
+      margin: 0;
+      max-width: 680px;
+      font-size: clamp(42px, 6vw, 74px);
+      line-height: 1.04;
+      letter-spacing: 0;
+      font-weight: 800;
+      color: var(--md-on-surface);
+    }
+
+    .title-accent {
+      color: var(--md-primary);
+    }
+
+    .hero-copy {
+      max-width: 560px;
+      margin: 22px 0 0;
+      color: var(--md-on-surface-variant);
+      font-size: 18px;
+      line-height: 1.8;
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      margin-top: 34px;
+    }
+
+    .btn {
+      min-height: 52px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 0 22px;
+      border: 0;
+      border-radius: var(--radius-full);
+      cursor: pointer;
+      font-weight: 800;
+      transition: transform 180ms ease, box-shadow 180ms ease, background 180ms ease, border-color 180ms ease;
+      white-space: nowrap;
+    }
+
+    .btn svg {
+      width: 19px;
+      height: 19px;
+    }
+
+    .btn-primary {
+      color: var(--md-on-primary);
+      background: var(--md-primary);
+      box-shadow: 0 10px 24px rgba(103, 80, 164, 0.22);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-3);
+      background: #5f479e;
+    }
+
+    .btn-secondary {
+      color: var(--md-primary);
+      background: var(--md-surface);
+      border: 1px solid var(--md-outline-variant);
+      box-shadow: var(--shadow-1);
+    }
+
+    .btn-secondary:hover {
+      transform: translateY(-2px);
+      border-color: rgba(103, 80, 164, 0.5);
+      background: rgba(234, 221, 255, 0.48);
+      box-shadow: var(--shadow-2);
+    }
+
+    .hero-points {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 28px;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 34px;
+      padding: 0 13px;
+      border-radius: var(--radius-full);
+      color: var(--md-on-surface-variant);
+      background: rgba(243, 237, 247, 0.82);
+      border: 1px solid rgba(202, 196, 208, 0.62);
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .chip svg {
+      width: 15px;
+      height: 15px;
+      color: var(--md-primary);
+    }
+
+    .workspace-preview {
+      position: relative;
+      min-height: 620px;
+      border-radius: var(--radius-xl);
+      background: var(--md-surface-container);
+      border: 1px solid rgba(202, 196, 208, 0.7);
+      box-shadow: var(--shadow-3);
+      padding: 18px;
+      overflow: hidden;
+    }
+
+    .workspace-top {
+      height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 0 4px 14px;
+    }
+
+    .window-controls {
+      display: flex;
+      gap: 8px;
+    }
+
+    .window-controls span {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--md-outline-variant);
+    }
+
+    .window-controls span:nth-child(1) {
+      background: #ff8a80;
+    }
+
+    .window-controls span:nth-child(2) {
+      background: #ffd180;
+    }
+
+    .window-controls span:nth-child(3) {
+      background: #81c995;
+    }
+
+    .workspace-pill {
+      height: 30px;
+      display: inline-flex;
+      align-items: center;
+      padding: 0 12px;
+      border-radius: var(--radius-full);
+      color: var(--md-primary);
+      background: var(--md-primary-container);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .workspace-grid {
+      height: calc(100% - 48px);
+      display: grid;
+      grid-template-columns: 220px minmax(260px, 1fr);
+      gap: 14px;
+    }
+
+    .editor-mock,
+    .paper-stage,
+    .ai-panel {
+      border: 1px solid rgba(202, 196, 208, 0.7);
+      background: var(--md-surface);
+      border-radius: 22px;
+      box-shadow: var(--shadow-1);
+    }
+
+    .editor-mock {
+      padding: 15px;
+      min-height: 520px;
+    }
+
+    .mock-label {
+      color: var(--md-on-surface-variant);
+      font-size: 12px;
+      font-weight: 800;
+      margin-bottom: 12px;
+    }
+
+    .field-card {
+      padding: 12px;
+      border-radius: 16px;
+      background: var(--md-surface-container-low);
+      border: 1px solid rgba(202, 196, 208, 0.58);
+      margin-bottom: 10px;
+    }
+
+    .field-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      color: var(--md-on-surface);
+      font-size: 12px;
+      font-weight: 800;
+      margin-bottom: 9px;
+    }
+
+    .spark {
+      display: inline-grid;
+      place-items: center;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      color: var(--md-primary);
+      background: var(--md-primary-container);
+    }
+
+    .spark svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    .line {
+      height: 8px;
+      border-radius: var(--radius-full);
+      background: var(--md-outline-variant);
+      opacity: 0.62;
+      margin-top: 7px;
+    }
+
+    .line.w-90 { width: 90%; }
+    .line.w-78 { width: 78%; }
+    .line.w-65 { width: 65%; }
+    .line.w-48 { width: 48%; }
+
+    .paper-stage {
+      position: relative;
+      min-height: 520px;
+      display: grid;
+      place-items: center;
+      padding: 18px;
+      background:
+        linear-gradient(90deg, rgba(202, 196, 208, 0.28) 1px, transparent 1px),
+        linear-gradient(rgba(202, 196, 208, 0.28) 1px, transparent 1px),
+        var(--md-surface-container-low);
+      background-size: 22px 22px;
+    }
+
+    .paper {
+      width: 250px;
+      min-height: 360px;
+      padding: 24px 22px;
+      border-radius: 4px;
+      background: #ffffff;
+      box-shadow: 0 16px 32px rgba(28, 27, 31, 0.12);
+      border: 1px solid rgba(202, 196, 208, 0.9);
+    }
+
+    .paper-name {
+      width: 126px;
+      height: 18px;
+      border-radius: 5px;
+      background: var(--md-on-surface);
+      margin-bottom: 10px;
+    }
+
+    .paper-contact {
+      display: flex;
+      gap: 5px;
+      margin-bottom: 20px;
+    }
+
+    .paper-contact span {
+      height: 5px;
+      border-radius: var(--radius-full);
+      background: var(--md-outline-variant);
+    }
+
+    .paper-contact span:nth-child(1) { width: 45px; }
+    .paper-contact span:nth-child(2) { width: 56px; }
+    .paper-contact span:nth-child(3) { width: 38px; }
+
+    .paper-section {
+      margin-top: 17px;
+    }
+
+    .section-rule {
+      width: 34px;
+      height: 3px;
+      border-radius: var(--radius-full);
+      background: var(--md-primary);
+      margin-bottom: 7px;
+    }
+
+    .paper-heading {
+      width: 82px;
+      height: 8px;
+      border-radius: var(--radius-full);
+      background: var(--md-on-surface);
+      opacity: 0.88;
+      margin-bottom: 10px;
+    }
+
+    .paper-row {
+      height: 6px;
+      border-radius: var(--radius-full);
+      background: var(--md-outline-variant);
+      opacity: 0.72;
+      margin-top: 6px;
+    }
+
+    .paper-row.short {
+      width: 68%;
+    }
+
+    .ai-panel {
+      position: absolute;
+      right: 26px;
+      bottom: 28px;
+      width: 254px;
+      padding: 14px;
+      border-radius: 24px;
+      background: rgba(255, 251, 254, 0.96);
+      box-shadow: 0 18px 46px rgba(28, 27, 31, 0.18);
+    }
+
+    .ai-panel-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .ai-panel-title strong {
+      font-size: 13px;
+    }
+
+    .score {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--md-success);
+      background: var(--md-success-container);
+      border-radius: var(--radius-full);
+      padding: 5px 9px;
+      font-size: 11px;
+      font-weight: 900;
+    }
+
+    .suggestion {
+      padding: 12px;
+      border-radius: 16px;
+      background: var(--md-primary-container);
+      color: var(--md-on-primary-container);
+      margin-bottom: 10px;
+    }
+
+    .suggestion strong {
+      display: block;
+      margin-bottom: 7px;
+      font-size: 12px;
+    }
+
+    .suggestion p {
+      margin: 0;
+      color: rgba(33, 0, 93, 0.78);
+      font-size: 11px;
+      line-height: 1.55;
+    }
+
+    .mini-action {
+      height: 34px;
+      border: 0;
+      border-radius: var(--radius-full);
+      color: var(--md-on-primary);
+      background: var(--md-primary);
+      padding: 0 14px;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    section {
+      padding: 84px 0;
+    }
+
+    .section-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: end;
+      gap: 30px;
+      margin-bottom: 28px;
+    }
+
+    .section-kicker {
+      margin: 0 0 10px;
+      color: var(--md-primary);
+      font-size: 14px;
+      font-weight: 900;
+    }
+
+    h2 {
+      margin: 0;
+      max-width: 700px;
+      font-size: clamp(30px, 4vw, 48px);
+      line-height: 1.14;
+      letter-spacing: 0;
+    }
+
+    .section-desc {
+      margin: 0;
+      max-width: 400px;
+      color: var(--md-on-surface-variant);
+      font-size: 16px;
+      line-height: 1.7;
+    }
+
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+
+    .feature-card {
+      min-height: 210px;
+      padding: 22px;
+      border-radius: var(--radius-lg);
+      background: var(--md-surface-container-low);
+      border: 1px solid rgba(202, 196, 208, 0.64);
+      box-shadow: var(--shadow-1);
+      transition: transform 180ms ease, box-shadow 180ms ease, background 180ms ease;
+    }
+
+    .feature-card:hover {
+      transform: translateY(-4px);
+      background: var(--md-surface);
+      box-shadow: var(--shadow-2);
+    }
+
+    .feature-icon {
+      width: 46px;
+      height: 46px;
+      border-radius: 17px;
+      display: grid;
+      place-items: center;
+      color: var(--md-primary);
+      background: var(--md-primary-container);
+      margin-bottom: 18px;
+    }
+
+    .feature-icon svg {
+      width: 23px;
+      height: 23px;
+    }
+
+    .feature-card h3 {
+      margin: 0 0 10px;
+      font-size: 19px;
+      letter-spacing: 0;
+    }
+
+    .feature-card p {
+      margin: 0;
+      color: var(--md-on-surface-variant);
+      font-size: 14px;
+      line-height: 1.75;
+    }
+
+    .template-section {
+      border-radius: 44px;
+      background: var(--md-surface-container);
+      border: 1px solid rgba(202, 196, 208, 0.64);
+      padding: 46px;
+      box-shadow: var(--shadow-1);
+    }
+
+    .template-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+
+    .template-card {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      min-height: 410px;
+      padding: 14px;
+      border-radius: 24px;
+      background: var(--md-surface);
+      border: 1px solid rgba(202, 196, 208, 0.72);
+      box-shadow: var(--shadow-1);
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+    }
+
+    .template-card:hover {
+      transform: translateY(-6px);
+      border-color: rgba(103, 80, 164, 0.45);
+      box-shadow: var(--shadow-3);
+    }
+
+    .template-thumb {
+      height: 234px;
+      border-radius: 16px;
+      background: #ffffff;
+      border: 1px solid rgba(202, 196, 208, 0.82);
+      padding: 16px 15px;
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.7);
+      overflow: hidden;
+    }
+
+    .thumb-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 13px;
+    }
+
+    .thumb-name {
+      width: 74px;
+      height: 14px;
+      border-radius: 4px;
+      background: var(--md-on-surface);
+    }
+
+    .thumb-photo {
+      width: 34px;
+      height: 42px;
+      border-radius: 8px;
+      background: var(--md-primary-container);
+    }
+
+    .thumb-line {
+      height: 5px;
+      border-radius: var(--radius-full);
+      background: var(--md-outline-variant);
+      margin-top: 6px;
+    }
+
+    .thumb-rule {
+      width: 32px;
+      height: 3px;
+      border-radius: var(--radius-full);
+      background: var(--md-primary);
+      margin: 15px 0 8px;
+    }
+
+    .thumb-heading {
+      width: 58px;
+      height: 7px;
+      border-radius: var(--radius-full);
+      background: var(--md-on-surface);
+      opacity: 0.86;
+      margin-bottom: 7px;
+    }
+
+    .template-card:nth-child(2) .template-thumb {
+      background: linear-gradient(90deg, #f7f2fa 0 31%, #ffffff 31% 100%);
+    }
+
+    .template-card:nth-child(2) .thumb-rule {
+      background: var(--md-tertiary);
+    }
+
+    .template-card:nth-child(3) .template-thumb {
+      background:
+        linear-gradient(180deg, rgba(234, 221, 255, 0.7) 0 28%, #ffffff 28% 100%);
+    }
+
+    .template-card:nth-child(4) .template-thumb {
+      background:
+        linear-gradient(90deg, #ffffff 0 50%, #f7f2fa 50% 100%);
+    }
+
+    .template-body {
+      padding: 16px 4px 2px;
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+    }
+
+    .template-body h3 {
+      margin: 0 0 8px;
+      font-size: 18px;
+      letter-spacing: 0;
+    }
+
+    .template-body p {
+      margin: 0;
+      color: var(--md-on-surface-variant);
+      font-size: 13px;
+      line-height: 1.65;
+    }
+
+    .template-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      margin-top: 13px;
+    }
+
+    .template-tags span {
+      display: inline-flex;
+      align-items: center;
+      height: 27px;
+      padding: 0 10px;
+      border-radius: var(--radius-full);
+      color: var(--md-primary);
+      background: var(--md-primary-container);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .template-link {
+      margin-top: auto;
+      padding-top: 18px;
+      color: var(--md-primary);
+      font-size: 14px;
+      font-weight: 900;
+    }
+
+    .bottom-cta {
+      padding: 86px 0 96px;
+    }
+
+    .cta-panel {
+      min-height: 320px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: center;
+      gap: 30px;
+      padding: 48px;
+      border-radius: 44px;
+      background: var(--md-primary-container);
+      color: var(--md-on-primary-container);
+      border: 1px solid rgba(103, 80, 164, 0.18);
+      box-shadow: var(--shadow-3);
+    }
+
+    .cta-panel h2 {
+      max-width: 720px;
+    }
+
+    .cta-panel p {
+      max-width: 560px;
+      margin: 16px 0 0;
+      color: rgba(33, 0, 93, 0.72);
+      font-size: 17px;
+      line-height: 1.7;
+    }
+
+    .cta-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      min-width: 220px;
+    }
+
+    .footer {
+      padding: 26px 0 42px;
+      border-top: 1px solid rgba(202, 196, 208, 0.64);
+      color: var(--md-on-surface-variant);
+      font-size: 13px;
+    }
+
+    .footer-inner {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+    }
+
+    @media (max-width: 1060px) {
+      .hero {
+        grid-template-columns: 1fr;
+        min-height: auto;
+      }
+
+      .workspace-preview {
+        min-height: 580px;
+      }
+
+      .feature-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .template-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .cta-panel {
+        grid-template-columns: 1fr;
+      }
+
+      .cta-actions {
+        flex-direction: row;
+        flex-wrap: wrap;
+      }
+    }
+
+    @media (max-width: 720px) {
+      .nav {
+        width: min(100% - 28px, 1180px);
+      }
+
+      .nav-links {
+        display: none;
+      }
+
+      .container {
+        width: min(100% - 28px, 1180px);
+      }
+
+      .hero {
+        padding: 46px 0 52px;
+      }
+
+      .hero-actions {
+        flex-direction: column;
+      }
+
+      .btn {
+        width: 100%;
+      }
+
+      .workspace-preview {
+        min-height: 710px;
+        padding: 14px;
+      }
+
+      .workspace-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .editor-mock {
+        min-height: 260px;
+      }
+
+      .paper-stage {
+        min-height: 390px;
+      }
+
+      .ai-panel {
+        left: 28px;
+        right: 28px;
+        bottom: 24px;
+        width: auto;
+      }
+
+      section {
+        padding: 58px 0;
+      }
+
+      .section-head {
+        display: block;
+      }
+
+      .section-desc {
+        margin-top: 14px;
+      }
+
+      .feature-grid,
+      .template-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .template-section,
+      .cta-panel {
+        padding: 24px;
+        border-radius: 32px;
+      }
+
+      .template-card {
+        min-height: auto;
+      }
+
+      .footer-inner {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="top-bar">
+      <nav class="nav" aria-label="主页导航">
+        <a class="brand" href="#">
+          <span class="brand-mark" aria-hidden="true">
+            <img src="../public/favicon.svg" alt="" />
+          </span>
+          <span>简历鸭</span>
+        </a>
+        <div class="nav-links">
+          <a href="#features">功能</a>
+          <a href="#templates">模板</a>
+          <a href="#start">开始使用</a>
+        </div>
+        <a class="nav-action" href="#start">开始写简历</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="hero container">
+        <div>
+          <div class="eyebrow"><span class="eyebrow-dot"></span>AI 驱动的专业简历工作台</div>
+          <h1>用 AI 写出一份<span class="title-accent">更适合投递</span>的简历</h1>
+          <p class="hero-copy">
+            从零开始对话生成，或导入已有简历继续优化。AI 帮你润色经历、适配岗位、预测面试问题，最后导出一份干净专业的 A4 简历。
+          </p>
+          <div class="hero-actions">
+            <button class="btn btn-primary" type="button">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+              </svg>
+              第一次写简历
+            </button>
+            <button class="btn btn-secondary" type="button">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M12 15V4m0 11-4-4m4 4 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M5 17.5v1.75h14V17.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+              </svg>
+              导入已有简历
+            </button>
+          </div>
+          <div class="hero-points" aria-label="核心能力">
+            <span class="chip">
+              <svg viewBox="0 0 24 24" fill="none"><path d="m20 6-11 11-5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
+              AI 对话生成
+            </span>
+            <span class="chip">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M4 7h16M4 12h16M4 17h10" stroke="currentColor" stroke-width="2" stroke-linecap="round" /></svg>
+              经历润色
+            </span>
+            <span class="chip">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M12 3v18M3 12h18" stroke="currentColor" stroke-width="2" stroke-linecap="round" /></svg>
+              岗位适配
+            </span>
+            <span class="chip">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M6 4h12v16H6V4Z" stroke="currentColor" stroke-width="2" /><path d="M8.8 8h6.4M8.8 11h6.4M8.8 14h4.4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" /></svg>
+              PDF 导出
+            </span>
+          </div>
+        </div>
+
+        <div class="workspace-preview" aria-label="产品工作台预览">
+          <div class="workspace-top">
+            <div class="window-controls" aria-hidden="true"><span></span><span></span><span></span></div>
+            <span class="workspace-pill">正在生成投递版简历</span>
+          </div>
+          <div class="workspace-grid">
+            <aside class="editor-mock">
+              <div class="mock-label">编辑器</div>
+              <div class="field-card">
+                <div class="field-title">个人信息 <span class="spark"><svg viewBox="0 0 24 24" fill="none"><path d="M12 3l1.7 5.1L19 10l-5.3 1.9L12 17l-1.7-5.1L5 10l5.3-1.9L12 3Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" /></svg></span></div>
+                <div class="line w-78"></div>
+                <div class="line w-48"></div>
+              </div>
+              <div class="field-card">
+                <div class="field-title">工作经历 <span class="spark"><svg viewBox="0 0 24 24" fill="none"><path d="M12 3l1.7 5.1L19 10l-5.3 1.9L12 17l-1.7-5.1L5 10l5.3-1.9L12 3Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" /></svg></span></div>
+                <div class="line w-90"></div>
+                <div class="line w-78"></div>
+                <div class="line w-65"></div>
+              </div>
+              <div class="field-card">
+                <div class="field-title">项目经历 <span class="spark"><svg viewBox="0 0 24 24" fill="none"><path d="M12 3l1.7 5.1L19 10l-5.3 1.9L12 17l-1.7-5.1L5 10l5.3-1.9L12 3Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" /></svg></span></div>
+                <div class="line w-90"></div>
+                <div class="line w-65"></div>
+              </div>
+              <div class="field-card">
+                <div class="field-title">专业技能</div>
+                <div class="line w-78"></div>
+                <div class="line w-90"></div>
+              </div>
+            </aside>
+
+            <div class="paper-stage">
+              <article class="paper" aria-label="A4 简历预览">
+                <div class="paper-name"></div>
+                <div class="paper-contact"><span></span><span></span><span></span></div>
+                <div class="paper-section">
+                  <div class="section-rule"></div>
+                  <div class="paper-heading"></div>
+                  <div class="paper-row"></div>
+                  <div class="paper-row"></div>
+                  <div class="paper-row short"></div>
+                </div>
+                <div class="paper-section">
+                  <div class="section-rule"></div>
+                  <div class="paper-heading"></div>
+                  <div class="paper-row"></div>
+                  <div class="paper-row"></div>
+                  <div class="paper-row"></div>
+                  <div class="paper-row short"></div>
+                </div>
+                <div class="paper-section">
+                  <div class="section-rule"></div>
+                  <div class="paper-heading"></div>
+                  <div class="paper-row"></div>
+                  <div class="paper-row short"></div>
+                </div>
+              </article>
+
+              <aside class="ai-panel" aria-label="AI 建议面板">
+                <div class="ai-panel-title">
+                  <strong>AI 岗位适配</strong>
+                  <span class="score">82 分</span>
+                </div>
+                <div class="suggestion">
+                  <strong>建议强化结果表达</strong>
+                  <p>将职责描述改为成果描述，补充业务影响、协作对象与量化数据。</p>
+                </div>
+                <button class="mini-action" type="button">应用建议</button>
+              </aside>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="features">
+        <div class="container">
+          <div class="section-head">
+            <div>
+              <p class="section-kicker">AI 能力</p>
+              <h2>把写简历拆成更容易完成的几个动作</h2>
+            </div>
+            <p class="section-desc">不是替你编造经历，而是帮你把真实经历整理得更清楚、更专业、更贴近岗位。</p>
+          </div>
+
+          <div class="feature-grid">
+            <article class="feature-card">
+              <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M7 8h10M7 12h7M8 20l-3 2v-5.5A7.5 7.5 0 0 1 12.5 4h1A7.5 7.5 0 0 1 21 11.5v0A7.5 7.5 0 0 1 13.5 19H8Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></svg></div>
+              <h3>从零生成简历</h3>
+              <p>通过对话收集个人信息、教育经历、项目与技能，自动整理成结构化简历初稿。</p>
+            </article>
+            <article class="feature-card">
+              <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M12 15V4m0 11-4-4m4 4 4-4" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" /><path d="M5 18h14" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" /></svg></div>
+              <h3>导入旧简历优化</h3>
+              <p>支持导入已有 PDF、图片或 Markdown 简历，解析后继续编辑、润色和导出。</p>
+            </article>
+            <article class="feature-card">
+              <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M12 3l1.9 5.7L20 11l-6.1 2.3L12 19l-1.9-5.7L4 11l6.1-2.3L12 3Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" /></svg></div>
+              <h3>AI 经历润色</h3>
+              <p>支持 STAR 法则、结果导向和精炼压缩，让经历从职责描述变成成果表达。</p>
+            </article>
+            <article class="feature-card">
+              <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M5 5h14v14H5V5Z" stroke="currentColor" stroke-width="1.8" /><path d="m8 13 2.5 2.5L16 9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></svg></div>
+              <h3>岗位适配分析</h3>
+              <p>粘贴目标 JD，AI 分析匹配度、缺失关键词和可直接应用的修改建议。</p>
+            </article>
+            <article class="feature-card">
+              <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M12 17h.01M9.8 9.4A2.7 2.7 0 0 1 12.4 7c1.6 0 2.9 1.1 2.9 2.6 0 1.8-1.6 2.4-2.6 3.1-.8.5-.9.9-.9 1.8" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" /><path d="M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20Z" stroke="currentColor" stroke-width="1.8" /></svg></div>
+              <h3>面试预测</h3>
+              <p>基于简历内容生成可能被追问的问题，提前准备经历深挖和能力验证。</p>
+            </article>
+            <article class="feature-card">
+              <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M7 3.75h7.2L19 8.55v11.7H7V3.75Z" stroke="currentColor" stroke-width="1.8" /><path d="M14 4v5h5M9.5 14h5M9.5 17h3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" /></svg></div>
+              <h3>实时预览导出</h3>
+              <p>左侧编辑、右侧 A4 实时预览，完成后导出 PDF 或 PNG 投递版本。</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section id="templates">
+        <div class="container template-section">
+          <div class="section-head">
+            <div>
+              <p class="section-kicker">模板市场</p>
+              <h2>选择一个模板，先看看好简历应该长什么样</h2>
+            </div>
+            <p class="section-desc">第一版提供 4 个精选场景模板，点击后新建一份示例简历草稿，不覆盖你的当前内容。</p>
+          </div>
+
+          <div class="template-grid">
+            <article class="template-card">
+              <div class="template-thumb">
+                <div class="thumb-top">
+                  <div>
+                    <div class="thumb-name"></div>
+                    <div class="thumb-line" style="width: 88px;"></div>
+                  </div>
+                  <div class="thumb-photo"></div>
+                </div>
+                <div class="thumb-rule"></div>
+                <div class="thumb-heading"></div>
+                <div class="thumb-line" style="width: 96%;"></div>
+                <div class="thumb-line" style="width: 82%;"></div>
+                <div class="thumb-rule"></div>
+                <div class="thumb-heading"></div>
+                <div class="thumb-line" style="width: 92%;"></div>
+                <div class="thumb-line" style="width: 74%;"></div>
+                <div class="thumb-rule"></div>
+                <div class="thumb-heading"></div>
+                <div class="thumb-line" style="width: 86%;"></div>
+              </div>
+              <div class="template-body">
+                <h3>应届生模板</h3>
+                <p>突出教育背景、实习经历、校园项目和可迁移能力。</p>
+                <div class="template-tags"><span>实习</span><span>校园经历</span></div>
+                <div class="template-link">查看示例简历</div>
+              </div>
+            </article>
+
+            <article class="template-card">
+              <div class="template-thumb">
+                <div class="thumb-top">
+                  <div>
+                    <div class="thumb-name"></div>
+                    <div class="thumb-line" style="width: 74px;"></div>
+                  </div>
+                </div>
+                <div class="thumb-rule"></div>
+                <div class="thumb-heading"></div>
+                <div class="thumb-line" style="width: 92%;"></div>
+                <div class="thumb-line" style="width: 76%;"></div>
+                <div class="thumb-line" style="width: 88%;"></div>
+                <div class="thumb-rule"></div>
+                <div class="thumb-heading"></div>
+                <div class="thumb-line" style="width: 94%;"></div>
+                <div class="thumb-line" style="width: 66%;"></div>
+                <div class="thumb-rule"></div>
+                <div class="thumb-heading"></div>
+                <div class="thumb-line" style="width: 80%;"></div>
+              </div>
+              <div class="template-body">
+                <h3>职场进阶模板</h3>
+                <p>强调工作成果、业务影响、团队协作和晋升潜力。</p>
+                <div class="template-tags"><span>成果导向</span><span>管理经验</span></div>
+                <div class="template-link">查看示例简历</div>
+              </div>
+            </article>
+
+            <article class="template-card">
+              <div class="template-thumb">
+                <div class="thumb-top">
+                  <div>
+                    <div class="thumb-name"></div>
+                    <div class="thumb-line" style="width: 96px;"></div>
+                  </div>
+                </div>
+                <div class="thumb-rule"></div>
+                <div class="thumb-heading"></div>
+                <div class="thumb-line" style="width: 88%;"></div>
+                <div class="thumb-line" style="width: 84%;"></div>
+                <div class="thumb-rule"></div>
+                <div class="thumb-heading"></div>
+                <div class="thumb-line" style="width: 92%;"></div>
+                <div class="thumb-line" style="width: 72%;"></div>
+                <div class="thumb-rule"></div>
+                <div class="thumb-heading"></div>
+                <div class="thumb-line" style="width: 94%;"></div>
+                <div class="thumb-line" style="width: 58%;"></div>
+              </div>
+              <div class="template-body">
+                <h3>技术 / 产品模板</h3>
+                <p>前置项目和技能栈，让作品、方法论和业务结果更醒目。</p>
+                <div class="template-tags"><span>项目经历</span><span>作品集</span></div>
+                <div class="template-link">查看示例简历</div>
+              </div>
+            </article>
+
+            <article class="template-card">
+              <div class="template-thumb">
+                <div class="thumb-top">
+                  <div>
+                    <div class="thumb-name"></div>
+                    <div class="thumb-line" style="width: 84px;"></div>
+                  </div>
+                  <div class="thumb-photo"></div>
+                </div>
+                <div class="thumb-rule"></div>
+                <div class="thumb-heading"></div>
+                <div class="thumb-line" style="width: 90%;"></div>
+                <div class="thumb-line" style="width: 80%;"></div>
+                <div class="thumb-rule"></div>
+                <div class="thumb-heading"></div>
+                <div class="thumb-line" style="width: 96%;"></div>
+                <div class="thumb-line" style="width: 76%;"></div>
+                <div class="thumb-rule"></div>
+                <div class="thumb-heading"></div>
+                <div class="thumb-line" style="width: 88%;"></div>
+              </div>
+              <div class="template-body">
+                <h3>海外 / 双语模板</h3>
+                <p>突出中英双语、语言能力、跨文化经历和国际化项目。</p>
+                <div class="template-tags"><span>双语</span><span>海外岗位</span></div>
+                <div class="template-link">查看示例简历</div>
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section id="start" class="bottom-cta">
+        <div class="container">
+          <div class="cta-panel">
+            <div>
+              <h2>准备好开始整理你的下一份简历了吗？</h2>
+              <p>选择从零开始，或者导入旧简历。你始终可以编辑、忽略或应用 AI 建议，最终简历仍然由你决定。</p>
+            </div>
+            <div class="cta-actions">
+              <button class="btn btn-primary" type="button">AI 帮我从零写</button>
+              <button class="btn btn-secondary" type="button">导入我的简历</button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="container footer-inner">
+        <span>简历鸭</span>
+        <span>真实经历，清楚表达，专业投递。</span>
+      </div>
+    </footer>
+  </div>
+</body>
+</html>

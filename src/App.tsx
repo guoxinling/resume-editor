@@ -92,6 +92,7 @@ export default function App() {
   // Responsive: editor visibility toggle for small screens
   const [showEditor, setShowEditor] = useState(true)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const isPanelOpen = useAIStore((s) => s.isOpen)
 
   const handleLandingWizard = () => {
     setShowLanding(false)
@@ -203,7 +204,9 @@ export default function App() {
 
   return (
     <div className="h-screen flex items-center justify-center bg-gray-100 lg:p-3">
-      <div className="flex flex-col lg:rounded-2xl bg-white lg:shadow-lg lg:shadow-gray-200/40 overflow-hidden w-full max-w-[1440px] h-full lg:max-h-[calc(100vh-24px)]">
+      {/* Main content wrapper — shifts left when AI panel opens */}
+      <div className={`w-full transition-[margin-right] duration-300 ease-out ${isPanelOpen ? 'lg:mr-[520px]' : ''}`}>
+      <div className="flex flex-col lg:rounded-2xl bg-white lg:shadow-lg lg:shadow-gray-200/40 overflow-hidden max-w-[1440px] mx-auto h-full lg:max-h-[calc(100vh-24px)]">
         <Toolbar
           onOpenDrafts={() => setShowDrafts(true)}
           showEditor={showEditor}
@@ -263,6 +266,7 @@ export default function App() {
         className="hidden"
         onChange={handleLandingFileImport}
       />
+      </div>
     </div>
   )
 }

@@ -1,0 +1,2203 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>简历鸭 IA 页面重设计 - Material You Prototype</title>
+  <link rel="icon" href="../public/favicon.svg" type="image/svg+xml" />
+  <style>
+    :root {
+      --primary: #6750a4;
+      --primary-2: #7c3aed;
+      --primary-3: #a855f7;
+      --on-primary: #ffffff;
+      --primary-container: #eaddff;
+      --on-primary-container: #21005d;
+      --secondary-container: #e8def8;
+      --tertiary: #7d5260;
+      --tertiary-container: #ffd8e4;
+      --surface: #fffbfe;
+      --surface-low: #f7f2fa;
+      --surface: #fffbfe;
+      --surface-container: #f3edf7;
+      --surface-high: #ece6f0;
+      --on-surface: #1c1b1f;
+      --on-variant: #49454f;
+      --outline: #79747e;
+      --outline-variant: #cac4d0;
+      --success: #1b873f;
+      --success-container: #d2f2e0;
+      --warning: #b06d00;
+      --warning-container: #fff3d6;
+      --error: #b3261e;
+      --error-container: #f9dedc;
+      --shadow-1: 0 1px 2px rgba(28, 27, 31, .08), 0 1px 3px rgba(28, 27, 31, .06);
+      --shadow-2: 0 8px 24px rgba(28, 27, 31, .08);
+      --shadow-3: 0 18px 48px rgba(103, 80, 164, .16);
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --radius-xl: 24px;
+      --radius-2xl: 32px;
+      --radius-full: 999px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--on-surface);
+      background: linear-gradient(180deg, #fffbfe 0%, #f8f3fb 52%, #fffbfe 100%);
+      font-family: "Inter", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    button,
+    input,
+    textarea {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    svg {
+      display: block;
+    }
+
+    .page {
+      min-height: 100vh;
+    }
+
+    .screen {
+      display: none;
+      min-height: 100vh;
+    }
+
+    .screen.active {
+      display: block;
+    }
+
+    .container {
+      width: min(1180px, calc(100% - 40px));
+      margin: 0 auto;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 40;
+      border-bottom: 1px solid rgba(202, 196, 208, .58);
+      background: rgba(255, 251, 254, .86);
+      backdrop-filter: blur(18px);
+    }
+
+    .nav {
+      height: 72px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      min-width: max-content;
+      font-weight: 800;
+      letter-spacing: 0;
+    }
+
+    .brand-mark {
+      width: 40px;
+      height: 40px;
+      display: grid;
+      place-items: center;
+      border-radius: 14px;
+      color: var(--on-primary);
+      background: var(--primary);
+      box-shadow: 0 8px 18px rgba(103, 80, 164, .24);
+    }
+
+    .brand-mark svg,
+    .brand-mark img {
+      width: 22px;
+      height: 22px;
+      display: block;
+    }
+
+    .main-tabs,
+    .nav-actions,
+    .segmented,
+    .chip-row,
+    .inline-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .main-tabs {
+      padding: 4px;
+      border-radius: var(--radius-full);
+      background: var(--surface-container);
+      border: 1px solid rgba(202, 196, 208, .65);
+    }
+
+    .tab-btn,
+    .chip-btn,
+    .plain-btn {
+      border: 0;
+      background: transparent;
+      color: var(--on-variant);
+      border-radius: var(--radius-full);
+      transition: background .18s ease, color .18s ease, transform .18s ease, box-shadow .18s ease;
+    }
+
+    .tab-btn {
+      height: 36px;
+      padding: 0 16px;
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    .tab-btn:hover,
+    .chip-btn:hover,
+    .plain-btn:hover {
+      color: var(--primary);
+      background: rgba(103, 80, 164, .08);
+    }
+
+    .tab-btn.active {
+      color: var(--primary);
+      background: var(--surface);
+      box-shadow: var(--shadow-1);
+    }
+
+    .btn {
+      min-height: 44px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      padding: 0 18px;
+      border-radius: var(--radius-full);
+      border: 0;
+      font-weight: 800;
+      white-space: nowrap;
+      transition: transform .18s ease, box-shadow .18s ease, background .18s ease, border-color .18s ease;
+    }
+
+    .btn svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    .btn-primary {
+      color: var(--on-primary);
+      background: var(--primary);
+      box-shadow: 0 10px 24px rgba(103, 80, 164, .22);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      background: #5f479e;
+      box-shadow: var(--shadow-3);
+    }
+
+    .btn-secondary {
+      color: var(--primary);
+      background: var(--surface);
+      border: 1px solid var(--outline-variant);
+      box-shadow: var(--shadow-1);
+    }
+
+    .btn-secondary:hover {
+      transform: translateY(-2px);
+      border-color: rgba(103, 80, 164, .5);
+      background: rgba(234, 221, 255, .48);
+      box-shadow: var(--shadow-2);
+    }
+
+    .btn-tonal {
+      color: var(--on-primary-container);
+      background: var(--primary-container);
+      border: 0;
+    }
+
+    .btn-ghost {
+      color: var(--on-variant);
+      background: transparent;
+      border: 1px solid var(--outline-variant);
+    }
+
+    .landing-hero {
+      min-height: calc(100vh - 72px);
+      display: grid;
+      grid-template-columns: minmax(0, .94fr) minmax(430px, 1.06fr);
+      gap: 46px;
+      align-items: center;
+      padding: 70px 0 68px;
+    }
+
+    .eyebrow {
+      width: fit-content;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      border-radius: var(--radius-full);
+      color: var(--primary);
+      background: var(--primary-container);
+      font-size: 13px;
+      font-weight: 900;
+      margin-bottom: 22px;
+    }
+
+    .pulse-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--primary);
+      box-shadow: 0 0 0 5px rgba(103, 80, 164, .12);
+    }
+
+    h1,
+    h2,
+    h3,
+    p {
+      letter-spacing: 0;
+    }
+
+    h1 {
+      margin: 0;
+      max-width: 720px;
+      font-size: clamp(42px, 6vw, 74px);
+      line-height: 1.04;
+      font-weight: 900;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: clamp(30px, 4vw, 48px);
+      line-height: 1.14;
+      font-weight: 900;
+    }
+
+    h3 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 900;
+    }
+
+    .accent {
+      color: var(--primary);
+    }
+
+    .lead {
+      max-width: 590px;
+      margin: 22px 0 0;
+      color: var(--on-variant);
+      font-size: 18px;
+      line-height: 1.8;
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      margin-top: 34px;
+    }
+
+    .signal-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 28px;
+    }
+
+    .signal {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 34px;
+      padding: 0 13px;
+      border-radius: var(--radius-full);
+      color: var(--on-variant);
+      background: rgba(243, 237, 247, .82);
+      border: 1px solid rgba(202, 196, 208, .62);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .signal svg {
+      width: 15px;
+      height: 15px;
+      color: var(--primary);
+    }
+
+    .hero-stage {
+      position: relative;
+      min-height: 620px;
+      border-radius: var(--radius-2xl);
+      background: var(--surface-container);
+      border: 1px solid rgba(202, 196, 208, .7);
+      box-shadow: var(--shadow-3);
+      padding: 18px;
+      overflow: hidden;
+    }
+
+    .stage-bar {
+      height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 0 4px 14px;
+    }
+
+    .dots {
+      display: flex;
+      gap: 8px;
+    }
+
+    .dots span {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--outline-variant);
+    }
+
+    .dots span:nth-child(1) { background: #ff8a80; }
+    .dots span:nth-child(2) { background: #ffd180; }
+    .dots span:nth-child(3) { background: #81c995; }
+
+    .stage-pill {
+      height: 30px;
+      display: inline-flex;
+      align-items: center;
+      padding: 0 12px;
+      border-radius: var(--radius-full);
+      color: var(--primary);
+      background: var(--primary-container);
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .stage-grid {
+      display: grid;
+      grid-template-columns: 220px minmax(260px, 1fr);
+      gap: 14px;
+    }
+
+    .mock-panel,
+    .paper-zone,
+    .floating-ai,
+    .card {
+      border: 1px solid rgba(202, 196, 208, .7);
+      background: var(--surface);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-1);
+    }
+
+    .mock-panel {
+      min-height: 520px;
+      padding: 15px;
+    }
+
+    .mock-label {
+      margin-bottom: 12px;
+      color: var(--on-variant);
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .field-card {
+      margin-bottom: 10px;
+      padding: 12px;
+      border-radius: var(--radius-lg);
+      background: var(--surface-low);
+      border: 1px solid rgba(202, 196, 208, .58);
+    }
+
+    .field-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 9px;
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .spark {
+      width: 24px;
+      height: 24px;
+      display: grid;
+      place-items: center;
+      border: 0;
+      border-radius: 50%;
+      color: var(--primary);
+      background: var(--primary-container);
+    }
+
+    .spark svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    .line {
+      height: 8px;
+      margin-top: 7px;
+      border-radius: var(--radius-full);
+      background: var(--outline-variant);
+      opacity: .62;
+    }
+
+    .w90 { width: 90%; }
+    .w78 { width: 78%; }
+    .w65 { width: 65%; }
+    .w48 { width: 48%; }
+
+    .paper-zone {
+      position: relative;
+      min-height: 520px;
+      display: grid;
+      place-items: center;
+      padding: 18px;
+      background:
+        linear-gradient(90deg, rgba(202, 196, 208, .28) 1px, transparent 1px),
+        linear-gradient(rgba(202, 196, 208, .28) 1px, transparent 1px),
+        var(--surface-low);
+      background-size: 22px 22px;
+    }
+
+    .resume-paper {
+      width: 250px;
+      min-height: 360px;
+      padding: 24px 22px;
+      border-radius: 4px;
+      background: #fff;
+      border: 1px solid rgba(202, 196, 208, .9);
+      box-shadow: 0 16px 32px rgba(28, 27, 31, .12);
+    }
+
+    .paper-name {
+      width: 126px;
+      height: 18px;
+      margin-bottom: 10px;
+      border-radius: 5px;
+      background: var(--on-surface);
+    }
+
+    .paper-contact {
+      display: flex;
+      gap: 5px;
+      margin-bottom: 20px;
+    }
+
+    .paper-contact span,
+    .paper-row,
+    .paper-title {
+      border-radius: var(--radius-full);
+      background: var(--outline-variant);
+    }
+
+    .paper-contact span {
+      height: 5px;
+    }
+
+    .paper-contact span:nth-child(1) { width: 45px; }
+    .paper-contact span:nth-child(2) { width: 56px; }
+    .paper-contact span:nth-child(3) { width: 38px; }
+
+    .paper-section {
+      margin-top: 17px;
+    }
+
+    .paper-rule {
+      width: 34px;
+      height: 3px;
+      margin-bottom: 7px;
+      border-radius: var(--radius-full);
+      background: var(--primary);
+    }
+
+    .paper-title {
+      width: 82px;
+      height: 8px;
+      margin-bottom: 10px;
+      background: var(--on-surface);
+      opacity: .88;
+    }
+
+    .paper-row {
+      height: 6px;
+      margin-top: 6px;
+      opacity: .72;
+    }
+
+    .paper-row.short {
+      width: 68%;
+    }
+
+    .floating-ai {
+      position: absolute;
+      right: 26px;
+      bottom: 28px;
+      width: 260px;
+      padding: 14px;
+      border-radius: var(--radius-xl);
+      background: rgba(255, 251, 254, .96);
+      box-shadow: 0 18px 46px rgba(28, 27, 31, .18);
+    }
+
+    .ai-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 12px;
+      font-size: 13px;
+      font-weight: 900;
+    }
+
+    .score {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 9px;
+      border-radius: var(--radius-full);
+      color: var(--success);
+      background: var(--success-container);
+      font-size: 11px;
+      font-weight: 900;
+    }
+
+    .ai-note {
+      padding: 12px;
+      border-radius: var(--radius-lg);
+      background: var(--primary-container);
+      color: var(--on-primary-container);
+      font-size: 12px;
+      line-height: 1.58;
+      margin-bottom: 10px;
+    }
+
+    .section-pad {
+      padding: 84px 0;
+    }
+
+    .section-head {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 30px;
+      margin-bottom: 28px;
+    }
+
+    .kicker {
+      margin: 0 0 10px;
+      color: var(--primary);
+      font-size: 14px;
+      font-weight: 900;
+    }
+
+    .section-desc {
+      max-width: 430px;
+      margin: 0;
+      color: var(--on-variant);
+      font-size: 16px;
+      line-height: 1.7;
+    }
+
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+
+    .feature-card {
+      min-height: 206px;
+      padding: 22px;
+      border-radius: var(--radius-xl);
+      background: var(--surface-low);
+      border: 1px solid rgba(202, 196, 208, .64);
+      box-shadow: var(--shadow-1);
+      transition: transform .18s ease, box-shadow .18s ease, background .18s ease;
+    }
+
+    .feature-card:hover {
+      transform: translateY(-4px);
+      background: var(--surface);
+      box-shadow: var(--shadow-2);
+    }
+
+    .feature-icon {
+      width: 46px;
+      height: 46px;
+      display: grid;
+      place-items: center;
+      margin-bottom: 18px;
+      border-radius: 17px;
+      color: var(--primary);
+      background: var(--primary-container);
+    }
+
+    .feature-icon svg {
+      width: 23px;
+      height: 23px;
+    }
+
+    .feature-card p,
+    .template-card p,
+    .resume-card p,
+    .small-copy {
+      color: var(--on-variant);
+      line-height: 1.7;
+    }
+
+    .feature-card p {
+      margin: 10px 0 0;
+      font-size: 14px;
+    }
+
+    .pricing-band {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 14px;
+      margin-top: 24px;
+    }
+
+    .price-card {
+      padding: 18px;
+      border-radius: var(--radius-xl);
+      background: var(--surface);
+      border: 1px solid rgba(202, 196, 208, .68);
+      box-shadow: var(--shadow-1);
+    }
+
+    .price-card strong {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--primary);
+      font-size: 22px;
+    }
+
+    .price-card span {
+      color: var(--on-variant);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .template-view {
+      display: none;
+      padding: 54px 0 82px;
+    }
+
+    .template-view.active {
+      display: block;
+    }
+
+    .template-hero {
+      margin: 46px 0 26px;
+      padding: 38px;
+      border-radius: 40px;
+      background: var(--primary-container);
+      border: 1px solid rgba(103, 80, 164, .18);
+      color: var(--on-primary-container);
+    }
+
+    .filter-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 24px 0 22px;
+    }
+
+    .chip-btn {
+      height: 38px;
+      padding: 0 15px;
+      border: 1px solid var(--outline-variant);
+      background: var(--surface);
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    .chip-btn.active {
+      color: var(--on-primary-container);
+      background: var(--primary-container);
+      border-color: transparent;
+    }
+
+    .template-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+
+    .template-card {
+      min-height: 420px;
+      display: flex;
+      flex-direction: column;
+      padding: 14px;
+      border-radius: var(--radius-xl);
+      background: var(--surface);
+      border: 1px solid rgba(202, 196, 208, .72);
+      box-shadow: var(--shadow-1);
+      transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+    }
+
+    .template-card:hover {
+      transform: translateY(-6px);
+      border-color: rgba(103, 80, 164, .45);
+      box-shadow: var(--shadow-3);
+    }
+
+    .template-thumb {
+      height: 220px;
+      padding: 16px;
+      overflow: hidden;
+      border-radius: var(--radius-lg);
+      background: #fff;
+      border: 1px solid rgba(202, 196, 208, .82);
+    }
+
+    .template-card[data-style="business"] .template-thumb {
+      background: linear-gradient(90deg, #f7f2fa 0 30%, #fff 30% 100%);
+    }
+
+    .template-card[data-style="tech"] .template-thumb {
+      background: linear-gradient(180deg, rgba(234, 221, 255, .8) 0 28%, #fff 28% 100%);
+    }
+
+    .template-card[data-style="creative"] .template-thumb {
+      background: linear-gradient(135deg, #fff 0 54%, #f7f2fa 54% 100%);
+    }
+
+    .thumb-name,
+    .thumb-heading,
+    .thumb-line,
+    .thumb-rule {
+      border-radius: var(--radius-full);
+    }
+
+    .thumb-name {
+      width: 76px;
+      height: 14px;
+      background: var(--on-surface);
+      margin-bottom: 10px;
+    }
+
+    .thumb-rule {
+      width: 32px;
+      height: 3px;
+      margin: 15px 0 8px;
+      background: var(--primary);
+    }
+
+    .thumb-heading {
+      width: 58px;
+      height: 7px;
+      background: var(--on-surface);
+      opacity: .86;
+      margin-bottom: 7px;
+    }
+
+    .thumb-line {
+      height: 5px;
+      background: var(--outline-variant);
+      margin-top: 6px;
+    }
+
+    .template-body {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      padding: 16px 4px 2px;
+    }
+
+    .template-body p {
+      margin: 8px 0 0;
+      font-size: 13px;
+    }
+
+    .tag-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      margin-top: 13px;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      height: 27px;
+      padding: 0 10px;
+      border-radius: var(--radius-full);
+      color: var(--primary);
+      background: var(--primary-container);
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .template-action {
+      margin-top: auto;
+      padding-top: 16px;
+    }
+
+    .dashboard-shell {
+      display: grid;
+      grid-template-columns: 250px 1fr;
+      min-height: 100vh;
+      background: var(--surface-low);
+    }
+
+    .dash-sidebar {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      padding: 22px;
+      border-right: 1px solid rgba(202, 196, 208, .68);
+      background: var(--surface);
+    }
+
+    .side-nav {
+      display: grid;
+      gap: 8px;
+      margin-top: 26px;
+    }
+
+    .side-nav button {
+      height: 44px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0 14px;
+      border: 0;
+      border-radius: var(--radius-full);
+      color: var(--on-variant);
+      background: transparent;
+      font-weight: 900;
+      text-align: left;
+    }
+
+    .side-nav button.active,
+    .side-nav button:hover {
+      color: var(--primary);
+      background: var(--primary-container);
+    }
+
+    .dash-main {
+      padding: 24px 30px 52px;
+    }
+
+    .dash-header {
+      height: 52px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 18px;
+      margin-bottom: 32px;
+    }
+
+    .credit-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 38px;
+      padding: 0 12px;
+      border-radius: var(--radius-full);
+      color: var(--primary);
+      background: var(--primary-container);
+      font-size: 13px;
+      font-weight: 900;
+    }
+
+    .dash-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .resume-card {
+      min-height: 230px;
+      padding: 16px;
+      border-radius: var(--radius-xl);
+      background: var(--surface);
+      border: 1px solid rgba(202, 196, 208, .68);
+      box-shadow: var(--shadow-1);
+      transition: transform .18s ease, box-shadow .18s ease;
+    }
+
+    .resume-card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-2);
+    }
+
+    .resume-thumb {
+      height: 122px;
+      border-radius: var(--radius-lg);
+      background: linear-gradient(90deg, #f7f2fa 0 32%, #fff 32% 100%);
+      border: 1px solid rgba(202, 196, 208, .68);
+      padding: 14px;
+      margin-bottom: 14px;
+    }
+
+    .new-card {
+      display: grid;
+      place-items: center;
+      min-height: 230px;
+      text-align: center;
+      background: var(--primary-container);
+      color: var(--on-primary-container);
+    }
+
+    .quick-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-top: 28px;
+    }
+
+    .quick-card {
+      padding: 18px;
+      border: 0;
+      border-radius: var(--radius-xl);
+      background: var(--surface);
+      box-shadow: var(--shadow-1);
+      text-align: left;
+      transition: transform .18s ease, box-shadow .18s ease;
+    }
+
+    .quick-card:hover {
+      transform: translateY(-3px);
+      box-shadow: var(--shadow-2);
+    }
+
+    .editor-shell {
+      height: 100vh;
+      display: grid;
+      grid-template-rows: 64px 1fr;
+      overflow: hidden;
+      background: var(--surface-low);
+    }
+
+    .editor-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      padding: 0 18px;
+      border-bottom: 1px solid rgba(202, 196, 208, .7);
+      background: rgba(255, 251, 254, .92);
+      backdrop-filter: blur(16px);
+      z-index: 20;
+    }
+
+    .editor-title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .editor-title strong {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .editor-body {
+      min-height: 0;
+      display: grid;
+      grid-template-columns: 88px 1fr 380px;
+      transition: grid-template-columns .24s ease;
+    }
+
+    .editor-body.panel-closed {
+      grid-template-columns: 88px 1fr 0;
+    }
+
+    .module-rail {
+      min-height: 0;
+      padding: 14px 10px;
+      border-right: 1px solid rgba(202, 196, 208, .7);
+      background: var(--surface);
+      overflow-y: auto;
+    }
+
+    .module-item {
+      width: 68px;
+      min-height: 58px;
+      display: grid;
+      place-items: center;
+      gap: 3px;
+      padding: 7px 4px;
+      margin-bottom: 8px;
+      border-radius: 18px;
+      color: var(--on-variant);
+      background: transparent;
+      border: 1px solid transparent;
+      font-size: 11px;
+      font-weight: 900;
+      text-align: center;
+      user-select: none;
+    }
+
+    .module-item span {
+      font-size: 18px;
+      line-height: 1;
+    }
+
+    .module-item:hover,
+    .module-item.active {
+      color: var(--primary);
+      background: var(--primary-container);
+    }
+
+    .module-item.dragging {
+      opacity: .45;
+      border-color: var(--primary);
+    }
+
+    .add-module {
+      width: 68px;
+      min-height: 42px;
+      border: 1px dashed var(--outline-variant);
+      border-radius: 18px;
+      color: var(--primary);
+      background: transparent;
+      font-size: 11px;
+      font-weight: 900;
+    }
+
+    .preview-area {
+      min-width: 0;
+      min-height: 0;
+      display: grid;
+      place-items: start center;
+      padding: 28px;
+      overflow: auto;
+      background:
+        radial-gradient(circle, rgba(202, 196, 208, .72) 1px, transparent 1px),
+        #e8eaee;
+      background-size: 22px 22px;
+    }
+
+    .a4 {
+      width: min(760px, 100%);
+      min-height: 980px;
+      padding: 48px 58px;
+      background: #fff;
+      border-radius: 2px;
+      box-shadow: 0 22px 54px rgba(28, 27, 31, .18);
+    }
+
+    .resume-real-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 24px;
+      padding-bottom: 22px;
+    }
+
+    .resume-real-head h2 {
+      font-size: 34px;
+      margin-bottom: 8px;
+    }
+
+    .resume-real-head p {
+      margin: 0;
+      color: var(--on-variant);
+      line-height: 1.6;
+    }
+
+    .photo-block {
+      width: 76px;
+      height: 96px;
+      border-radius: 8px;
+      background: var(--primary-container);
+      border: 1px solid rgba(103, 80, 164, .2);
+      flex-shrink: 0;
+    }
+
+    .resume-section {
+      position: relative;
+      padding: 16px 42px 14px 0;
+      border-top: 1px solid rgba(202, 196, 208, .8);
+      transition: background .18s ease, outline .18s ease;
+    }
+
+    .resume-section:hover,
+    .resume-section.active {
+      background: linear-gradient(90deg, rgba(234, 221, 255, .35), transparent 80%);
+      outline: 1px solid rgba(103, 80, 164, .2);
+      outline-offset: 8px;
+    }
+
+    .resume-section h3 {
+      color: var(--primary);
+      font-size: 13px;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    .resume-section p,
+    .resume-section li {
+      color: var(--on-variant);
+      font-size: 14px;
+      line-height: 1.75;
+    }
+
+    .resume-section p {
+      margin: 0;
+    }
+
+    .resume-section ul {
+      margin: 0;
+      padding-left: 18px;
+    }
+
+    .section-ai {
+      position: absolute;
+      top: 14px;
+      right: 0;
+      width: 30px;
+      height: 30px;
+    }
+
+    .context-panel {
+      min-width: 0;
+      min-height: 0;
+      border-left: 1px solid rgba(202, 196, 208, .7);
+      background: var(--surface);
+      overflow: hidden;
+      transition: transform .24s ease, opacity .18s ease;
+    }
+
+    .editor-body.panel-closed .context-panel {
+      opacity: 0;
+      transform: translateX(100%);
+      pointer-events: none;
+    }
+
+    .panel-head {
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      border-bottom: 1px solid rgba(202, 196, 208, .65);
+    }
+
+    .panel-head strong {
+      font-size: 15px;
+    }
+
+    .icon-btn {
+      width: 38px;
+      height: 38px;
+      display: grid;
+      place-items: center;
+      border: 0;
+      border-radius: 50%;
+      color: var(--on-variant);
+      background: transparent;
+    }
+
+    .icon-btn:hover {
+      color: var(--primary);
+      background: rgba(103, 80, 164, .08);
+    }
+
+    .panel-body {
+      height: calc(100vh - 128px);
+      padding: 16px;
+      overflow-y: auto;
+    }
+
+    .panel-mode {
+      display: none;
+    }
+
+    .panel-mode.active {
+      display: block;
+    }
+
+    .form-row {
+      margin-bottom: 14px;
+    }
+
+    .form-row label {
+      display: block;
+      margin-bottom: 7px;
+      color: var(--on-variant);
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .text-input,
+    .text-area {
+      width: 100%;
+      border: 1px solid var(--outline-variant);
+      border-radius: var(--radius-md);
+      background: var(--surface-low);
+      color: var(--on-surface);
+      outline: none;
+      transition: border-color .18s ease, box-shadow .18s ease, background .18s ease;
+    }
+
+    .text-input {
+      height: 42px;
+      padding: 0 12px;
+    }
+
+    .text-area {
+      min-height: 116px;
+      padding: 12px;
+      resize: vertical;
+      line-height: 1.65;
+    }
+
+    .text-input:focus,
+    .text-area:focus {
+      background: var(--surface);
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px rgba(103, 80, 164, .11);
+    }
+
+    .ai-capsules {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .ai-capsule {
+      min-height: 42px;
+      border: 0;
+      border-radius: var(--radius-full);
+      color: var(--primary);
+      background: var(--primary-container);
+      font-size: 13px;
+      font-weight: 900;
+    }
+
+    .chat-card {
+      padding: 13px;
+      border-radius: var(--radius-lg);
+      margin-bottom: 10px;
+      font-size: 13px;
+      line-height: 1.65;
+    }
+
+    .chat-ai {
+      color: var(--on-surface);
+      background: var(--surface-low);
+    }
+
+    .chat-user {
+      color: var(--on-primary);
+      background: var(--primary);
+      margin-left: 38px;
+    }
+
+    .chat-input {
+      position: sticky;
+      bottom: 0;
+      display: flex;
+      gap: 8px;
+      padding-top: 12px;
+      background: linear-gradient(180deg, rgba(255, 251, 254, 0), var(--surface) 25%);
+    }
+
+    .export-wrap {
+      position: relative;
+    }
+
+    .export-menu {
+      position: absolute;
+      top: 50px;
+      right: 0;
+      width: 210px;
+      display: none;
+      padding: 8px;
+      border-radius: var(--radius-lg);
+      background: var(--surface);
+      border: 1px solid var(--outline-variant);
+      box-shadow: var(--shadow-2);
+      z-index: 30;
+    }
+
+    .export-menu.active {
+      display: block;
+    }
+
+    .export-menu button {
+      width: 100%;
+      height: 42px;
+      border: 0;
+      border-radius: var(--radius-md);
+      background: transparent;
+      color: var(--on-variant);
+      font-weight: 800;
+      text-align: left;
+      padding: 0 12px;
+    }
+
+    .export-menu button:hover {
+      color: var(--primary);
+      background: var(--primary-container);
+    }
+
+    .prototype-switch {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      z-index: 80;
+      display: flex;
+      gap: 6px;
+      padding: 6px;
+      border-radius: var(--radius-full);
+      background: rgba(255, 251, 254, .9);
+      border: 1px solid rgba(202, 196, 208, .75);
+      box-shadow: var(--shadow-2);
+      backdrop-filter: blur(18px);
+    }
+
+    .prototype-switch button {
+      height: 34px;
+      border: 0;
+      border-radius: var(--radius-full);
+      padding: 0 12px;
+      color: var(--on-variant);
+      background: transparent;
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .prototype-switch button.active,
+    .prototype-switch button:hover {
+      color: var(--primary);
+      background: var(--primary-container);
+    }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      display: none;
+      place-items: center;
+      z-index: 100;
+      padding: 20px;
+      background: rgba(28, 27, 31, .38);
+      backdrop-filter: blur(8px);
+    }
+
+    .modal-backdrop.active {
+      display: grid;
+    }
+
+    .modal {
+      width: min(440px, 100%);
+      padding: 22px;
+      border-radius: var(--radius-2xl);
+      background: var(--surface);
+      box-shadow: var(--shadow-3);
+    }
+
+    .modal h3 {
+      font-size: 24px;
+      margin-bottom: 8px;
+    }
+
+    .modal p {
+      color: var(--on-variant);
+      line-height: 1.7;
+    }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 76px;
+      transform: translateX(-50%) translateY(12px);
+      z-index: 120;
+      opacity: 0;
+      pointer-events: none;
+      padding: 12px 18px;
+      border-radius: var(--radius-full);
+      color: var(--surface);
+      background: var(--on-surface);
+      box-shadow: var(--shadow-2);
+      font-size: 13px;
+      font-weight: 900;
+      transition: opacity .2s ease, transform .2s ease;
+    }
+
+    .toast.active {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    @media (max-width: 1100px) {
+      .landing-hero {
+        grid-template-columns: 1fr;
+        min-height: auto;
+      }
+
+      .feature-grid,
+      .pricing-band,
+      .dash-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .template-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .editor-body,
+      .editor-body.panel-closed {
+        grid-template-columns: 78px 1fr;
+      }
+
+      .context-panel {
+        position: fixed;
+        top: 64px;
+        right: 0;
+        bottom: 0;
+        width: min(380px, calc(100vw - 78px));
+        z-index: 50;
+        box-shadow: var(--shadow-3);
+      }
+    }
+
+    @media (max-width: 760px) {
+      .container {
+        width: min(100% - 28px, 1180px);
+      }
+
+      .nav {
+        height: auto;
+        min-height: 72px;
+        align-items: flex-start;
+        flex-direction: column;
+        padding: 12px 0;
+      }
+
+      .main-tabs {
+        width: 100%;
+      }
+
+      .tab-btn {
+        flex: 1;
+      }
+
+      .nav-actions {
+        width: 100%;
+        justify-content: space-between;
+      }
+
+      .landing-hero {
+        padding-top: 42px;
+      }
+
+      .hero-actions,
+      .inline-actions {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .btn {
+        width: 100%;
+      }
+
+      .hero-stage {
+        min-height: 710px;
+        padding: 14px;
+      }
+
+      .stage-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .mock-panel {
+        min-height: 250px;
+      }
+
+      .paper-zone {
+        min-height: 390px;
+      }
+
+      .floating-ai {
+        left: 28px;
+        right: 28px;
+        bottom: 24px;
+        width: auto;
+      }
+
+      .section-head {
+        display: block;
+      }
+
+      .section-desc {
+        margin-top: 14px;
+      }
+
+      .feature-grid,
+      .pricing-band,
+      .template-grid,
+      .dash-grid,
+      .quick-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .dashboard-shell {
+        grid-template-columns: 1fr;
+      }
+
+      .dash-sidebar {
+        position: static;
+        height: auto;
+      }
+
+      .dash-main {
+        padding: 22px 14px 52px;
+      }
+
+      .dash-header,
+      .editor-header {
+        height: auto;
+        min-height: 64px;
+        flex-wrap: wrap;
+        padding: 10px 12px;
+      }
+
+      .editor-body,
+      .editor-body.panel-closed {
+        grid-template-columns: 70px 1fr;
+      }
+
+      .a4 {
+        min-height: 880px;
+        padding: 32px 28px;
+      }
+
+      .prototype-switch {
+        left: 12px;
+        right: 12px;
+        justify-content: center;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <section class="screen active" id="screen-landing">
+      <header class="topbar">
+        <div class="container nav">
+          <a class="brand" href="#" data-go="landing">
+            <span class="brand-mark" aria-hidden="true">
+              <img src="../public/favicon.svg" alt="" />
+            </span>
+            <span>简历鸭</span>
+          </a>
+          <div class="main-tabs" role="tablist">
+            <button class="tab-btn active" type="button" data-landing-tab="ai">AI 写简历</button>
+            <button class="tab-btn" type="button" data-landing-tab="templates">模板市场</button>
+          </div>
+          <div class="nav-actions">
+            <button class="btn btn-secondary" type="button" data-modal="login">注册/登录</button>
+            <button class="btn btn-primary" type="button" data-go="editor" data-editor-mode="ai">开始使用</button>
+          </div>
+        </div>
+      </header>
+
+      <main>
+        <div class="landing-view active" id="landing-ai">
+          <section class="landing-hero container">
+            <div>
+              <div class="eyebrow"><span class="pulse-dot"></span>公开首页 · 无需注册即可试用</div>
+              <h1>让 AI 写出<span class="accent">面试官想看</span>的简历</h1>
+              <p class="lead">上传简历，AI 诊断，一键优化，再导出。对话式 AI 统一入口，不用在多个工具 Tab 之间来回切换。</p>
+              <div class="hero-actions">
+                <button class="btn btn-primary" type="button" data-go="editor" data-editor-mode="wizard">
+                  <svg viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" /></svg>
+                  我是第一次写简历
+                </button>
+                <button class="btn btn-secondary" type="button" data-go="editor" data-editor-mode="import">
+                  <svg viewBox="0 0 24 24" fill="none"><path d="M12 15V4m0 11-4-4m4 4 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /><path d="M5 18h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" /></svg>
+                  我已有简历想优化
+                </button>
+              </div>
+              <div class="signal-row">
+                <span class="signal"><svg viewBox="0 0 24 24" fill="none"><path d="m20 6-11 11-5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>本地优先</span>
+                <span class="signal"><svg viewBox="0 0 24 24" fill="none"><path d="M7 8h10M7 12h7M8 20l-3 2v-5.5A7.5 7.5 0 0 1 12.5 4h1A7.5 7.5 0 0 1 21 11.5v0A7.5 7.5 0 0 1 13.5 19H8Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></svg>统一 AI 对话</span>
+                <span class="signal"><svg viewBox="0 0 24 24" fill="none"><path d="M6 4h12v16H6V4Z" stroke="currentColor" stroke-width="2" /><path d="M8.8 8h6.4M8.8 11h6.4M8.8 14h4.4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" /></svg>A4 所见即所得</span>
+              </div>
+            </div>
+
+            <div class="hero-stage" aria-label="编辑器效果预览">
+              <div class="stage-bar">
+                <div class="dots"><span></span><span></span><span></span></div>
+                <span class="stage-pill">AI 正在输出岗位适配建议</span>
+              </div>
+              <div class="stage-grid">
+                <aside class="mock-panel">
+                  <div class="mock-label">模块编辑</div>
+                  <div class="field-card"><div class="field-head">个人概述 <button class="spark" type="button" data-go="editor" data-editor-mode="polish"><svg viewBox="0 0 24 24" fill="none"><path d="M12 3l1.7 5.1L19 10l-5.3 1.9L12 17l-1.7-5.1L5 10l5.3-1.9L12 3Z" stroke="currentColor" stroke-width="1.7" /></svg></button></div><div class="line w90"></div><div class="line w65"></div></div>
+                  <div class="field-card"><div class="field-head">工作经历 <button class="spark" type="button" data-go="editor" data-editor-mode="polish"><svg viewBox="0 0 24 24" fill="none"><path d="M12 3l1.7 5.1L19 10l-5.3 1.9L12 17l-1.7-5.1L5 10l5.3-1.9L12 3Z" stroke="currentColor" stroke-width="1.7" /></svg></button></div><div class="line w90"></div><div class="line w78"></div><div class="line w48"></div></div>
+                  <div class="field-card"><div class="field-head">AI 项目实践</div><div class="line w78"></div><div class="line w65"></div></div>
+                  <div class="field-card"><div class="field-head">面试预测</div><div class="line w90"></div><div class="line w78"></div></div>
+                </aside>
+                <div class="paper-zone">
+                  <article class="resume-paper">
+                    <div class="paper-name"></div>
+                    <div class="paper-contact"><span></span><span></span><span></span></div>
+                    <div class="paper-section"><div class="paper-rule"></div><div class="paper-title"></div><div class="paper-row"></div><div class="paper-row"></div><div class="paper-row short"></div></div>
+                    <div class="paper-section"><div class="paper-rule"></div><div class="paper-title"></div><div class="paper-row"></div><div class="paper-row"></div><div class="paper-row"></div><div class="paper-row short"></div></div>
+                    <div class="paper-section"><div class="paper-rule"></div><div class="paper-title"></div><div class="paper-row"></div><div class="paper-row short"></div></div>
+                  </article>
+                  <aside class="floating-ai">
+                    <div class="ai-head">AI 诊断报告 <span class="score">82 分</span></div>
+                    <div class="ai-note">建议将职责描述改为成果描述，补充业务影响、协作对象与量化数据。</div>
+                    <button class="btn btn-primary" style="min-height:34px;padding:0 14px;font-size:12px" type="button" data-go="editor" data-editor-mode="adapt">应用建议</button>
+                  </aside>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="section-pad">
+            <div class="container">
+              <div class="section-head">
+                <div>
+                  <p class="kicker">核心能力</p>
+                  <h2>统一到一个 AI 助手里，但保留快捷操作</h2>
+                </div>
+                <p class="section-desc">用户可以直接聊天，也可以点胶囊触发润色、JD 匹配、诊断、面试预测。</p>
+              </div>
+              <div class="feature-grid">
+                <article class="feature-card"><div class="feature-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M12 3l1.9 5.7L20 11l-6.1 2.3L12 19l-1.9-5.7L4 11l6.1-2.3L12 3Z" stroke="currentColor" stroke-width="1.8" /></svg></div><h3>经历润色</h3><p>STAR 法则、结果导向、精炼压缩，按真实经历重写表达。</p></article>
+                <article class="feature-card"><div class="feature-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M5 5h14v14H5V5Z" stroke="currentColor" stroke-width="1.8" /><path d="m8 13 2.5 2.5L16 9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" /></svg></div><h3>岗位适配</h3><p>粘贴 JD 或 OCR 截图，输出匹配度、缺失项和可应用修改。</p></article>
+                <article class="feature-card"><div class="feature-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M4 5h16M4 12h16M4 19h10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" /></svg></div><h3>简历诊断</h3><p>逐模块评分，给出结构、内容、关键词、量化表达的改进方向。</p></article>
+                <article class="feature-card"><div class="feature-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M12 17h.01M9.8 9.4A2.7 2.7 0 0 1 12.4 7c1.6 0 2.9 1.1 2.9 2.6 0 1.8-1.6 2.4-2.6 3.1-.8.5-.9.9-.9 1.8" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" /><path d="M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20Z" stroke="currentColor" stroke-width="1.8" /></svg></div><h3>面试预测</h3><p>输出 10 道深挖问题，并提供可折叠的答案建议。</p></article>
+                <article class="feature-card"><div class="feature-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M7 3.75h7.2L19 8.55v11.7H7V3.75Z" stroke="currentColor" stroke-width="1.8" /><path d="M14 4v5h5M9.5 14h5M9.5 17h3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" /></svg></div><h3>导出投递版</h3><p>免费版带轻量水印，付费点数可导出无水印 PDF/PNG。</p></article>
+                <article class="feature-card"><div class="feature-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M8 7h8M8 11h8M8 15h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" /><path d="M5 3.5h14v17H5v-17Z" stroke="currentColor" stroke-width="1.8" /></svg></div><h3>模板市场</h3><p>5-8 套模板作为 MVP，不改数据结构，切换 CSS 与模块顺序。</p></article>
+              </div>
+              <div class="pricing-band">
+                <div class="price-card"><strong>免费 10 点 / 天</strong><span>无需注册即可试用核心 AI 能力</span></div>
+                <div class="price-card"><strong>¥9.9 / 50 点</strong><span>适合短期修改 1-2 份简历</span></div>
+                <div class="price-card"><strong>¥29.9 / 200 点</strong><span>适合求职季多岗位适配</span></div>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <div class="template-view" id="landing-templates">
+          <div class="container">
+            <div class="template-hero">
+              <p class="kicker">模板市场</p>
+              <h2>选择专业模板，AI 帮你一键填充内容</h2>
+              <p class="lead" style="max-width:760px;color:rgba(33,0,93,.74)">模板不只是换皮，而是预设版式、模块顺序和视觉重点。MVP 先提供 8 套，后续再扩展筛选与付费模板。</p>
+            </div>
+            <div class="filter-bar" aria-label="模板筛选">
+              <button class="chip-btn active" type="button" data-filter="all">全部</button>
+              <button class="chip-btn" type="button" data-filter="simple">简洁</button>
+              <button class="chip-btn" type="button" data-filter="creative">创意</button>
+              <button class="chip-btn" type="button" data-filter="tech">技术</button>
+              <button class="chip-btn" type="button" data-filter="finance">金融</button>
+              <button class="chip-btn" type="button" data-filter="marketing">市场</button>
+            </div>
+            <div class="template-grid" id="templateGrid"></div>
+            <div style="display:flex;justify-content:center;margin-top:28px">
+              <button class="btn btn-secondary" type="button" data-toast="已加载全部 MVP 模板">加载更多</button>
+            </div>
+          </div>
+        </div>
+      </main>
+    </section>
+
+    <section class="screen" id="screen-dashboard">
+      <div class="dashboard-shell">
+        <aside class="dash-sidebar">
+          <a class="brand" href="#" data-go="landing">
+            <span class="brand-mark"><img src="../public/favicon.svg" alt="" /></span>
+            <span>简历鸭工作台</span>
+          </a>
+          <nav class="side-nav">
+            <button class="active" type="button">📄 我的简历</button>
+            <button type="button" data-landing-tab-jump="templates">🎨 模板市场</button>
+            <button type="button" data-modal="points">🔋 购买点数</button>
+            <button type="button" data-toast="设置页将在用户系统上线后开放">⚙️ 设置</button>
+          </nav>
+        </aside>
+        <main class="dash-main">
+          <div class="dash-header">
+            <div>
+              <p class="kicker">Dashboard</p>
+              <h2>我的简历</h2>
+            </div>
+            <div class="inline-actions">
+              <span class="credit-pill">🔋 7/10 今日免费点数</span>
+              <button class="btn btn-tonal" type="button" data-modal="points">购买</button>
+              <button class="btn btn-secondary" type="button" data-go="landing">返回首页</button>
+            </div>
+          </div>
+
+          <div class="dash-grid">
+            <button class="resume-card new-card" type="button" data-go="editor" data-editor-mode="wizard">
+              <div>
+                <div style="font-size:34px;margin-bottom:10px">＋</div>
+                <h3>新建简历</h3>
+                <p>Wizard / 空白 / 导入</p>
+              </div>
+            </button>
+            <article class="resume-card">
+              <div class="resume-thumb"><div class="thumb-name"></div><div class="thumb-rule"></div><div class="thumb-heading"></div><div class="thumb-line" style="width:86%"></div><div class="thumb-line" style="width:64%"></div></div>
+              <h3>产品经理 - AI 方向</h3>
+              <p>修改于 2 天前</p>
+              <div class="inline-actions"><button class="btn btn-primary" type="button" data-go="editor">继续编辑</button><button class="btn btn-ghost" type="button" data-toast="已复制一份简历">复制</button></div>
+            </article>
+            <article class="resume-card">
+              <div class="resume-thumb" style="background:linear-gradient(180deg,rgba(234,221,255,.8) 0 30%,#fff 30% 100%)"><div class="thumb-name"></div><div class="thumb-rule"></div><div class="thumb-heading"></div><div class="thumb-line" style="width:92%"></div><div class="thumb-line" style="width:72%"></div></div>
+              <h3>海外运营负责人</h3>
+              <p>修改于昨天</p>
+              <div class="inline-actions"><button class="btn btn-primary" type="button" data-go="editor">继续编辑</button><button class="btn btn-ghost" type="button" data-toast="删除前会二次确认">删除</button></div>
+            </article>
+          </div>
+
+          <div class="quick-grid">
+            <button class="quick-card" type="button" data-go="editor" data-editor-mode="wizard"><h3>🤖 AI 对话从零创建</h3><p>适合第一次写，AI 逐步追问并生成完整初稿。</p></button>
+            <button class="quick-card" type="button" data-go="editor" data-editor-mode="import"><h3>📄 导入现有简历</h3><p>上传 PDF / 图片 / Markdown，保留内容再优化。</p></button>
+          </div>
+        </main>
+      </div>
+    </section>
+
+    <section class="screen" id="screen-editor">
+      <div class="editor-shell">
+        <header class="editor-header">
+          <div class="editor-title">
+            <button class="btn btn-ghost" type="button" data-go="dashboard">返回</button>
+            <strong id="editorResumeName">产品经理 - AI 方向</strong>
+          </div>
+          <div class="inline-actions">
+            <span class="credit-pill">🔋 7/10</span>
+            <button class="btn btn-tonal" id="langToggle" type="button">CN / EN</button>
+            <div class="export-wrap">
+              <button class="btn btn-primary" id="exportButton" type="button">导出</button>
+              <div class="export-menu" id="exportMenu">
+                <button type="button" data-toast="免费版 PDF 将带轻量水印">导出 PDF</button>
+                <button type="button" data-toast="PNG 已进入导出队列">导出 PNG</button>
+                <button type="button" data-modal="points">购买无水印导出</button>
+              </div>
+            </div>
+            <button class="btn btn-secondary" type="button" data-panel="ai">💬 AI 助手</button>
+          </div>
+        </header>
+
+        <div class="editor-body" id="editorBody">
+          <aside class="module-rail" id="moduleRail">
+            <div class="module-item active" draggable="true" data-section="personal"><span>👤</span>个人</div>
+            <div class="module-item" draggable="true" data-section="summary"><span>🧭</span>概述</div>
+            <div class="module-item" draggable="true" data-section="work"><span>💼</span>工作</div>
+            <div class="module-item" draggable="true" data-section="project"><span>🚀</span>AI实践</div>
+            <div class="module-item" draggable="true" data-section="education"><span>🎓</span>教育</div>
+            <div class="module-item" draggable="true" data-section="skills"><span>🏷️</span>技能</div>
+            <div class="module-item" draggable="true" data-section="language"><span>🌐</span>语言</div>
+            <div class="module-item" draggable="true" data-section="self"><span>💬</span>自评</div>
+            <button class="add-module" type="button" data-toast="打开自定义模块弹窗">＋ 添加</button>
+          </aside>
+
+          <main class="preview-area">
+            <article class="a4">
+              <header class="resume-real-head" data-preview-section="personal">
+                <div>
+                  <h2>郭欣灵</h2>
+                  <p>AI 产品经理 / 海外运营负责人</p>
+                  <p>Shanghai · guoxinling.cn · 138****8888</p>
+                </div>
+                <div class="photo-block"></div>
+              </header>
+              <section class="resume-section" data-preview-section="summary">
+                <button class="spark section-ai" type="button" data-ai-section="个人概述"><svg viewBox="0 0 24 24" fill="none"><path d="M12 3l1.7 5.1L19 10l-5.3 1.9L12 17l-1.7-5.1L5 10l5.3-1.9L12 3Z" stroke="currentColor" stroke-width="1.7" /></svg></button>
+                <h3>个人概述</h3>
+                <p>8 年互联网与海外游戏发行经验，近年深耕 AI 产品与自动化工作流，擅长将业务问题拆解为可落地的产品方案。</p>
+              </section>
+              <section class="resume-section" data-preview-section="work">
+                <button class="spark section-ai" type="button" data-ai-section="工作经历"><svg viewBox="0 0 24 24" fill="none"><path d="M12 3l1.7 5.1L19 10l-5.3 1.9L12 17l-1.7-5.1L5 10l5.3-1.9L12 3Z" stroke="currentColor" stroke-width="1.7" /></svg></button>
+                <h3>工作经历</h3>
+                <p><strong>某游戏公司 · 海外运营负责人</strong> 2018 - 2023</p>
+                <ul><li>负责德国市场全链路发行策略，统筹本地化、增长、商业化与跨团队协作。</li><li>主导 3 款产品上线，沉淀市场策略与数据复盘机制。</li></ul>
+              </section>
+              <section class="resume-section" data-preview-section="project">
+                <button class="spark section-ai" type="button" data-ai-section="AI 项目实践"><svg viewBox="0 0 24 24" fill="none"><path d="M12 3l1.7 5.1L19 10l-5.3 1.9L12 17l-1.7-5.1L5 10l5.3-1.9L12 3Z" stroke="currentColor" stroke-width="1.7" /></svg></button>
+                <h3>AI 项目实践</h3>
+                <p><strong>简历编辑器 · AI 求职工具</strong></p>
+                <ul><li>设计对话式简历生成、JD 匹配、OCR 识别和面试预测能力。</li></ul>
+              </section>
+              <section class="resume-section" data-preview-section="skills">
+                <h3>专业技能</h3>
+                <p>AI 产品设计 / LLM 应用 / 海外发行 / 数据分析 / React / TypeScript / Prompt Engineering</p>
+              </section>
+            </article>
+          </main>
+
+          <aside class="context-panel">
+            <div class="panel-head">
+              <strong id="panelTitle">编辑个人信息</strong>
+              <button class="icon-btn" type="button" id="closePanel">✕</button>
+            </div>
+            <div class="panel-body">
+              <div class="panel-mode active" id="panel-form">
+                <div class="form-row">
+                  <label id="fieldLabelA">姓名</label>
+                  <input class="text-input" value="郭欣灵" />
+                </div>
+                <div class="form-row">
+                  <label id="fieldLabelB">求职意向</label>
+                  <input class="text-input" value="AI 产品经理 / 海外运营负责人" />
+                </div>
+                <div class="form-row">
+                  <label id="fieldLabelC">模块内容</label>
+                  <textarea class="text-area">8 年互联网与海外游戏发行经验，近年深耕 AI 产品与自动化工作流，擅长将业务问题拆解为可落地的产品方案。</textarea>
+                </div>
+                <button class="btn btn-primary" type="button" data-panel="ai">用 AI 优化这个模块</button>
+              </div>
+
+              <div class="panel-mode" id="panel-ai">
+                <div class="ai-capsules">
+                  <button class="ai-capsule" type="button" data-ai-action="polish">✨ 润色经历</button>
+                  <button class="ai-capsule" type="button" data-ai-action="adapt">🎯 JD 匹配</button>
+                  <button class="ai-capsule" type="button" data-ai-action="diagnose">🔍 诊断简历</button>
+                  <button class="ai-capsule" type="button" data-ai-action="interview">💬 面试问题</button>
+                </div>
+                <div id="chatStack">
+                  <div class="chat-card chat-ai">你好！我可以帮你优化简历。你可以直接告诉我想润色哪段经历，或粘贴目标 JD 做匹配分析。</div>
+                </div>
+                <div class="chat-input">
+                  <input class="text-input" id="chatInput" placeholder="输入你想做的事，例如：帮我看看这段工作经历" />
+                  <button class="btn btn-primary" style="min-height:42px;padding:0 14px" type="button" id="sendChat">发送</button>
+                </div>
+              </div>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </section>
+
+    <div class="prototype-switch" aria-label="原型页面切换">
+      <button class="active" type="button" data-go="landing">一级：首页</button>
+      <button type="button" data-go="dashboard">二级：Dashboard</button>
+      <button type="button" data-go="editor">二级：Editor</button>
+    </div>
+
+    <div class="modal-backdrop" id="loginModal">
+      <div class="modal">
+        <h3>Magic Link 登录</h3>
+        <p>输入邮箱后发送登录链接。MVP 可先做弹窗原型，后续接 Vercel Function + Resend。</p>
+        <div class="form-row"><label>邮箱</label><input class="text-input" value="hello@example.com" /></div>
+        <div class="inline-actions">
+          <button class="btn btn-primary" type="button" data-login-send>发送登录链接</button>
+          <button class="btn btn-secondary" type="button" data-close-modal>取消</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-backdrop" id="pointsModal">
+      <div class="modal">
+        <h3>购买点数</h3>
+        <p>点数用于 AI 润色、JD 匹配、面试预测和简历诊断。免费额度每日刷新。</p>
+        <div class="pricing-band" style="grid-template-columns:1fr;margin:16px 0">
+          <div class="price-card"><strong>¥9.9 · 50 点</strong><span>入门包</span></div>
+          <div class="price-card"><strong>¥29.9 · 200 点</strong><span>进阶包</span></div>
+          <div class="price-card"><strong>¥59.9 · 500 点</strong><span>求职季包</span></div>
+        </div>
+        <div class="inline-actions">
+          <button class="btn btn-primary" type="button" data-toast="支付二维码将在后端接入后展示">选择进阶包</button>
+          <button class="btn btn-secondary" type="button" data-close-modal>关闭</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="toast" id="toast">已更新</div>
+  </div>
+
+  <script>
+    const templates = [
+      { name: '经典商务', desc: '稳重单栏，适合通用职场人与管理岗。', tags: ['通用', '经验'], filter: 'simple', style: 'business' },
+      { name: '极简白纸', desc: '高留白、弱装饰，适合应届生与咨询岗位。', tags: ['学生', '简洁'], filter: 'simple', style: 'simple' },
+      { name: '科技产品', desc: '项目和技能前置，适合技术、产品、AI 岗。', tags: ['技术', '产品'], filter: 'tech', style: 'tech' },
+      { name: '创意作品集', desc: '更强视觉区分度，适合设计、市场、内容。', tags: ['创意', '作品集'], filter: 'creative', style: 'creative' },
+      { name: '双栏布局', desc: '左侧信息密度高，适合经验丰富候选人。', tags: ['通用', '双栏'], filter: 'simple', style: 'business' },
+      { name: '时间轴履历', desc: '强化职业发展路径，适合 5 年以上经验。', tags: ['经验', '晋升'], filter: 'marketing', style: 'creative' },
+      { name: '金融精英', desc: '强调证书、项目、量化指标和严谨表达。', tags: ['金融', '量化'], filter: 'finance', style: 'business' },
+      { name: '海外双语', desc: '中英信息结构清晰，突出语言和跨文化协作。', tags: ['双语', '海外'], filter: 'marketing', style: 'tech' },
+    ];
+
+    const sectionNames = {
+      personal: '个人信息',
+      summary: '个人概述',
+      work: '工作经历',
+      project: 'AI 项目实践',
+      education: '教育背景',
+      skills: '专业技能',
+      language: '语言能力',
+      self: '自我评价',
+    };
+
+    const aiReplies = {
+      polish: '我会先列出你的工作经历，并让你选择 STAR 法则、结果导向或精炼压缩。建议优先润色最近一段经历。',
+      adapt: '请粘贴目标 JD，或上传岗位截图。我会输出匹配度、缺失关键词和可一键应用的修改建议。',
+      diagnose: '我将从结构完整度、表达专业度、岗位匹配度、竞争差异化四个维度诊断整份简历。',
+      interview: '我会基于当前简历生成 10 道面试追问，答案建议默认折叠，避免你直接背稿。',
+    };
+
+    const templateGrid = document.getElementById('templateGrid');
+    const toast = document.getElementById('toast');
+    let toastTimer = null;
+
+    function renderTemplates(filter = 'all') {
+      const items = templates.filter((t) => filter === 'all' || t.filter === filter);
+      templateGrid.innerHTML = items.map((t) => `
+        <article class="template-card" data-style="${t.style}">
+          <div class="template-thumb">
+            <div class="thumb-name"></div>
+            <div class="thumb-line" style="width:82%"></div>
+            <div class="thumb-rule"></div>
+            <div class="thumb-heading"></div>
+            <div class="thumb-line" style="width:94%"></div>
+            <div class="thumb-line" style="width:72%"></div>
+            <div class="thumb-rule"></div>
+            <div class="thumb-heading"></div>
+            <div class="thumb-line" style="width:88%"></div>
+            <div class="thumb-line" style="width:66%"></div>
+            <div class="thumb-rule"></div>
+            <div class="thumb-heading"></div>
+            <div class="thumb-line" style="width:78%"></div>
+          </div>
+          <div class="template-body">
+            <h3>${t.name}</h3>
+            <p>${t.desc}</p>
+            <div class="tag-row">${t.tags.map((tag) => `<span class="tag">${tag}</span>`).join('')}</div>
+            <div class="template-action"><button class="btn btn-primary" type="button" data-template="${t.name}">用此模板创建</button></div>
+          </div>
+        </article>
+      `).join('');
+    }
+
+    function showToast(message) {
+      toast.textContent = message;
+      toast.classList.add('active');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toast.classList.remove('active'), 1800);
+    }
+
+    function go(screen, options = {}) {
+      document.querySelectorAll('.screen').forEach((el) => el.classList.remove('active'));
+      document.getElementById(`screen-${screen}`).classList.add('active');
+      document.querySelectorAll('.prototype-switch button').forEach((btn) => btn.classList.toggle('active', btn.dataset.go === screen));
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      if (screen === 'editor') {
+        openPanel(options.mode === 'form' ? 'form' : 'ai');
+        if (options.mode) seedEditorMode(options.mode);
+      }
+    }
+
+    function seedEditorMode(mode) {
+      const map = {
+        wizard: '我会以面试式对话带你从零生成简历。先告诉我你的目标岗位和最近一段经历。',
+        import: '请上传 PDF / 图片 / Markdown，我会解析内容并保留可编辑结构。',
+        polish: aiReplies.polish,
+        adapt: aiReplies.adapt,
+        ai: '你好！你可以直接告诉我想做什么，也可以点击上方快捷胶囊。',
+      };
+      addAiMessage(map[mode] || map.ai);
+      if (mode === 'wizard') document.getElementById('editorResumeName').textContent = '新建简历 · AI 向导';
+      if (mode === 'import') document.getElementById('editorResumeName').textContent = '导入简历 · 解析中';
+    }
+
+    function switchLandingTab(tab) {
+      document.querySelectorAll('[data-landing-tab]').forEach((btn) => btn.classList.toggle('active', btn.dataset.landingTab === tab));
+      document.getElementById('landing-ai').style.display = tab === 'ai' ? 'block' : 'none';
+      document.getElementById('landing-templates').classList.toggle('active', tab === 'templates');
+      if (tab === 'templates') renderTemplates('all');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function openModal(id) {
+      document.getElementById(`${id}Modal`).classList.add('active');
+    }
+
+    function closeModals() {
+      document.querySelectorAll('.modal-backdrop').forEach((modal) => modal.classList.remove('active'));
+    }
+
+    function openPanel(mode) {
+      document.getElementById('editorBody').classList.remove('panel-closed');
+      document.querySelectorAll('.panel-mode').forEach((el) => el.classList.remove('active'));
+      document.getElementById(mode === 'form' ? 'panel-form' : 'panel-ai').classList.add('active');
+      document.getElementById('panelTitle').textContent = mode === 'form' ? `编辑${document.getElementById('panelTitle').dataset.section || '个人信息'}` : 'AI 助手';
+    }
+
+    function closePanel() {
+      document.getElementById('editorBody').classList.add('panel-closed');
+    }
+
+    function setActiveSection(key) {
+      const label = sectionNames[key] || '模块';
+      document.querySelectorAll('.module-item').forEach((el) => el.classList.toggle('active', el.dataset.section === key));
+      document.querySelectorAll('.resume-section, .resume-real-head').forEach((el) => el.classList.toggle('active', el.dataset.previewSection === key));
+      document.getElementById('panelTitle').dataset.section = label;
+      document.getElementById('panelTitle').textContent = `编辑${label}`;
+      document.getElementById('fieldLabelA').textContent = `${label}标题`;
+      document.getElementById('fieldLabelB').textContent = `${label}补充信息`;
+      document.getElementById('fieldLabelC').textContent = `${label}内容`;
+      openPanel('form');
+    }
+
+    function addAiMessage(text) {
+      const stack = document.getElementById('chatStack');
+      const card = document.createElement('div');
+      card.className = 'chat-card chat-ai';
+      card.textContent = text;
+      stack.appendChild(card);
+      stack.scrollIntoView({ block: 'end', behavior: 'smooth' });
+    }
+
+    function sendChat() {
+      const input = document.getElementById('chatInput');
+      const text = input.value.trim();
+      if (!text) return;
+      const stack = document.getElementById('chatStack');
+      const userCard = document.createElement('div');
+      userCard.className = 'chat-card chat-user';
+      userCard.textContent = text;
+      stack.appendChild(userCard);
+      input.value = '';
+      setTimeout(() => addAiMessage('收到。我会结合当前简历内容给出建议，并把可应用的修改放在结果卡片里。'), 260);
+    }
+
+    document.addEventListener('click', (event) => {
+      const target = event.target.closest('button, a');
+      if (!target) return;
+
+      if (target.dataset.go) {
+        event.preventDefault();
+        go(target.dataset.go, { mode: target.dataset.editorMode });
+      }
+
+      if (target.dataset.landingTab) {
+        switchLandingTab(target.dataset.landingTab);
+      }
+
+      if (target.dataset.landingTabJump) {
+        go('landing');
+        setTimeout(() => switchLandingTab(target.dataset.landingTabJump), 50);
+      }
+
+      if (target.dataset.modal) {
+        openModal(target.dataset.modal);
+      }
+
+      if (target.dataset.closeModal !== undefined) {
+        closeModals();
+      }
+
+      if (target.dataset.loginSend !== undefined) {
+        showToast('登录链接已发送，原型中直接进入 Dashboard');
+        closeModals();
+        go('dashboard');
+      }
+
+      if (target.dataset.toast) {
+        showToast(target.dataset.toast);
+      }
+
+      if (target.dataset.template) {
+        showToast(`已用「${target.dataset.template}」新建示例简历`);
+        go('editor', { mode: 'ai' });
+        document.getElementById('editorResumeName').textContent = `${target.dataset.template} · 示例简历`;
+      }
+
+      if (target.dataset.filter) {
+        document.querySelectorAll('[data-filter]').forEach((btn) => btn.classList.toggle('active', btn === target));
+        renderTemplates(target.dataset.filter);
+      }
+
+      if (target.dataset.panel) {
+        openPanel(target.dataset.panel === 'ai' ? 'ai' : 'form');
+      }
+
+      if (target.dataset.aiAction) {
+        openPanel('ai');
+        addAiMessage(aiReplies[target.dataset.aiAction]);
+      }
+
+      if (target.dataset.aiSection) {
+        openPanel('ai');
+        addAiMessage(`你点击了「${target.dataset.aiSection}」旁的 AI 按钮。我会针对这个模块给出润色建议。`);
+      }
+    });
+
+    document.getElementById('closePanel').addEventListener('click', closePanel);
+    document.getElementById('sendChat').addEventListener('click', sendChat);
+    document.getElementById('chatInput').addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') sendChat();
+    });
+
+    document.getElementById('exportButton').addEventListener('click', (event) => {
+      event.stopPropagation();
+      document.getElementById('exportMenu').classList.toggle('active');
+    });
+
+    document.getElementById('langToggle').addEventListener('click', () => {
+      showToast('已切换简历预览语言');
+    });
+
+    document.addEventListener('click', (event) => {
+      if (!event.target.closest('.export-wrap')) document.getElementById('exportMenu').classList.remove('active');
+      if (event.target.classList.contains('modal-backdrop')) closeModals();
+    });
+
+    document.querySelectorAll('.module-item').forEach((item) => {
+      item.addEventListener('click', () => setActiveSection(item.dataset.section));
+      item.addEventListener('dragstart', () => item.classList.add('dragging'));
+      item.addEventListener('dragend', () => item.classList.remove('dragging'));
+    });
+
+    document.getElementById('moduleRail').addEventListener('dragover', (event) => {
+      event.preventDefault();
+      const dragging = document.querySelector('.module-item.dragging');
+      const after = [...document.querySelectorAll('.module-item:not(.dragging)')].find((item) => {
+        const box = item.getBoundingClientRect();
+        return event.clientY < box.top + box.height / 2;
+      });
+      if (!dragging) return;
+      if (after) document.getElementById('moduleRail').insertBefore(dragging, after);
+      else document.getElementById('moduleRail').insertBefore(dragging, document.querySelector('.add-module'));
+    });
+
+    document.querySelectorAll('[data-preview-section]').forEach((section) => {
+      section.addEventListener('click', (event) => {
+        if (event.target.closest('.section-ai')) return;
+        setActiveSection(section.dataset.previewSection);
+      });
+    });
+
+    renderTemplates('all');
+  </script>
+</body>
+</html>

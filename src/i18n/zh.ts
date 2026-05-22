@@ -1,5 +1,5 @@
 export const zh = {
-  appTitle: '简历编辑器',
+  appTitle: '简历鸭',
   toolbar: {
     import: '导入 Markdown',
     exportPdf: '导出 PDF',

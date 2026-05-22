@@ -73,7 +73,7 @@ export default function LandingPage({ onImportClick, onDraftContinue, onWizardCl
         {/* Logo */}
         <div className="flex items-center gap-2.5 mb-2">
           <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-[#4F46E5] to-[#7C3AED] flex items-center justify-center text-xl shadow-lg shadow-indigo-500/20">
-            📄
+            🦆
           </div>
           <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-white/5 text-purple-400 border border-white/10 tracking-wide">
             v1.0 Beta

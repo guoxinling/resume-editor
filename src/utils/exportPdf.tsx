@@ -180,12 +180,33 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
 
 function PDFResume({ data, lang }: { data: ResumeData; lang: Lang }) {
   const t = (zh: string, en: string) => (lang === 'zh' ? zh : en)
+
   // Section title helper: uses store's user-editable labels, falls back to defaults
-  const st = (sectionKey: string, defaultZh: string, defaultEn: string) => {
-    const sl = useResumeStore.getState().sectionLabels
-    if (sl[sectionKey]) return lang === 'zh' ? sl[sectionKey].zh : sl[sectionKey].en
-    return lang === 'zh' ? defaultZh : defaultEn
+  const storeState = useResumeStore.getState()
+  const sectionOrder = storeState.sectionOrder
+  const fallbackLabels: Record<string, { zh: string; en: string }> = {
+    summary: { zh: '个人概述', en: 'PROFESSIONAL SUMMARY' },
+    workExperience: { zh: '工作经历', en: 'WORK EXPERIENCE' },
+    aiProjects: { zh: '项目经历', en: 'PROJECTS' },
+    education: { zh: '教育背景', en: 'EDUCATION' },
+    skills: { zh: '专业技能', en: 'SKILLS' },
+    languages: { zh: '语言能力', en: 'LANGUAGES' },
+    selfEvaluation: { zh: '自我评价', en: 'SELF EVALUATION' },
   }
+
+  const st = (sectionKey: string): string => {
+    const sl = storeState.sectionLabels
+    if (sl[sectionKey]) return lang === 'zh' ? sl[sectionKey].zh : sl[sectionKey].en
+    // For custom sections, use the section's own label
+    if (sectionKey.startsWith('custom_')) {
+      const cs = data.customSections.find((c) => c.id === sectionKey)
+      if (cs) return t(cs.label, cs.labelEn)
+    }
+    // Built-in fallback
+    const fb = fallbackLabels[sectionKey]
+    return fb ? (lang === 'zh' ? fb.zh : fb.en) : sectionKey
+  }
+
   const pi = data.personalInfo
 
   const nameDisplay = t(pi.name, pi.nameEn || pi.name)
@@ -201,6 +222,189 @@ function PDFResume({ data, lang }: { data: ResumeData; lang: Lang }) {
     .filter((f) => f.key && f.value)
     .map((f) => `${f.key}: ${f.value}`)
     .join('  |  ')
+
+  // Check if a section has content to render
+  const sectionHasContent = (key: string): boolean => {
+    switch (key) {
+      case 'summary':
+        return !!t(data.summary, data.summaryEn)
+      case 'workExperience':
+        return data.workExperience.some((w) => w.company || w.companyEn)
+      case 'aiProjects':
+        return data.aiProjects.some((p) => p.name || p.nameEn)
+      case 'education':
+        return data.education.some((e) => e.school || e.schoolEn)
+      case 'skills':
+        return data.skills.some((s) => s.category || s.categoryEn)
+      case 'languages':
+        return data.languages.length > 0 || data.languagesEn.length > 0
+      case 'selfEvaluation':
+        return !!(lang === 'zh' ? data.selfEvaluation : data.selfEvaluationEn)
+      default:
+        if (key.startsWith('custom_')) {
+          const cs = data.customSections.find((c) => c.id === key)
+          return !!(cs && t(cs.content, cs.contentEn))
+        }
+        return false
+    }
+  }
+
+  /** Render a section by key (driven by sectionOrder, same as preview) */
+  const renderSection = (key: string) => {
+    if (!sectionHasContent(key)) return null
+    const title = st(key)
+    if (!title) return null
+
+    // ── Summary ──
+    if (key === 'summary') {
+      return (
+        <React.Fragment key={key}>
+          <SectionTitle>{title}</SectionTitle>
+          <View style={styles.summaryView}>
+            <Text style={styles.summaryText}>{t(data.summary, data.summaryEn)}</Text>
+          </View>
+        </React.Fragment>
+      )
+    }
+
+    // ── Work Experience ──
+    if (key === 'workExperience') {
+      return (
+        <React.Fragment key={key}>
+          <SectionTitle>{title}</SectionTitle>
+          {data.workExperience.map((w) => {
+            const company = t(w.company, w.companyEn)
+            const role = t(w.role, w.roleEn)
+            const dates = t(w.dates, w.datesEn)
+            const bullets = lang === 'zh' ? w.bullets : w.bulletsEn
+            if (!company && !role) return null
+            return (
+              <View key={w.id} style={styles.entry} wrap={false}>
+                <Text style={styles.entryTitle}>
+                  {[company, role].filter(Boolean).join(' | ')}
+                </Text>
+                {dates ? <Text style={styles.entrySub}>{dates}</Text> : null}
+                {bullets.filter(Boolean).map((b, i) => (
+                  <Text key={i} style={styles.bullet}>• {b}</Text>
+                ))}
+              </View>
+            )
+          })}
+        </React.Fragment>
+      )
+    }
+
+    // ── Projects ──
+    if (key === 'aiProjects') {
+      return (
+        <React.Fragment key={key}>
+          <SectionTitle>{title}</SectionTitle>
+          {data.aiProjects.map((p) => {
+            const name = t(p.name, p.nameEn)
+            const role = t(p.direction, p.directionEn)
+            const dates = t(p.dates, p.datesEn)
+            const desc = t(p.description, p.descriptionEn)
+            if (!name && !role) return null
+            return (
+              <View key={p.id} style={styles.entry} wrap={false}>
+                <Text style={styles.entryTitle}>
+                  {[name, role].filter(Boolean).join(' · ')}
+                </Text>
+                {dates ? <Text style={styles.entrySub}>{dates}</Text> : null}
+                {desc ? desc.split('\n').filter(Boolean).map((line, i) => (
+                  <Text key={i} style={styles.bullet}>– {line}</Text>
+                )) : null}
+              </View>
+            )
+          })}
+        </React.Fragment>
+      )
+    }
+
+    // ── Education ──
+    if (key === 'education') {
+      return (
+        <React.Fragment key={key}>
+          <SectionTitle>{title}</SectionTitle>
+          {data.education.map((e) => {
+            const school = t(e.school, e.schoolEn)
+            if (!school) return null
+            const highlights = lang === 'zh' ? e.highlights : e.highlightsEn
+            return (
+              <View key={e.id} style={styles.entry} wrap={false}>
+                <Text style={styles.entryTitle}>
+                  {[school, t(e.degree, e.degreeEn), t(e.major, e.majorEn)].filter(Boolean).join(' | ')}
+                </Text>
+                {t(e.dates, e.datesEn) ? <Text style={styles.entrySub}>{t(e.dates, e.datesEn)}</Text> : null}
+                {highlights.filter(Boolean).map((h, i) => (
+                  <Text key={i} style={styles.bullet}>• {h}</Text>
+                ))}
+              </View>
+            )
+          })}
+        </React.Fragment>
+      )
+    }
+
+    // ── Skills ──
+    if (key === 'skills') {
+      return (
+        <React.Fragment key={key}>
+          <SectionTitle>{title}</SectionTitle>
+          {data.skills.map((s, i) => {
+            const cat = t(s.category, s.categoryEn)
+            if (!cat) return null
+            return (
+              <View key={i} style={styles.skillRow} wrap={false}>
+                <Text style={styles.skillCat}>{cat}</Text>
+                <Text style={styles.skillItems}>{t(s.items, s.itemsEn)}</Text>
+              </View>
+            )
+          })}
+        </React.Fragment>
+      )
+    }
+
+    // ── Languages ──
+    if (key === 'languages') {
+      return (
+        <React.Fragment key={key}>
+          <SectionTitle>{title}</SectionTitle>
+          <Text style={styles.summaryText}>
+            {t(data.languages.join(' / '), data.languagesEn.join(' / '))}
+          </Text>
+        </React.Fragment>
+      )
+    }
+
+    // ── Self Evaluation ──
+    if (key === 'selfEvaluation') {
+      return (
+        <React.Fragment key={key}>
+          <SectionTitle>{title}</SectionTitle>
+          <Text style={styles.summaryText}>
+            {t(data.selfEvaluation, data.selfEvaluationEn)}
+          </Text>
+        </React.Fragment>
+      )
+    }
+
+    // ── Custom Section ──
+    if (key.startsWith('custom_')) {
+      const cs = data.customSections.find((c) => c.id === key)
+      if (!cs) return null
+      const content = t(cs.content, cs.contentEn)
+      if (!content) return null
+      return (
+        <React.Fragment key={key}>
+          <SectionTitle>{title}</SectionTitle>
+          <Text style={styles.summaryText}>{content}</Text>
+        </React.Fragment>
+      )
+    }
+
+    return null
+  }
 
   return (
     <Document>
@@ -223,137 +427,8 @@ function PDFResume({ data, lang }: { data: ResumeData; lang: Lang }) {
           </View>
         ) : null}
 
-        {/* ═══ Summary ═══ */}
-        {t(data.summary, data.summaryEn) ? (
-          <>
-            <SectionTitle>{st('summary', '个人概述', 'PROFESSIONAL SUMMARY')}</SectionTitle>
-            <View style={styles.summaryView}>
-              <Text style={styles.summaryText}>{t(data.summary, data.summaryEn)}</Text>
-            </View>
-          </>
-        ) : null}
-
-        {/* ═══ Work Experience ═══ */}
-        {data.workExperience.length > 0 && data.workExperience.some(w => w.company || w.companyEn) ? (
-          <>
-            <SectionTitle>{st('workExperience', '工作经历', 'WORK EXPERIENCE')}</SectionTitle>
-            {data.workExperience.map((w) => {
-              const company = t(w.company, w.companyEn)
-              const role = t(w.role, w.roleEn)
-              const dates = t(w.dates, w.datesEn)
-              const bullets = lang === 'zh' ? w.bullets : w.bulletsEn
-              if (!company && !role) return null
-              return (
-                <View key={w.id} style={styles.entry} wrap={false}>
-                  <Text style={styles.entryTitle}>
-                    {[company, role].filter(Boolean).join(' | ')}
-                  </Text>
-                  {dates ? <Text style={styles.entrySub}>{dates}</Text> : null}
-                  {bullets.filter(Boolean).map((b, i) => (
-                    <Text key={i} style={styles.bullet}>• {b}</Text>
-                  ))}
-                </View>
-              )
-            })}
-          </>
-        ) : null}
-
-        {/* ═══ Projects ═══ */}
-        {data.aiProjects.length > 0 && data.aiProjects.some(p => p.name || p.nameEn) ? (
-          <>
-            <SectionTitle>{st('aiProjects', '项目经历', 'PROJECTS')}</SectionTitle>
-            {data.aiProjects.map((p) => {
-              const name = t(p.name, p.nameEn)
-              const role = t(p.direction, p.directionEn)
-              const dates = t(p.dates, p.datesEn)
-              const desc = t(p.description, p.descriptionEn)
-              if (!name && !role) return null
-              return (
-                <View key={p.id} style={styles.entry} wrap={false}>
-                  <Text style={styles.entryTitle}>
-                    {[name, role].filter(Boolean).join(' · ')}
-                  </Text>
-                  {dates ? <Text style={styles.entrySub}>{dates}</Text> : null}
-                  {desc ? desc.split('\n').filter(Boolean).map((line, i) => (
-                    <Text key={i} style={styles.bullet}>– {line}</Text>
-                  )) : null}
-                </View>
-              )
-            })}
-          </>
-        ) : null}
-
-        {/* ═══ Education ═══ */}
-        {data.education.length > 0 && data.education.some(e => e.school || e.schoolEn) ? (
-          <>
-            <SectionTitle>{st('education', '教育背景', 'EDUCATION')}</SectionTitle>
-            {data.education.map((e) => {
-              const school = t(e.school, e.schoolEn)
-              if (!school) return null
-              const highlights = lang === 'zh' ? e.highlights : e.highlightsEn
-              return (
-                <View key={e.id} style={styles.entry} wrap={false}>
-                  <Text style={styles.entryTitle}>
-                    {[school, t(e.degree, e.degreeEn), t(e.major, e.majorEn)].filter(Boolean).join(' | ')}
-                  </Text>
-                  {t(e.dates, e.datesEn) ? <Text style={styles.entrySub}>{t(e.dates, e.datesEn)}</Text> : null}
-                  {highlights.filter(Boolean).map((h, i) => (
-                    <Text key={i} style={styles.bullet}>• {h}</Text>
-                  ))}
-                </View>
-              )
-            })}
-          </>
-        ) : null}
-
-        {/* ═══ Skills ═══ */}
-        {data.skills.length > 0 && data.skills.some(s => s.category || s.categoryEn) ? (
-          <>
-            <SectionTitle>{st('skills', '专业技能', 'SKILLS')}</SectionTitle>
-            {data.skills.map((s, i) => {
-              const cat = t(s.category, s.categoryEn)
-              if (!cat) return null
-              return (
-                <View key={i} style={styles.skillRow} wrap={false}>
-                  <Text style={styles.skillCat}>{cat}</Text>
-                  <Text style={styles.skillItems}>{t(s.items, s.itemsEn)}</Text>
-                </View>
-              )
-            })}
-          </>
-        ) : null}
-
-        {/* ═══ Languages ═══ */}
-        {(data.languages.length > 0 || data.languagesEn.length > 0) ? (
-          <>
-            <SectionTitle>{st('languages', '语言能力', 'LANGUAGES')}</SectionTitle>
-            <Text style={styles.summaryText}>
-              {t(data.languages.join(' / '), data.languagesEn.join(' / '))}
-            </Text>
-          </>
-        ) : null}
-
-        {/* ═══ Self Evaluation ═══ */}
-        {t(data.selfEvaluation, data.selfEvaluationEn) ? (
-          <>
-            <SectionTitle>{st('selfEvaluation', '自我评价', 'SELF EVALUATION')}</SectionTitle>
-            <Text style={styles.summaryText}>
-              {t(data.selfEvaluation, data.selfEvaluationEn)}
-            </Text>
-          </>
-        ) : null}
-
-        {/* ═══ Custom Sections ═══ */}
-        {data.customSections.map((cs) => {
-          const content = t(cs.content, cs.contentEn)
-          if (!content) return null
-          return (
-            <View key={cs.id}>
-              <SectionTitle>{t(cs.label, cs.labelEn)}</SectionTitle>
-              <Text style={styles.summaryText}>{content}</Text>
-            </View>
-          )
-        })}
+        {/* ═══ Sections driven by editor sectionOrder (matching preview) ═══ */}
+        {sectionOrder.filter((k) => k !== 'personalInfo').map(renderSection)}
       </Page>
     </Document>
   )

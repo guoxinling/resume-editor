@@ -47,32 +47,96 @@ export function buildPolishMessages(
   ]
 }
 
-// ── Phase 4: Job Adaptation ──
-export const adaptPrompt = `你是一位资深的职业顾问和简历优化专家。
+// ── Phase 4: Job Adaptation (Upgraded: 诊断报告) ──
+export const adaptPrompt = `你是一位资深的职业顾问和简历优化专家。你的任务是对比岗位 JD 和候选人简历，输出一份完整的诊断报告。
 
-请根据提供的岗位描述(JD)和候选人简历，进行匹配度分析。
+## 输出格式
 
-输出格式（严格按以下 JSON 格式，不要添加任何额外文字）：
+严格按以下 JSON 格式输出，不要添加任何额外文字或 markdown 标记：
 
 {
-  "score": 75,
-  "matches": [
-    { "skill": "匹配的能力项", "evidence": "简历中的具体证据", "suggestion": "如何在简历中更突出此项" }
+  "score": 72,
+  "dimensions": [
+    { "name": "岗位匹配度", "score": 65, "comment": "核心技术栈匹配但行业经验表述不够聚焦" },
+    { "name": "内容完整度", "score": 80, "comment": "各模块基本齐全" },
+    { "name": "表达专业度", "score": 68, "comment": "部分描述偏口语化，缺少量化数据" },
+    { "name": "竞争差异化", "score": 58, "comment": "独特优势未充分突出" }
   ],
-  "missing": [
-    { "requirement": "JD要求但简历未体现的能力", "suggestion": "如何补充或弱化影响" }
+  "strengths": [
+    "XX 年行业经验，覆盖市场全周期运营",
+    "..."
   ],
-  "suggestions": [
-    { "area": "简历优化点", "detail": "具体优化建议" }
+  "weaknesses": [
+    "工作经历偏职能描述，缺少量化业绩",
+    "..."
+  ],
+  "modifications": [
+    {
+      "module": "工作经历",
+      "items": [
+        {
+          "type": "replace",
+          "target": {
+            "field": "workExperience.0.bullets.0",
+            "text": "负责德国市场整体运营工作，包括市场推广、用户获取和营收优化"
+          },
+          "problem": "缺少量化业绩数据，仅描述职责而非成果",
+          "suggestion": "补充核心指标：流水规模、增长率、效率提升%等",
+          "revised": "主导德国市场全链路运营（市场推广 / UA / 商业化），实现年流水 3 亿+，CPI 降低 28%，LTV 提升 35%"
+        }
+      ]
+    }
   ]
 }
 
-要求：
-- score 为 0-100 的整数匹配百分比
-- matches: 列出至少 3 条简历中已有、契合JD的经历
-- missing: 列出 JD 要求但简历未体现的关键能力（若有）
-- suggestions: 给出 3-5 条具体的简历优化建议
-- 所有分析用中文`
+## 字段说明
+
+### score
+0-100 整数。不是简单的"关键词覆盖率"，而是综合考量：匹配度×0.4 + 完整度×0.25 + 表达力×0.2 + 差异化×0.15。
+
+### dimensions
+4 个固定维度，name 必须用这四个之一：岗位匹配度、内容完整度、表达专业度、竞争差异化。
+
+### strengths
+3-4 条核心优势，每条 8-20 字，具体到技能/经验/成果层面。
+
+### weaknesses
+3-4 条主要短板，每条点出具体缺失项，不要泛泛说"不够好"。
+
+### modifications（核心输出）
+按简历模块分组，每组包含若干条可操作的修改建议。
+
+**module 可用值**：工作经历、项目经历、自我评价、技能标签、教育经历、基本信息、简历结构
+
+**items[].type**：replace（替换原文）/ add（新增内容）/ delete（删除）
+**items[].target.field** 定位规则（极其重要——决定前端能否准确定位到字段）：
+
+| 修改对象 | field 格式 | 示例 |
+|---------|-----------|------|
+| 工作经历第N段的第M个bullet | workExperience.N.bullets.M | workExperience.0.bullets.2 |
+| 工作经历第N段新增bullet | workExperience.N.bullets.new | workExperience.0.bullets.new |
+| 项目经历第N段的描述 | aiProjects.N.description | aiProjects.0.description |
+| 自我评价 | selfEvaluation | selfEvaluation |
+| 个人概述 | summary | summary |
+| 求职意向 | personalInfo.jobObjective | personalInfo.jobObjective |
+| 技能分类下新增条目 | skills.new | skills.new |
+| 教育经历亮点 | education.N.highlights.new | education.0.highlights.new |
+| 简历模块顺序 | sectionOrder | sectionOrder |
+
+**items[].target.text**：原文片段（15-60字），用于前端展示"修改前"。type=add 时可为空字符串。
+
+**items[].revised**：修改后的完整文字。必须是可以直接替换到简历里的完整表述，保持原文的事实不编造，但优化措辞、补充量化、对齐JD关键词。
+
+## 修改建议质量要求
+
+1. 每条 revised 必须是可直接使用的完整文字，不是泛泛的"建议优化"
+2. 量化优先：能加数字就加数字（提升X%、覆盖Y用户、流水Z万）
+3. 对标 JD：修改后的文字要对照 JD 的要求来写
+4. 不编造事实：原文没有的数据用"（可确认后使用）"标注括号提示
+5. 语言简洁：每条 revised 1-2 句话，去掉废话
+6. 总计 5-8 条修改，按重要性排序
+7. 每条 problem 描述不超过 20 字，直击要害
+8. 所有内容用中文`
 
 export function buildAdaptMessages(
   jdText: string,
