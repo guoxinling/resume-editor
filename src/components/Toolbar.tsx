@@ -17,9 +17,11 @@ interface Props {
   showEditor: boolean
   onToggleEditor: () => void
   onGoHome: () => void
+  onNewClick: () => void
+  onCreditsClick: () => void
 }
 
-export default function Toolbar({ onOpenDrafts, showEditor, onToggleEditor, onGoHome }: Props) {
+export default function Toolbar({ onOpenDrafts, showEditor, onToggleEditor, onGoHome, onNewClick, onCreditsClick }: Props) {
   const { data, draftId, setLang, setDraftInfo, loadData, applyTranslation, translateLoading, translateError, setTranslateLoading, setTranslateError } = useResumeStore()
   const isPanelOpen = useAIStore((s) => s.isOpen)
   const togglePanel = useAIStore((s) => s.togglePanel)
@@ -191,7 +193,7 @@ export default function Toolbar({ onOpenDrafts, showEditor, onToggleEditor, onGo
             onClick={(e) => { e.stopPropagation(); setMenuOpen(!menuOpen); setExportMenuOpen(false) }}
             className="flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-gray-100 transition-colors text-[13px] font-medium text-gray-700"
           >
-            {data.personalInfo.name || lang === 'zh' ? '未命名简历' : 'Untitled'}
+            {data.personalInfo.name || (lang === 'zh' ? '未命名简历' : 'Untitled')}
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M3 5l3 3 3-3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>
           </button>
 
@@ -214,12 +216,22 @@ export default function Toolbar({ onOpenDrafts, showEditor, onToggleEditor, onGo
             </div>
           )}
         </div>
+
+        <button
+          onClick={onNewClick}
+          className="w-11 h-9 rounded-xl bg-[#EADDFF] text-[#6750A4] flex items-center justify-center text-xl font-semibold hover:bg-[#D9C7F2] active:scale-95 transition-all"
+          title={lang === 'zh' ? '新建简历' : 'New Resume'}
+        >
+          +
+        </button>
       </div>
 
       {/* ── Right: Credits + Lang + Export + AI ── */}
       <div className="flex items-center gap-2">
         {/* Credits badge */}
-        <span
+        <button
+          type="button"
+          onClick={onCreditsClick}
           className={`${pillBase} text-[11px] ${
             remaining <= 3
               ? 'bg-red-50 text-red-600 border border-red-200'
@@ -232,7 +244,7 @@ export default function Toolbar({ onOpenDrafts, showEditor, onToggleEditor, onGo
           <span className="text-[13px]">🔋</span>
           <span className="font-semibold">{remaining}</span>
           <span className="opacity-60">/{creditsTotal}</span>
-        </span>
+        </button>
 
         {/* Language toggle */}
         <button

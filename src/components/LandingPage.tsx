@@ -1,4 +1,4 @@
-import { type ReactNode, useState } from 'react'
+import { type ReactNode, useEffect, useState } from 'react'
 import { useResumeStore } from '../store/resumeStore'
 
 interface Props {
@@ -243,7 +243,7 @@ function WorkspacePreview() {
 }
 
 export default function LandingPage({ onImportClick, onDraftContinue, onWizardClick }: Props) {
-  const [activeTab, setActiveTab] = useState<'ai' | 'templates'>('ai')
+  const [activeTab, setActiveTab] = useState<'ai' | 'templates'>(() => (window.location.hash === '#templates' ? 'templates' : 'ai'))
   const [activeTemplate, setActiveTemplate] = useState(0)
   const [activeFilter, setActiveFilter] = useState<(typeof filters)[number]['id']>('all')
   const [toast, setToast] = useState('')
@@ -263,6 +263,15 @@ export default function LandingPage({ onImportClick, onDraftContinue, onWizardCl
     setToast(message)
     window.setTimeout(() => setToast(''), 1800)
   }
+
+  useEffect(() => {
+    const syncHash = () => {
+      if (window.location.hash === '#templates') setActiveTab('templates')
+    }
+    syncHash()
+    window.addEventListener('hashchange', syncHash)
+    return () => window.removeEventListener('hashchange', syncHash)
+  }, [])
 
   return (
     <div className="min-h-screen bg-[linear-gradient(180deg,#FFFBFE_0%,#F8F3FB_48%,#FFFBFE_100%)] text-[#1C1B1F] antialiased">
