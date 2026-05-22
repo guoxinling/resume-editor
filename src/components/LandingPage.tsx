@@ -73,48 +73,61 @@ const icons: Record<IconName, ReactNode> = {
 
 const featureCards: Array<{ title: string; copy: string; icon: IconName; tone: string }> = [
   {
-    title: '从零生成简历',
-    copy: '用对话收集目标岗位、经历、项目和技能，自动整理成结构化简历初稿。',
-    icon: 'chat',
+    title: '经历润色',
+    copy: 'STAR 法则、结果导向、精炼压缩，按真实经历重写表达。',
+    icon: 'polish',
     tone: 'bg-[#EADDFF] text-[#6750A4]',
   },
   {
-    title: '导入旧简历优化',
-    copy: '支持 PDF、图片、Markdown 和文本导入，保留可编辑结构后继续精修。',
-    icon: 'upload',
+    title: '岗位适配',
+    copy: '粘贴 JD 或导入岗位截图，输出匹配度、缺失项和可应用修改。',
+    icon: 'target',
     tone: 'bg-[#D2F2E0] text-[#1B873F]',
   },
   {
-    title: 'AI 经历润色',
-    copy: '按 STAR 法则、结果导向和精炼压缩，把职责描述变成成果表达。',
-    icon: 'polish',
+    title: '简历诊断',
+    copy: '逐模块评分，给出结构、内容、关键词、量化表达的改进方向。',
+    icon: 'spark',
     tone: 'bg-[#FFD8E4] text-[#7D5260]',
   },
   {
-    title: '岗位适配分析',
-    copy: '粘贴 JD 后生成匹配度、缺失关键词和可直接应用的修改建议。',
-    icon: 'target',
+    title: '面试预测',
+    copy: '输出 10 道深挖问题，并提供可折叠的答案建议。',
+    icon: 'question',
     tone: 'bg-[#FFF3D6] text-[#B06D00]',
   },
   {
-    title: '面试预测',
-    copy: '基于简历内容生成高概率追问，帮助你提前准备经历深挖。',
-    icon: 'question',
+    title: '导出投递版',
+    copy: '免费版带轻量水印，付费点数可导出无水印 PDF/PNG。',
+    icon: 'file',
     tone: 'bg-[#E8DEF8] text-[#625B71]',
   },
   {
-    title: '实时预览导出',
-    copy: '左侧编辑、右侧 A4 实时预览，完成后导出 PDF 或 PNG 投递版。',
-    icon: 'file',
+    title: '模板市场',
+    copy: '5-8 套模板作为 MVP，不改数据结构，切换 CSS 与模块顺序。',
+    icon: 'chat',
     tone: 'bg-[#D9EAF7] text-[#245F73]',
   },
 ]
 
 const templates = [
-  { name: '应届生模板', desc: '突出教育背景、实习经历、校园项目和可迁移能力。', tags: ['实习', '校园经历'], style: 'fresh' },
-  { name: '职场进阶模板', desc: '强调工作成果、业务影响、团队协作和晋升潜力。', tags: ['成果导向', '管理经验'], style: 'business' },
-  { name: '技术 / 产品模板', desc: '前置项目和技能栈，让作品、方法论和业务结果更醒目。', tags: ['项目经历', '作品集'], style: 'tech' },
-  { name: '海外 / 双语模板', desc: '突出中英双语、跨文化经历和国际化项目。', tags: ['双语', '海外岗位'], style: 'global' },
+  { name: '经典商务', desc: '稳重单栏，适合通用职场人与管理岗。', tags: ['通用', '经验'], style: 'business', filter: 'simple' },
+  { name: '极简白纸', desc: '高留白、弱装饰，适合应届生与咨询岗位。', tags: ['学生', '简洁'], style: 'fresh', filter: 'simple' },
+  { name: '科技产品', desc: '项目和技能前置，适合技术、产品、AI 岗。', tags: ['技术', '产品'], style: 'tech', filter: 'tech' },
+  { name: '创意作品集', desc: '更强视觉区分度，适合设计、市场、内容岗。', tags: ['创意', '作品集'], style: 'global', filter: 'creative' },
+  { name: '双栏布局', desc: '左侧信息密度高，适合经验丰富候选人。', tags: ['通用', '双栏'], style: 'business', filter: 'simple' },
+  { name: '时间轴履历', desc: '强化职业发展路径，适合 5 年以上经验。', tags: ['经验', '晋升'], style: 'global', filter: 'marketing' },
+  { name: '金融精英', desc: '强调证书、项目、量化指标和严谨表达。', tags: ['金融', '量化'], style: 'business', filter: 'finance' },
+  { name: '海外双语', desc: '中英信息结构清晰，突出语言和跨文化协作。', tags: ['双语', '海外'], style: 'tech', filter: 'marketing' },
+] as const
+
+const filters = [
+  { id: 'all', label: '全部' },
+  { id: 'simple', label: '简洁' },
+  { id: 'creative', label: '创意' },
+  { id: 'tech', label: '技术' },
+  { id: 'finance', label: '金融' },
+  { id: 'marketing', label: '市场' },
 ] as const
 
 function Icon({ name, className = 'h-5 w-5' }: { name: IconName; className?: string }) {
@@ -230,16 +243,31 @@ function WorkspacePreview() {
 }
 
 export default function LandingPage({ onImportClick, onDraftContinue, onWizardClick }: Props) {
+  const [activeTab, setActiveTab] = useState<'ai' | 'templates'>('ai')
   const [activeTemplate, setActiveTemplate] = useState(0)
+  const [activeFilter, setActiveFilter] = useState<(typeof filters)[number]['id']>('all')
+  const [toast, setToast] = useState('')
   const hasDraft = useResumeStore((s) => {
     const d = s.data
     return !!(d.personalInfo.name || d.personalInfo.email || d.summary || d.workExperience.length > 0 || d.education.length > 0)
   })
 
+  const visibleTemplates = templates.filter((template) => activeFilter === 'all' || template.filter === activeFilter)
+
+  const switchTab = (tab: 'ai' | 'templates') => {
+    setActiveTab(tab)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  const showToast = (message: string) => {
+    setToast(message)
+    window.setTimeout(() => setToast(''), 1800)
+  }
+
   return (
     <div className="min-h-screen bg-[linear-gradient(180deg,#FFFBFE_0%,#F8F3FB_48%,#FFFBFE_100%)] text-[#1C1B1F] antialiased">
       <header className="sticky top-0 z-30 border-b border-[#CAC4D0]/60 bg-[#FFFBFE]/85 backdrop-blur-xl">
-        <nav className="mx-auto flex h-[72px] w-[min(1180px,calc(100%-32px))] items-center justify-between gap-4">
+        <nav className="mx-auto flex h-[72px] w-[min(1180px,calc(100%-32px))] items-center justify-between gap-3">
           <a href="#top" className="inline-flex min-w-max items-center gap-3 font-black tracking-normal">
             <span className="grid h-10 w-10 place-items-center rounded-[14px] bg-[#6750A4] shadow-[0_8px_18px_rgba(103,80,164,0.24)]">
               <img src="/favicon.svg" alt="" className="h-[22px] w-[22px]" />
@@ -247,124 +275,195 @@ export default function LandingPage({ onImportClick, onDraftContinue, onWizardCl
             <span>简历鸭</span>
           </a>
 
-          <div className="hidden items-center gap-1 rounded-full border border-[#CAC4D0]/65 bg-[#F3EDF7] p-1 text-sm font-extrabold text-[#49454F] md:flex">
-            <a href="#features" className="rounded-full px-4 py-2 transition hover:bg-white hover:text-[#6750A4] hover:shadow-sm">功能</a>
-            <a href="#templates" className="rounded-full px-4 py-2 transition hover:bg-white hover:text-[#6750A4] hover:shadow-sm">模板</a>
-            <a href="#start" className="rounded-full px-4 py-2 transition hover:bg-white hover:text-[#6750A4] hover:shadow-sm">开始</a>
+          <div className="hidden items-center gap-1 rounded-full border border-[#CAC4D0]/65 bg-[#F3EDF7] p-1 text-sm font-extrabold text-[#49454F] sm:flex">
+            <button
+              type="button"
+              onClick={() => switchTab('ai')}
+              className={`h-9 rounded-full px-4 transition ${
+                activeTab === 'ai' ? 'bg-white text-[#6750A4] shadow-sm' : 'hover:bg-white/70 hover:text-[#6750A4]'
+              }`}
+            >
+              AI 写简历
+            </button>
+            <button
+              type="button"
+              onClick={() => switchTab('templates')}
+              className={`h-9 rounded-full px-4 transition ${
+                activeTab === 'templates' ? 'bg-white text-[#6750A4] shadow-sm' : 'hover:bg-white/70 hover:text-[#6750A4]'
+              }`}
+            >
+              模板市场
+            </button>
           </div>
 
-          <button
-            type="button"
-            onClick={onWizardClick}
-            className="inline-flex h-10 items-center justify-center rounded-full bg-[#6750A4] px-4 text-sm font-black text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-[#5F479E] hover:shadow-[0_10px_24px_rgba(103,80,164,0.22)] active:translate-y-0"
-          >
-            开始写简历
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => showToast('Magic Link 登录会在用户系统接入后开放')}
+              className="hidden h-10 items-center justify-center rounded-full border border-[#CAC4D0] bg-[#FFFBFE] px-4 text-sm font-black text-[#6750A4] shadow-sm transition hover:-translate-y-0.5 hover:bg-[#EADDFF]/50 hover:shadow-md active:translate-y-0 md:inline-flex"
+            >
+              注册/登录
+            </button>
+            <button
+              type="button"
+              onClick={onWizardClick}
+              className="inline-flex h-10 items-center justify-center rounded-full bg-[#6750A4] px-4 text-sm font-black text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-[#5F479E] hover:shadow-[0_10px_24px_rgba(103,80,164,0.22)] active:translate-y-0"
+            >
+              开始使用
+            </button>
+          </div>
         </nav>
       </header>
 
       <main id="top">
-        <section className="mx-auto grid w-[min(1180px,calc(100%-32px))] gap-10 py-12 lg:grid-cols-[minmax(0,0.92fr)_minmax(430px,1.08fr)] lg:items-center lg:py-14">
-          <div>
-            <div className="mb-5 inline-flex items-center gap-2 rounded-full bg-[#EADDFF] px-3.5 py-2 text-sm font-black text-[#6750A4]">
-              <span className="h-2 w-2 rounded-full bg-[#6750A4] shadow-[0_0_0_5px_rgba(103,80,164,0.12)]" />
-              AI 驱动的专业简历工作台
-            </div>
+        <div className="mx-auto mt-4 flex w-[min(1180px,calc(100%-32px))] rounded-full border border-[#CAC4D0]/65 bg-[#F3EDF7] p-1 text-sm font-extrabold text-[#49454F] sm:hidden">
+          <button
+            type="button"
+            onClick={() => switchTab('ai')}
+            className={`h-9 flex-1 rounded-full transition ${activeTab === 'ai' ? 'bg-white text-[#6750A4] shadow-sm' : ''}`}
+          >
+            AI 写简历
+          </button>
+          <button
+            type="button"
+            onClick={() => switchTab('templates')}
+            className={`h-9 flex-1 rounded-full transition ${activeTab === 'templates' ? 'bg-white text-[#6750A4] shadow-sm' : ''}`}
+          >
+            模板市场
+          </button>
+        </div>
 
-            <h1 className="max-w-[720px] text-[clamp(40px,5.7vw,72px)] font-black leading-[1.04] tracking-normal">
-              用 AI 写出一份<span className="text-[#6750A4]">更适合投递</span>的简历
-            </h1>
-            <p className="mt-5 max-w-[580px] text-[17px] leading-8 text-[#49454F]">
-              从零开始对话生成，或导入已有简历继续优化。AI 帮你润色经历、适配岗位、预测面试问题，最后导出干净专业的 A4 简历。
-            </p>
-
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-              <button
-                type="button"
-                onClick={onWizardClick}
-                className="inline-flex min-h-[52px] items-center justify-center gap-2 rounded-full bg-[#6750A4] px-6 font-black text-white shadow-[0_10px_24px_rgba(103,80,164,0.22)] transition hover:-translate-y-1 hover:bg-[#5F479E] hover:shadow-[0_18px_48px_rgba(103,80,164,0.16)] active:translate-y-0"
-              >
-                <Icon name="spark" />
-                第一次写简历
-              </button>
-              <button
-                type="button"
-                onClick={onImportClick}
-                className="inline-flex min-h-[52px] items-center justify-center gap-2 rounded-full border border-[#CAC4D0] bg-[#FFFBFE] px-6 font-black text-[#6750A4] shadow-sm transition hover:-translate-y-1 hover:border-[#6750A4]/50 hover:bg-[#EADDFF]/50 hover:shadow-md active:translate-y-0"
-              >
-                <Icon name="upload" />
-                导入已有简历
-              </button>
-              {hasDraft && (
-                <button
-                  type="button"
-                  onClick={onDraftContinue}
-                  className="inline-flex min-h-[52px] items-center justify-center gap-2 rounded-full border border-[#F4C06A]/70 bg-[#FFF3D6] px-5 font-black text-[#7C4A00] transition hover:-translate-y-1 hover:shadow-md active:translate-y-0"
-                >
-                  <span className="h-2 w-2 rounded-full bg-[#B06D00]" />
-                  继续未完成草稿
-                </button>
-              )}
-            </div>
-
-            <div className="mt-7 flex flex-wrap gap-2.5">
-              {['AI 对话生成', '经历润色', '岗位适配', 'PDF 导出'].map((item) => (
-                <span key={item} className="inline-flex min-h-9 items-center gap-2 rounded-full border border-[#CAC4D0]/60 bg-[#F3EDF7]/85 px-3.5 text-sm font-bold text-[#49454F]">
-                  <Icon name="check" className="h-4 w-4 text-[#6750A4]" />
-                  {item}
-                </span>
-              ))}
-            </div>
-          </div>
-
-          <WorkspacePreview />
-        </section>
-
-        <section id="features" className="mx-auto w-[min(1180px,calc(100%-32px))] py-12 md:py-16">
-          <div className="mb-7 flex flex-col justify-between gap-4 md:flex-row md:items-end">
-            <div>
-              <p className="mb-2 text-sm font-black text-[#6750A4]">AI 能力</p>
-              <h2 className="max-w-[700px] text-[clamp(30px,4vw,48px)] font-black leading-tight tracking-normal">
-                把写简历拆成更容易完成的几个动作
-              </h2>
-            </div>
-            <p className="max-w-[430px] text-base leading-7 text-[#49454F]">
-              不是替你编造经历，而是帮你把真实经历整理得更清楚、更专业、更贴近岗位。
-            </p>
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {featureCards.map((feature) => (
-              <article
-                key={feature.title}
-                className="min-h-[206px] rounded-3xl border border-[#CAC4D0]/65 bg-[#F7F2FA] p-5 shadow-sm transition hover:-translate-y-1 hover:bg-[#FFFBFE] hover:shadow-[0_8px_24px_rgba(28,27,31,0.08)]"
-              >
-                <div className={`mb-4 grid h-12 w-12 place-items-center rounded-[17px] ${feature.tone}`}>
-                  <Icon name={feature.icon} className="h-6 w-6" />
-                </div>
-                <h3 className="mb-2 text-lg font-black tracking-normal">{feature.title}</h3>
-                <p className="text-sm leading-7 text-[#49454F]">{feature.copy}</p>
-              </article>
-            ))}
-          </div>
-        </section>
-
-        <section id="templates" className="mx-auto w-[min(1180px,calc(100%-32px))] py-12 md:py-16">
-          <div className="rounded-[32px] border border-[#CAC4D0]/65 bg-[#F3EDF7] p-5 shadow-sm md:p-8 lg:p-11">
-            <div className="mb-7 flex flex-col justify-between gap-4 md:flex-row md:items-end">
+        {activeTab === 'ai' ? (
+          <>
+            <section className="mx-auto grid w-[min(1180px,calc(100%-32px))] gap-10 py-12 lg:grid-cols-[minmax(0,0.92fr)_minmax(430px,1.08fr)] lg:items-center lg:py-14">
               <div>
-                <p className="mb-2 text-sm font-black text-[#6750A4]">简历模板</p>
-                <h2 className="max-w-[700px] text-[clamp(30px,4vw,48px)] font-black leading-tight tracking-normal">
-                  选择一个模板，先看看好简历应该长什么样
-                </h2>
+                <div className="mb-5 inline-flex items-center gap-2 rounded-full bg-[#EADDFF] px-3.5 py-2 text-sm font-black text-[#6750A4]">
+                  <span className="h-2 w-2 rounded-full bg-[#6750A4] shadow-[0_0_0_5px_rgba(103,80,164,0.12)]" />
+                  公开首页 · 无需注册即可试用
+                </div>
+
+                <h1 className="max-w-[720px] text-[clamp(40px,5.7vw,72px)] font-black leading-[1.04] tracking-normal">
+                  用 AI 写出<span className="text-[#6750A4]">面试官想看</span>的简历
+                </h1>
+                <p className="mt-5 max-w-[580px] text-[17px] leading-8 text-[#49454F]">
+                  上传简历，AI 诊断，一键优化，再导出。对话式 AI 统一入口，不用在多个工具 Tab 之间来回切换。
+                </p>
+
+                <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+                  <button
+                    type="button"
+                    onClick={onWizardClick}
+                    className="inline-flex min-h-[52px] items-center justify-center gap-2 rounded-full bg-[#6750A4] px-6 font-black text-white shadow-[0_10px_24px_rgba(103,80,164,0.22)] transition hover:-translate-y-1 hover:bg-[#5F479E] hover:shadow-[0_18px_48px_rgba(103,80,164,0.16)] active:translate-y-0"
+                  >
+                    <Icon name="spark" />
+                    我是第一次写简历
+                  </button>
+                  <button
+                    type="button"
+                    onClick={onImportClick}
+                    className="inline-flex min-h-[52px] items-center justify-center gap-2 rounded-full border border-[#CAC4D0] bg-[#FFFBFE] px-6 font-black text-[#6750A4] shadow-sm transition hover:-translate-y-1 hover:border-[#6750A4]/50 hover:bg-[#EADDFF]/50 hover:shadow-md active:translate-y-0"
+                  >
+                    <Icon name="upload" />
+                    我已有简历想优化
+                  </button>
+                  {hasDraft && (
+                    <button
+                      type="button"
+                      onClick={onDraftContinue}
+                      className="inline-flex min-h-[52px] items-center justify-center gap-2 rounded-full border border-[#F4C06A]/70 bg-[#FFF3D6] px-5 font-black text-[#7C4A00] transition hover:-translate-y-1 hover:shadow-md active:translate-y-0"
+                    >
+                      <span className="h-2 w-2 rounded-full bg-[#B06D00]" />
+                      继续未完成草稿
+                    </button>
+                  )}
+                </div>
+
+                <div className="mt-7 flex flex-wrap gap-2.5">
+                  {['本地优先', '统一 AI 对话', 'A4 所见即所得'].map((item) => (
+                    <span key={item} className="inline-flex min-h-9 items-center gap-2 rounded-full border border-[#CAC4D0]/60 bg-[#F3EDF7]/85 px-3.5 text-sm font-bold text-[#49454F]">
+                      <Icon name="check" className="h-4 w-4 text-[#6750A4]" />
+                      {item}
+                    </span>
+                  ))}
+                </div>
               </div>
-              <p className="max-w-[420px] text-base leading-7 text-[#49454F]">
-                第一版提供精选场景模板。MVP 会先用 CSS 与模块顺序实现，不改变现有简历数据结构。
+
+              <WorkspacePreview />
+            </section>
+
+            <section id="features" className="mx-auto w-[min(1180px,calc(100%-32px))] py-12 md:py-16">
+              <div className="mb-7 flex flex-col justify-between gap-4 md:flex-row md:items-end">
+                <div>
+                  <p className="mb-2 text-sm font-black text-[#6750A4]">核心能力</p>
+                  <h2 className="max-w-[700px] text-[clamp(30px,4vw,48px)] font-black leading-tight tracking-normal">
+                    统一到一个 AI 助手里，但保留快捷操作
+                  </h2>
+                </div>
+                <p className="max-w-[430px] text-base leading-7 text-[#49454F]">
+                  用户可以直接聊天，也可以点胶囊触发润色、JD 匹配、诊断、面试预测。
+                </p>
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                {featureCards.map((feature) => (
+                  <article
+                    key={feature.title}
+                    className="min-h-[206px] rounded-3xl border border-[#CAC4D0]/65 bg-[#F7F2FA] p-5 shadow-sm transition hover:-translate-y-1 hover:bg-[#FFFBFE] hover:shadow-[0_8px_24px_rgba(28,27,31,0.08)]"
+                  >
+                    <div className={`mb-4 grid h-12 w-12 place-items-center rounded-[17px] ${feature.tone}`}>
+                      <Icon name={feature.icon} className="h-6 w-6" />
+                    </div>
+                    <h3 className="mb-2 text-lg font-black tracking-normal">{feature.title}</h3>
+                    <p className="text-sm leading-7 text-[#49454F]">{feature.copy}</p>
+                  </article>
+                ))}
+              </div>
+
+              <div className="mt-6 grid gap-3 md:grid-cols-3">
+                {[
+                  ['免费 10 点 / 天', '无需注册即可试用核心 AI 能力'],
+                  ['¥9.9 / 50 点', '适合短期修改 1-2 份简历'],
+                  ['¥29.9 / 200 点', '适合求职季多岗位适配'],
+                ].map(([title, copy]) => (
+                  <div key={title} className="rounded-3xl border border-[#CAC4D0]/70 bg-[#FFFBFE] p-5 shadow-sm">
+                    <strong className="block text-2xl font-black text-[#6750A4]">{title}</strong>
+                    <span className="mt-2 block text-sm font-bold leading-6 text-[#49454F]">{copy}</span>
+                  </div>
+                ))}
+              </div>
+            </section>
+          </>
+        ) : (
+          <section id="templates" className="mx-auto w-[min(1180px,calc(100%-32px))] py-12 md:py-16">
+            <div className="rounded-[40px] border border-[#6750A4]/20 bg-[#EADDFF] p-6 text-[#21005D] shadow-sm md:p-9">
+              <p className="mb-2 text-sm font-black text-[#6750A4]">模板市场</p>
+              <h1 className="max-w-[760px] text-[clamp(34px,5vw,56px)] font-black leading-tight tracking-normal">
+                选择专业模板，AI 帮你一键填充内容
+              </h1>
+              <p className="mt-4 max-w-[760px] text-base leading-8 text-[#21005D]/75">
+                模板不只是换皮，而是预设版式、模块顺序和视觉重点。MVP 先提供 8 套，后续再扩展筛选与付费模板。
               </p>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-              {templates.map((template, index) => (
+            <div className="mt-6 flex flex-wrap gap-2.5">
+              {filters.map((filter) => (
+                <button
+                  key={filter.id}
+                  type="button"
+                  onClick={() => setActiveFilter(filter.id)}
+                  className={`h-10 rounded-full border px-4 text-sm font-black transition hover:-translate-y-0.5 ${
+                    activeFilter === filter.id
+                      ? 'border-transparent bg-[#EADDFF] text-[#21005D]'
+                      : 'border-[#CAC4D0] bg-[#FFFBFE] text-[#49454F] hover:text-[#6750A4]'
+                  }`}
+                >
+                  {filter.label}
+                </button>
+              ))}
+            </div>
+
+            <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+              {visibleTemplates.map((template, index) => (
                 <article
                   key={template.name}
                   onMouseEnter={() => setActiveTemplate(index)}
@@ -397,8 +496,8 @@ export default function LandingPage({ onImportClick, onDraftContinue, onWizardCl
                 </article>
               ))}
             </div>
-          </div>
-        </section>
+          </section>
+        )}
 
         <section id="start" className="mx-auto w-[min(1180px,calc(100%-32px))] py-12 pb-16 md:py-20">
           <div className="grid min-h-[300px] items-center gap-6 rounded-[32px] border border-[#6750A4]/20 bg-[#EADDFF] p-6 text-[#21005D] shadow-[0_18px_48px_rgba(103,80,164,0.16)] md:grid-cols-[1fr_auto] md:p-10 lg:p-12">
@@ -436,6 +535,12 @@ export default function LandingPage({ onImportClick, onDraftContinue, onWizardCl
           <span>真实经历，清楚表达，专业投递。</span>
         </div>
       </footer>
+
+      {toast && (
+        <div className="fixed bottom-5 left-1/2 z-50 -translate-x-1/2 rounded-full bg-[#1C1B1F] px-4 py-2 text-sm font-bold text-white shadow-xl">
+          {toast}
+        </div>
+      )}
     </div>
   )
 }
