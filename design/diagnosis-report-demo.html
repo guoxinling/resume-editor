@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI 简历诊断报告 — Material You</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  /* ══════════ Material You Design Tokens ══════════ */
+  :root {
+    /* Surface system (tonal, never pure white) */
+    --md-surface: #FFFBFE;
+    --md-surface-container: #F3EDF7;
+    --md-surface-container-low: #E7E0EC;
+    --md-surface-container-high: #ECE6F0;
+    /* Primary (seed #6750A4) */
+    --md-primary: #6750A4;
+    --md-on-primary: #FFFFFF;
+    --md-primary-container: #E8DEF8;
+    --md-on-primary-container: #1D192B;
+    /* Secondary */
+    --md-secondary-container: #E8DEF8;
+    /* Tertiary */
+    --md-tertiary: #7D5260;
+    /* On-surface */
+    --md-on-surface: #1C1B1F;
+    --md-on-surface-variant: #49454F;
+    /* Outline */
+    --md-outline: #79747E;
+    --md-outline-variant: #CAC4D0;
+    /* Semantic */
+    --md-error: #B3261E;
+    --md-error-container: #F9DEDC;
+    --md-on-error-container: #410E0B;
+    --md-success: #1B873F;
+    --md-success-container: #D2F2E0;
+    --md-warning: #B06D00;
+    --md-warning-container: #FFF3D6;
+
+    /* Radius (Material You generous scale) */
+    --radius-xs: 8px;
+    --radius-sm: 12px;
+    --radius: 16px;
+    --radius-lg: 24px;
+    --radius-xl: 28px;
+    --radius-2xl: 48px;
+    --radius-full: 9999px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Roboto', -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    background: var(--md-surface);
+    color: var(--md-on-surface);
+    display: flex; justify-content: center; align-items: flex-start;
+    min-height: 100vh; padding: 40px 16px 80px;
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.5;
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  /* ── Organic Blur Shapes (Signature MD3) ── */
+  .blur-shape {
+    position: fixed; pointer-events: none; z-index: 0;
+    border-radius: 50%;
+  }
+  .blur-shape.s1 {
+    width: 360px; height: 360px; top: -100px; right: -140px;
+    background: radial-gradient(circle, var(--md-primary) 0%, transparent 70%);
+    opacity: 0.06; filter: blur(72px);
+  }
+  .blur-shape.s2 {
+    width: 300px; height: 300px; bottom: 60px; left: -120px;
+    background: radial-gradient(circle, var(--md-tertiary) 0%, transparent 70%);
+    opacity: 0.05; filter: blur(64px);
+  }
+
+  /* ── Main Container ── */
+  .report {
+    position: relative; z-index: 1;
+    width: 100%; max-width: 600px;
+    background: var(--md-surface-container);
+    border-radius: var(--radius-2xl);
+    box-shadow:
+      0 1px 3px rgba(0,0,0,.04),
+      0 2px 8px rgba(0,0,0,.03);
+    overflow: hidden;
+  }
+
+  /* ── Tabs ── */
+  .tabs {
+    display: flex;
+    padding: 8px 8px 0;
+    gap: 4px;
+    background: var(--md-surface-container);
+  }
+  .tab {
+    flex: 1; padding: 12px 0 10px; text-align: center;
+    font-family: 'Roboto', sans-serif;
+    font-size: 0.875rem; font-weight: 500; letter-spacing: 0.01em;
+    color: var(--md-on-surface-variant);
+    cursor: pointer; border: none; background: transparent;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    transition: all 300ms cubic-bezier(0.2, 0, 0, 1);
+    position: relative;
+  }
+  .tab:hover {
+    background: rgba(103,80,164,0.06);
+    color: var(--md-on-surface);
+  }
+  .tab.active {
+    color: var(--md-primary);
+    background: var(--md-surface);
+  }
+  .tab.active::after {
+    content: ''; position: absolute; bottom: 0; left: 50%;
+    transform: translateX(-50%);
+    width: 32px; height: 3px; border-radius: 3px;
+    background: var(--md-primary);
+  }
+  .tab:active { scale: 0.97; }
+
+  /* ── Content ── */
+  .content { background: var(--md-surface); }
+
+  /* ── Hero ── */
+  .hero {
+    text-align: center; padding: 36px 28px 28px;
+    background: var(--md-primary-container);
+    position: relative; overflow: hidden;
+  }
+  .hero::before {
+    content: ''; position: absolute;
+    width: 160px; height: 160px; top: -50px; right: -50px;
+    border-radius: 50%;
+    background: radial-gradient(circle, var(--md-primary) 0%, transparent 70%);
+    opacity: 0.05;
+  }
+  .hero > * { position: relative; z-index: 1; }
+
+  .hero h2 {
+    font-size: 1.25rem; font-weight: 500;
+    color: var(--md-on-primary-container);
+    margin-bottom: 4px; letter-spacing: -0.005em;
+  }
+  .hero .sub {
+    font-size: 0.75rem; color: var(--md-on-primary-container);
+    opacity: 0.6; margin-bottom: 20px;
+  }
+
+  /* Score Ring */
+  .score-wrap { display: flex; justify-content: center; margin-bottom: 14px; }
+  .score-ring { position: relative; width: 108px; height: 108px; }
+  .score-ring svg { transform: rotate(-90deg); width: 108px; height: 108px; }
+  .score-ring .bg {
+    fill: none; stroke: rgba(29,25,43,.1); stroke-width: 9;
+  }
+  .score-ring .fill {
+    fill: none; stroke: var(--md-primary); stroke-width: 9; stroke-linecap: round;
+    transition: stroke-dashoffset 1s cubic-bezier(0.2, 0, 0, 1);
+  }
+  .score-num {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%,-50%); text-align: center; line-height: 1;
+  }
+  .score-num .big {
+    font-size: 2.5rem; font-weight: 700;
+    color: var(--md-on-primary-container);
+  }
+  .score-num .small {
+    font-size: 0.75rem; color: var(--md-on-primary-container);
+    opacity: 0.55; margin-top: 3px;
+  }
+  .tagline {
+    font-size: 0.8125rem; color: var(--md-on-primary-container);
+    opacity: 0.7; max-width: 400px; margin: 0 auto; line-height: 1.55;
+  }
+  .tagline strong { color: var(--md-on-primary-container); opacity: 1; }
+
+  /* ── Dimension Bars ── */
+  .dim-stack { padding: 20px 28px 12px; display: flex; flex-direction: column; gap: 10px; }
+  .score-bar {
+    display: flex; align-items: center; gap: 12px;
+    padding: 0;
+  }
+  .score-bar-label {
+    width: 80px; font-size: 0.75rem; font-weight: 500;
+    color: var(--md-on-surface-variant); text-align: right; flex-shrink: 0;
+  }
+  .score-bar-track {
+    flex: 1; height: 8px;
+    background: var(--md-surface-container-low);
+    border-radius: 4px; overflow: hidden;
+  }
+  .score-bar-fill {
+    height: 100%; border-radius: 4px;
+    transition: width 1s cubic-bezier(0.2, 0, 0, 1);
+  }
+  .score-bar-fill.high { background: var(--md-success); }
+  .score-bar-fill.medium { background: var(--md-warning); }
+  .score-bar-fill.low { background: var(--md-error); }
+  .score-bar-val {
+    width: 32px; font-size: 0.8125rem; font-weight: 700;
+    text-align: right; flex-shrink: 0;
+  }
+  .score-bar-val.high { color: var(--md-success); }
+  .score-bar-val.medium { color: var(--md-warning); }
+  .score-bar-val.low { color: var(--md-error); }
+
+  /* ── Strengths / Weaknesses ── */
+  .sw-wrap {
+    padding: 16px 28px;
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .sw-col {
+    background: var(--md-surface-container);
+    border-radius: var(--radius-lg);
+    padding: 16px;
+  }
+  .sw-title {
+    font-size: 0.8125rem; font-weight: 500;
+    margin-bottom: 10px;
+    display: flex; align-items: center; gap: 6px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--md-outline-variant);
+  }
+  .sw-item {
+    font-size: 0.75rem; color: var(--md-on-surface-variant);
+    padding: 4px 0; line-height: 1.5;
+    display: flex; align-items: flex-start; gap: 8px;
+  }
+  .sw-item .dot {
+    flex-shrink: 0; margin-top: 5px;
+    width: 6px; height: 6px; border-radius: 50%;
+  }
+  .sw-item .dot.green { background: var(--md-success); }
+  .sw-item .dot.gray { background: var(--md-outline-variant); }
+
+  /* ── Divider ── */
+  .sep { height: 1px; background: var(--md-outline-variant); margin: 8px 28px; opacity: .6; }
+
+  /* ── Modifications ── */
+  .mods { padding: 12px 28px 12px; }
+  .mod-section-title {
+    font-size: 0.875rem; font-weight: 500;
+    color: var(--md-on-surface);
+    margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
+  }
+  .mod-section-title .count {
+    font-size: 0.6875rem; font-weight: 500;
+    background: var(--md-primary-container);
+    color: var(--md-on-primary-container);
+    padding: 2px 10px; border-radius: var(--radius-full);
+  }
+
+  /* Module Group — uses tonal surface card */
+  .mod-group {
+    margin-bottom: 8px;
+    background: var(--md-surface-container);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    transition: box-shadow 300ms cubic-bezier(0.2, 0, 0, 1);
+    box-shadow: 0 1px 3px rgba(0,0,0,.03);
+  }
+  .mod-group:hover {
+    box-shadow: 0 2px 8px rgba(0,0,0,.06), 0 0 0 1px rgba(103,80,164,.08);
+  }
+
+  .mod-group-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 16px; cursor: pointer; user-select: none;
+    transition: background 200ms cubic-bezier(0.2, 0, 0, 1);
+    border-radius: var(--radius-lg);
+  }
+  .mod-group-header:hover { background: rgba(103,80,164,.04); }
+  .mod-group-header:active { scale: 0.995; }
+
+  .mod-group-title {
+    font-size: 0.8125rem; font-weight: 500;
+    color: var(--md-on-surface);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .mod-group-count {
+    font-size: 0.6875rem; font-weight: 500;
+    padding: 2px 10px; border-radius: var(--radius-full);
+  }
+  .mod-group-count.warn { background: var(--md-warning-container); color: var(--md-warning); }
+  .mod-group-count.alert { background: var(--md-error-container); color: var(--md-error); }
+  .mod-group-count.info { background: var(--md-primary-container); color: var(--md-on-primary-container); }
+
+  .mod-group-arrow {
+    font-size: 0.75rem; color: var(--md-on-surface-variant);
+    transition: transform 300ms cubic-bezier(0.2, 0, 0, 1);
+    width: 24px; height: 24px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 50%;
+  }
+  .mod-group.open .mod-group-arrow {
+    transform: rotate(180deg);
+    background: rgba(103,80,164,.08);
+  }
+  .mod-group-header:hover .mod-group-arrow {
+    background: rgba(103,80,164,.05);
+  }
+
+  .mod-group:not(.open) .mod-items { display: none; }
+  .mod-items { border-top: 1px solid var(--md-outline-variant); }
+
+  .mod-item { padding: 16px; }
+  .mod-item + .mod-item { border-top: 1px solid var(--md-outline-variant); }
+
+  .mod-problem {
+    font-size: 0.75rem; font-weight: 500;
+    color: var(--md-on-surface);
+    margin-bottom: 10px;
+    display: flex; align-items: flex-start; gap: 8px;
+    line-height: 1.5;
+  }
+  .mod-problem .icon {
+    flex-shrink: 0; width: 20px; height: 20px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.6875rem; font-weight: 700;
+    background: var(--md-warning-container);
+    color: var(--md-warning);
+  }
+
+  /* Before → After (vertical) */
+  .mod-compare {
+    display: flex; flex-direction: column; gap: 0;
+    border-radius: var(--radius-sm); overflow: hidden;
+    margin-bottom: 14px;
+    border: 1px solid var(--md-outline-variant);
+  }
+  .mod-col {
+    padding: 12px 14px; font-size: 0.75rem; line-height: 1.55;
+  }
+  .mod-col.before {
+    background: #F5F4F6;
+    color: var(--md-on-surface-variant);
+  }
+  .mod-col.before .mod-col-label {
+    font-size: 0.625rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.06em;
+    color: var(--md-on-surface-variant); opacity: .5;
+    margin-bottom: 5px;
+  }
+  .mod-col.after {
+    background: var(--md-primary-container);
+    color: var(--md-on-primary-container);
+    border-top: 1px solid rgba(103,80,164,.12);
+  }
+  .mod-col.after .mod-col-label {
+    font-size: 0.625rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.06em;
+    color: var(--md-primary);
+    margin-bottom: 5px;
+  }
+
+  /* ── Buttons (MD3 pill) ── */
+  .btn {
+    font-family: 'Roboto', sans-serif;
+    font-size: 0.75rem; font-weight: 500; letter-spacing: 0.01em;
+    padding: 8px 20px; border-radius: var(--radius-full);
+    border: none; cursor: pointer;
+    transition: all 300ms cubic-bezier(0.2, 0, 0, 1);
+    display: inline-flex; align-items: center; gap: 5px;
+  }
+  .btn-apply {
+    background: var(--md-primary); color: var(--md-on-primary);
+    box-shadow: 0 1px 3px rgba(0,0,0,.08);
+  }
+  .btn-apply:hover {
+    background: rgba(103,80,164,.92);
+    box-shadow: 0 2px 8px rgba(103,80,164,.25);
+    transform: translateY(-1px);
+  }
+  .btn-apply:active {
+    background: rgba(103,80,164,.80);
+    transform: scale(0.95);
+  }
+  .btn-apply.done {
+    background: var(--md-success); pointer-events: none;
+    box-shadow: none;
+  }
+
+  .btn-ignore {
+    background: transparent; color: var(--md-on-surface-variant);
+    border: 1px solid var(--md-outline-variant);
+  }
+  .btn-ignore:hover {
+    background: rgba(103,80,164,.06);
+    border-color: var(--md-outline);
+  }
+  .btn-ignore:active { scale: .95; }
+
+  .mod-actions { display: flex; gap: 8px; align-items: center; }
+
+  .applied-tag {
+    font-size: 0.625rem; font-weight: 500;
+    color: var(--md-success); margin-left: 4px;
+    opacity: 0; transition: opacity 200ms;
+  }
+  .applied-tag.show { opacity: 1; }
+
+  /* ── Bottom ── */
+  .bottom {
+    padding: 20px 28px 28px;
+    display: flex; gap: 12px;
+  }
+  .btn-lg {
+    flex: 1; font-family: 'Roboto', sans-serif;
+    font-size: 0.875rem; font-weight: 500; letter-spacing: 0.01em;
+    padding: 14px 0; border-radius: var(--radius-full);
+    border: none; cursor: pointer;
+    transition: all 300ms cubic-bezier(0.2, 0, 0, 1);
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+  }
+  .btn-primary {
+    background: var(--md-primary); color: var(--md-on-primary);
+    box-shadow: 0 1px 4px rgba(103,80,164,.2);
+  }
+  .btn-primary:hover {
+    background: rgba(103,80,164,.92);
+    box-shadow: 0 3px 12px rgba(103,80,164,.35);
+    transform: translateY(-1px);
+  }
+  .btn-primary:active { transform: scale(.96); }
+  .btn-primary.done { background: var(--md-success); box-shadow: none; pointer-events: none; }
+
+  .btn-outline {
+    background: transparent; color: var(--md-primary);
+    border: 1.5px solid var(--md-outline);
+  }
+  .btn-outline:hover {
+    background: rgba(103,80,164,.06);
+    border-color: var(--md-primary);
+    transform: translateY(-1px);
+  }
+  .btn-outline:active { transform: scale(.96); }
+
+  /* ── Toast ── */
+  .toast {
+    position: fixed; top: 24px; left: 50%; transform: translateX(-50%);
+    background: var(--md-on-surface); color: var(--md-surface);
+    font-size: 0.8125rem; font-weight: 500;
+    padding: 12px 24px; border-radius: var(--radius-full);
+    opacity: 0; pointer-events: none;
+    transition: opacity 300ms cubic-bezier(0.2, 0, 0, 1), transform 300ms;
+    z-index: 100; box-shadow: 0 4px 16px rgba(0,0,0,.15);
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(4px); }
+
+  /* Interview Placeholder */
+  .interview-placeholder { padding: 64px 28px; text-align: center; }
+  .interview-placeholder .icon {
+    width: 80px; height: 80px; margin: 0 auto 20px;
+    border-radius: 50%; background: var(--md-primary-container);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 2.25rem;
+  }
+  .interview-placeholder h3 {
+    font-size: 1.25rem; font-weight: 500;
+    color: var(--md-on-surface);
+    margin-bottom: 10px;
+  }
+  .interview-placeholder p {
+    font-size: 0.8125rem; color: var(--md-on-surface-variant);
+    max-width: 360px; margin: 0 auto; line-height: 1.7;
+  }
+
+  @media (max-width: 480px) {
+    body { padding: 16px 8px 60px; }
+    .report { border-radius: var(--radius-xl); }
+    .hero { padding: 28px 20px 24px; }
+    .dim-stack { padding: 16px 20px 10px; }
+    .sw-wrap { grid-template-columns: 1fr; padding: 12px 20px; }
+    .mods { padding: 8px 20px 8px; }
+    .bottom { padding: 16px 20px 24px; flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+
+<div class="blur-shape s1"></div>
+<div class="blur-shape s2"></div>
+
+<div class="report">
+
+  <div class="tabs">
+    <button class="tab active" id="tabDiag">📊 诊断报告</button>
+    <button class="tab" id="tabInterview">🎤 模拟面试</button>
+  </div>
+
+  <div class="content" id="contentDiag">
+
+    <!-- Hero — uses Primary Container as tonal surface -->
+    <div class="hero">
+      <h2>AI 简历诊断报告</h2>
+      <div class="sub">基于「海外游戏发行负责人」岗位分析 · 2026-05-21</div>
+
+      <div class="score-wrap">
+        <div class="score-ring">
+          <svg viewBox="0 0 108 108">
+            <circle class="bg" cx="54" cy="54" r="46"/>
+            <circle class="fill" cx="54" cy="54" r="46"
+              stroke-dasharray="289.03"
+              stroke-dashoffset="101.16"/>
+          </svg>
+          <div class="score-num">
+            <div class="big">72</div>
+            <div class="small">综合得分</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tagline">
+        核心能力突出，针对性优化 3–4 个关键点可达 <strong>85+</strong>
+      </div>
+    </div>
+
+    <!-- Dimension Bars -->
+    <div class="dim-stack">
+      <div class="score-bar">
+        <div class="score-bar-label">岗位匹配度</div>
+        <div class="score-bar-track">
+          <div class="score-bar-fill medium" style="width:65%"></div>
+        </div>
+        <div class="score-bar-val medium">65</div>
+      </div>
+      <div class="score-bar">
+        <div class="score-bar-label">内容完整度</div>
+        <div class="score-bar-track">
+          <div class="score-bar-fill high" style="width:82%"></div>
+        </div>
+        <div class="score-bar-val high">82</div>
+      </div>
+      <div class="score-bar">
+        <div class="score-bar-label">表达专业度</div>
+        <div class="score-bar-track">
+          <div class="score-bar-fill medium" style="width:68%"></div>
+        </div>
+        <div class="score-bar-val medium">68</div>
+      </div>
+      <div class="score-bar">
+        <div class="score-bar-label">竞争差异化</div>
+        <div class="score-bar-track">
+          <div class="score-bar-fill low" style="width:58%"></div>
+        </div>
+        <div class="score-bar-val low">58</div>
+      </div>
+    </div>
+
+    <!-- Strengths / Weaknesses -->
+    <div class="sw-wrap">
+      <div class="sw-col">
+        <div class="sw-title" style="color:var(--md-success)">✓ 核心优势</div>
+        <div class="sw-item"><span class="dot green"></span>8 年游戏行业经验，覆盖德国市场全周期运营</div>
+        <div class="sw-item"><span class="dot green"></span>3 款产品 0→1 上线，具备完整项目视角</div>
+        <div class="sw-item"><span class="dot green"></span>德语专八 + 英语流利，匹配海外岗硬门槛</div>
+      </div>
+      <div class="sw-col">
+        <div class="sw-title" style="color:var(--md-on-surface-variant)">✗ 主要短板</div>
+        <div class="sw-item"><span class="dot gray"></span>工作经历偏职能，缺少量化数据</div>
+        <div class="sw-item"><span class="dot gray"></span>AI 经验未聚焦游戏发行业务场景</div>
+        <div class="sw-item"><span class="dot gray"></span>2023–2026 空白期未合理解释</div>
+      </div>
+    </div>
+
+    <div class="sep"></div>
+
+    <!-- Modifications -->
+    <div class="mods">
+      <div class="mod-section-title">
+        修改建议 <span class="count">7 项</span>
+      </div>
+
+      <!-- 工作经历 -->
+      <div class="mod-group open" data-group="work">
+        <div class="mod-group-header" onclick="this.parentElement.classList.toggle('open')">
+          <div class="mod-group-title">
+            工作经历
+            <span class="mod-group-count warn">3 项</span>
+            <span class="applied-tag" id="tag-work"></span>
+          </div>
+          <div class="mod-group-arrow">▾</div>
+        </div>
+        <div class="mod-items">
+          <div class="mod-item" data-mod="work-1">
+            <div class="mod-problem">
+              <span class="icon">!</span>
+              缺少量化业绩数据，仅描述职责而非成果
+            </div>
+            <div class="mod-compare">
+              <div class="mod-col before">
+                <div class="mod-col-label">修改前</div>
+                负责德国市场整体运营工作，包括市场推广、用户获取和营收优化
+              </div>
+              <div class="mod-col after">
+                <div class="mod-col-label">建议改为</div>
+                主导德国市场全链路运营（市场推广 / UA / 商业化），实现年流水 3 亿+，用户获取成本（CPI）降低 28%，LTV 提升 35%，德国区收入贡献占产品全球总收入 40%+
+              </div>
+            </div>
+            <div class="mod-actions">
+              <button class="btn btn-apply" onclick="applyMod(this,'work-1')">✨ 应用</button>
+              <button class="btn btn-ignore" onclick="this.closest('.mod-item').style.opacity='.35'">忽略</button>
+            </div>
+          </div>
+
+          <div class="mod-item" data-mod="work-2">
+            <div class="mod-problem">
+              <span class="icon">!</span>
+              AI 能力未绑定游戏发行场景，说服力不足
+            </div>
+            <div class="mod-compare">
+              <div class="mod-col before">
+                <div class="mod-col-label">修改前</div>
+                独立开发 6 款 AI 产品，涵盖内容生成、数据分析、智能客服等方向
+              </div>
+              <div class="mod-col after">
+                <div class="mod-col-label">建议改为</div>
+                独立搭建 6 款 AI 效率工具（内容生成 / 数据看板 / 智能客服），其中 AI 素材本地化工具将德语市场素材产出效率提升 60%，被公司内部 3 个发行项目复用
+              </div>
+            </div>
+            <div class="mod-actions">
+              <button class="btn btn-apply" onclick="applyMod(this,'work-2')">✨ 应用</button>
+              <button class="btn btn-ignore" onclick="this.closest('.mod-item').style.opacity='.35'">忽略</button>
+            </div>
+          </div>
+
+          <div class="mod-item" data-mod="work-3">
+            <div class="mod-problem">
+              <span class="icon">!</span>
+              2023–2026 经历空白，未做合理说明
+            </div>
+            <div class="mod-compare">
+              <div class="mod-col before">
+                <div class="mod-col-label">修改前</div>
+                （未提及此段经历）
+              </div>
+              <div class="mod-col after">
+                <div class="mod-col-label">建议补充</div>
+                2023–2026 独立探索期：系统学习 AI/大模型技术栈，独立完成 6 款 AI 产品全栈开发（React + Python + LLM），期间保持对游戏行业趋势跟踪，产出游戏+AI 融合方向深度分析 10+ 篇
+              </div>
+            </div>
+            <div class="mod-actions">
+              <button class="btn btn-apply" onclick="applyMod(this,'work-3')">✨ 应用</button>
+              <button class="btn btn-ignore" onclick="this.closest('.mod-item').style.opacity='.35'">忽略</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 自我评价 -->
+      <div class="mod-group open" data-group="selfeval">
+        <div class="mod-group-header" onclick="this.parentElement.classList.toggle('open')">
+          <div class="mod-group-title">
+            自我评价
+            <span class="mod-group-count alert">1 项</span>
+            <span class="applied-tag" id="tag-selfeval"></span>
+          </div>
+          <div class="mod-group-arrow">▾</div>
+        </div>
+        <div class="mod-items">
+          <div class="mod-item" data-mod="self-1">
+            <div class="mod-problem">
+              <span class="icon">!</span>
+              偏性格描述，未聚焦岗位核心能力，篇幅过长
+            </div>
+            <div class="mod-compare">
+              <div class="mod-col before">
+                <div class="mod-col-label">修改前</div>
+                性格开朗、乐观、有活力，待人热情真诚；工作认真负责，积极主动，能吃苦耐劳…
+              </div>
+              <div class="mod-col after">
+                <div class="mod-col-label">建议改为</div>
+                8 年游戏行业经验，专注海外发行全链路运营。具备德语专八语言优势，主导德国市场 3 亿+ 流水。近年深耕 AI + 游戏融合方向，独立完成 6 款 AI 产品全栈开发，善于用技术手段提升发行效率
+              </div>
+            </div>
+            <div class="mod-actions">
+              <button class="btn btn-apply" onclick="applyMod(this,'self-1')">✨ 应用</button>
+              <button class="btn btn-ignore" onclick="this.closest('.mod-item').style.opacity='.35'">忽略</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 技能标签 -->
+      <div class="mod-group open" data-group="skills">
+        <div class="mod-group-header" onclick="this.parentElement.classList.toggle('open')">
+          <div class="mod-group-title">
+            技能标签
+            <span class="mod-group-count info">2 项</span>
+            <span class="applied-tag" id="tag-skills"></span>
+          </div>
+          <div class="mod-group-arrow">▾</div>
+        </div>
+        <div class="mod-items">
+          <div class="mod-item" data-mod="skill-1">
+            <div class="mod-problem">
+              <span class="icon">!</span>
+              技能列表偏技术向，缺少游戏发行行业关键词
+            </div>
+            <div class="mod-compare">
+              <div class="mod-col before">
+                <div class="mod-col-label">修改前</div>
+                React, TypeScript, Python, SQL, LLM, AI Agent, Vibe Coding
+              </div>
+              <div class="mod-col after">
+                <div class="mod-col-label">建议改为</div>
+                游戏发行：市场投放优化 / UA 策略 / LTV 分析 / 本地化运营<br>
+                AI 应用：LLM 应用开发 / AI Agent / 自动化工作流 / 数据分析<br>
+                语言：德语（专八）· 英语（流利）<br>
+                工具：React · Python · SQL · Notion · Figma
+              </div>
+            </div>
+            <div class="mod-actions">
+              <button class="btn btn-apply" onclick="applyMod(this,'skill-1')">✨ 应用</button>
+              <button class="btn btn-ignore" onclick="this.closest('.mod-item').style.opacity='.35'">忽略</button>
+            </div>
+          </div>
+
+          <div class="mod-item" data-mod="skill-2">
+            <div class="mod-problem">
+              <span class="icon">!</span>
+              缺少发行渠道 / 本地化协作等岗位关键词
+            </div>
+            <div class="mod-compare">
+              <div class="mod-col before">
+                <div class="mod-col-label">修改前</div>
+                （未涉及）
+              </div>
+              <div class="mod-col after">
+                <div class="mod-col-label">建议新增</div>
+                发行渠道：Google Play / App Store / 华为 AppGallery 运营经验<br>
+                协作能力：跨时区团队管理（中/德/英三语沟通）· 本地化供应商管理
+              </div>
+            </div>
+            <div class="mod-actions">
+              <button class="btn btn-apply" onclick="applyMod(this,'skill-2')">✨ 应用</button>
+              <button class="btn btn-ignore" onclick="this.closest('.mod-item').style.opacity='.35'">忽略</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 简历结构 -->
+      <div class="mod-group" data-group="structure">
+        <div class="mod-group-header" onclick="this.parentElement.classList.toggle('open')">
+          <div class="mod-group-title">
+            简历结构
+            <span class="mod-group-count info">1 项</span>
+            <span class="applied-tag" id="tag-structure"></span>
+          </div>
+          <div class="mod-group-arrow">▾</div>
+        </div>
+        <div class="mod-items">
+          <div class="mod-item" data-mod="struct-1">
+            <div class="mod-problem">
+              <span class="icon">!</span>
+              AI 项目经历应独立前置，提升面试官关注度
+            </div>
+            <div class="mod-compare">
+              <div class="mod-col before">
+                <div class="mod-col-label">当前顺序</div>
+                个人信息 → 教育经历 → 技能 → 项目经历 → 自我评价
+              </div>
+              <div class="mod-col after">
+                <div class="mod-col-label">建议顺序</div>
+                个人信息 → 求职意向 → 工作经历 → <strong>AI 项目经历（重点前置）</strong> → 技能 → 教育经历 → 语言能力 → 自我评价
+              </div>
+            </div>
+            <div class="mod-actions">
+              <button class="btn btn-apply" onclick="applyMod(this,'struct-1')">✨ 应用</button>
+              <button class="btn btn-ignore" onclick="this.closest('.mod-item').style.opacity='.35'">忽略</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom — pill buttons -->
+    <div class="bottom">
+      <button class="btn-lg btn-primary" id="btnAll" onclick="applyAll()">
+        🔄 全部应用（<span id="remain">7</span>）
+      </button>
+      <button class="btn-lg btn-outline" onclick="reDiagnose()">
+        🔁 重新诊断
+      </button>
+    </div>
+  </div>
+
+  <!-- Interview Placeholder -->
+  <div class="content" id="contentInterview" style="display:none">
+    <div class="interview-placeholder">
+      <div class="icon">🎤</div>
+      <h3>智能模拟面试</h3>
+      <p>基于你的简历内容，AI 将扮演 HR 面试官角色，进行一对一模拟面试。<br><br>此功能将在诊断报告上线后开发。</p>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  const applied = new Set();
+  const GROUPS = { 'work-1':'work','work-2':'work','work-3':'work', 'self-1':'selfeval', 'skill-1':'skills','skill-2':'skills', 'struct-1':'structure' };
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.classList.add('show');
+    clearTimeout(t._t);
+    t._t = setTimeout(() => t.classList.remove('show'), 1800);
+  }
+
+  function applyMod(btn, modId) {
+    if (applied.has(modId)) { showToast('已应用 ✓'); return; }
+    applied.add(modId);
+    btn.textContent = '✓ 已应用'; btn.classList.add('done');
+    updateGroupTag(GROUPS[modId]);
+    updateRemaining();
+    showToast('已应用到简历 ✨');
+  }
+
+  function updateGroupTag(groupName) {
+    const group = document.querySelector(`[data-group="${groupName}"]`);
+    if (!group) return;
+    const items = group.querySelectorAll('.mod-item');
+    const appliedCount = Array.from(items).filter(it => applied.has(it.getAttribute('data-mod'))).length;
+    const tag = document.getElementById('tag-' + groupName);
+    if (tag) { tag.textContent = `✓ ${appliedCount}/${items.length}`; tag.classList.toggle('show', appliedCount > 0); }
+    if (appliedCount === items.length && items.length > 0) group.classList.remove('open');
+  }
+
+  function updateRemaining() {
+    const total = document.querySelectorAll('.mod-item').length;
+    const remaining = total - applied.size;
+    document.getElementById('remain').textContent = remaining;
+    if (remaining === 0) {
+      const btn = document.getElementById('btnAll');
+      btn.textContent = '✓ 全部已应用';
+      btn.classList.add('done');
+      showToast('🎉 所有修改已应用！');
+    }
+  }
+
+  function applyAll() {
+    let count = 0;
+    document.querySelectorAll('.mod-item').forEach(item => {
+      if (item.style.opacity === '0.35') return;
+      const modId = item.getAttribute('data-mod');
+      const btn = item.querySelector('.btn-apply');
+      if (modId && btn && !applied.has(modId)) {
+        applied.add(modId);
+        btn.textContent = '✓ 已应用'; btn.classList.add('done');
+        count++;
+      }
+    });
+    Object.keys(GROUPS).forEach(m => updateGroupTag(GROUPS[m]));
+    updateRemaining();
+    showToast(count > 0 ? `已批量应用 ${count} 条 ✨` : '没有新修改');
+  }
+
+  function reDiagnose() {
+    applied.clear();
+    document.querySelectorAll('.btn-apply').forEach(btn => {
+      btn.textContent = '✨ 应用'; btn.classList.remove('done');
+    });
+    document.querySelectorAll('.mod-item').forEach(i => i.style.opacity = '1');
+    document.querySelectorAll('.mod-group').forEach(g => g.classList.add('open'));
+    document.querySelectorAll('.applied-tag').forEach(t => t.classList.remove('show'));
+    document.getElementById('remain').textContent = '7';
+    const btn = document.getElementById('btnAll');
+    btn.innerHTML = '🔄 全部应用（<span id="remain">7</span>）';
+    btn.classList.remove('done');
+    showToast('正在重新诊断…');
+  }
+
+  document.getElementById('tabDiag').onclick = function() {
+    this.classList.add('active');
+    document.getElementById('tabInterview').classList.remove('active');
+    document.getElementById('contentDiag').style.display = 'block';
+    document.getElementById('contentInterview').style.display = 'none';
+  };
+  document.getElementById('tabInterview').onclick = function() {
+    this.classList.add('active');
+    document.getElementById('tabDiag').classList.remove('active');
+    document.getElementById('contentDiag').style.display = 'none';
+    document.getElementById('contentInterview').style.display = 'block';
+  };
+</script>
+
+</body>
+</html>

@@ -1,13 +1,19 @@
 # 简历编辑器 — 开发状态
 
-**最后更新：** 2026-05-19 22:27
+**最后更新：** 2026-05-20 23:42
 
 ## 📁 项目位置
-`20_PROJECTS/resume-editor/` | `http://localhost:5173`
+`20_PROJECTS/resume-editor/` | 本地: `http://localhost:5173`
+线上: https://resume.guoxinling.cn | Vercel: guoxinlings-projects/resume-editor
 
 ---
 
 ## ✅ 已完成
+
+### 部署
+- ✅ Vercel 部署（vercel.json: vite framework）
+- ✅ 自定义域名 resume.guoxinling.cn 已生效（AliDNS A 记录 → 76.76.21.21）
+- ✅ 自动 SSL 证书签发
 
 ### 基础设施
 - React 19 + TypeScript + Vite 脚手架
@@ -87,16 +93,45 @@
 **启动页 Bug 修复**
 - LandingPage "第一次写简历" 按钮无反应 → App.tsx 传递 `onWizardClick` 回调
 
+### 🔧 2026-05-20 修复
+
+**PDF 导出同步 sectionOrder**
+- `exportPdf.tsx` 重构：硬编码固定顺序 → 数据驱动 `sectionOrder`
+- 与 `ResumePreview.tsx` 统一渲染策略：同一 `sectionHasContent` + 同一 `sectionOrder` 数据源
+- section title 优先用户自定义标签 → fallback 默认值
+- 验证：tsc 零错误 + vite build 成功
+
+### UI/UX 优化
+
+**Favicon 图标**
+- 从纯白 📄 emoji → 紫色渐变文档 SVG（折角 + ✦ 星芒），白底可见
+
+**AIPanel 布局平移（桌面端）**
+- 打开 AI 面板 → 主内容区平滑左移 520px，简历完整可见
+- AIPanel 改为 CSS transition（translate-x-full ↔ translate-x-0），不再 return null
+- Backdrop 淡入淡出（opacity transition）
+- 移动端保持浮层模式（屏幕太小无法平移）
+
+### 🔐 安全
+
+**API Key 硬编码泄漏修复**
+- 泄漏源：`aiStore.ts` 默认值硬编码 `sk-9c476...`，推送到公开 GitHub
+- 修复：默认值改为空字符串，从 Git 历史 force push 抹除
+- 用户侧：DeepSeek 后台已撤销泄漏 Key
+- 未来方案（待落地）：Vercel Serverless 后端代理 / 自建服务器 Express 代理
+
 ---
 
 ## ⏳ 待办
 
 | # | 事项 | 优先级 |
 |---|------|--------|
-| 1 | PDF 导出同步 sectionOrder | 🟡 中 |
-| 2 | 响应式布局实测调优 | 🟢 低 |
-| 3 | 自定义模块支持更多类型（列表、表格等，目前仅纯文本） | 🟢 低 |
-| 4 | GitHub Pages 部署（暂缓，需解决交互问题） | 🟢 低 |
+| 1 | 后端 API 代理（Vercel Serverless / 自建服务器） | 🔴 高 |
+| 2 | 用户无需自带 Key 即可使用 AI 功能 | 🔴 高 |
+| 3 | ~~PDF 导出同步 sectionOrder~~ ✅ (2026-05-20) | 已完成 |
+| 4 | 响应式布局实测调优 | 🟢 低 |
+| 5 | 自定义模块支持更多类型（列表、表格等，目前仅纯文本） | 🟢 低 |
+| 6 | **新功能：简历诊断** — 上传简历+JD → 逐模块评分+改写+模块增减+能力补充 → 一键应用 | 🔶 产品设计阶段 |
 
 ## 🧪 验收状态
 

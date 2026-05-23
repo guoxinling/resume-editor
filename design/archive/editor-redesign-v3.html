@@ -1,0 +1,2202 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>简历鸭 Editor 重设计 v3 — 全流程效果图</title>
+  <style>
+    :root {
+      --primary: #6750a4;
+      --primary-dim: #5f479e;
+      --on-primary: #ffffff;
+      --primary-container: #eaddff;
+      --on-primary-container: #21005d;
+      --secondary-container: #e8def8;
+      --surface: #fffbfe;
+      --surface-low: #f7f2fa;
+      --surface-container: #f3edf7;
+      --surface-high: #ece6f0;
+      --on-surface: #1c1b1f;
+      --on-variant: #49454f;
+      --outline: #79747e;
+      --outline-variant: #cac4d0;
+      --success: #1b873f;
+      --success-container: #d2f2e0;
+      --error: #b3261e;
+      --error-container: #f9dedc;
+      --shadow-1: 0 1px 2px rgba(28,27,31,.08), 0 1px 3px rgba(28,27,31,.06);
+      --shadow-2: 0 8px 24px rgba(28,27,31,.08);
+      --shadow-3: 0 18px 48px rgba(103,80,164,.16);
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --radius-xl: 24px;
+      --radius-2xl: 32px;
+      --radius-full: 999px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: "Inter", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+      color: var(--on-surface);
+      background: linear-gradient(180deg, #fffbfe 0%, #f8f3fb 52%, #fffbfe 100%);
+      -webkit-font-smoothing: antialiased;
+      min-height: 100vh; display: flex; flex-direction: column;
+    }
+    button, input, textarea { font: inherit; }
+    button { cursor: pointer; border: 0; }
+    a { color: inherit; text-decoration: none; }
+
+    /* ── View toggle bar ── */
+    .view-switch-bar {
+      display: flex;
+      justify-content: center;
+      gap: 4px;
+      padding: 4px;
+      margin: 20px auto 16px;
+      border-radius: var(--radius-full);
+      background: var(--surface-container);
+      width: fit-content;
+      border: 1px solid rgba(202,196,208,.65);
+      flex-shrink: 0;
+    }
+    .view-switch-bar button {
+      height: 40px;
+      padding: 0 22px;
+      border-radius: var(--radius-full);
+      background: transparent;
+      color: var(--on-variant);
+      font-size: 14px;
+      font-weight: 800;
+      transition: all .18s ease;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .view-switch-bar button:hover { color: var(--primary); background: rgba(103,80,164,.06); }
+    .view-switch-bar button.active {
+      color: var(--primary);
+      background: var(--surface);
+      box-shadow: var(--shadow-1);
+    }
+    .view-switch-bar .divider {
+      width: 1px;
+      background: rgba(202,196,208,.7);
+      margin: 6px 0;
+    }
+    .view-switch-bar .divider {
+      width: 1px;
+      background: rgba(202,196,208,.7);
+      margin: 6px 4px;
+    }
+
+    /* ── Screens ── */
+    .screen { display: none; flex: 1; flex-direction: column; }
+    .screen.active { display: flex; }
+
+    /* ── Editor shell ── */
+    .editor-shell {
+      flex: 1;
+      margin: 0 20px 20px;
+      border-radius: var(--radius-2xl);
+      background: var(--surface);
+      border: 1px solid rgba(202,196,208,.6);
+      box-shadow: var(--shadow-2);
+      overflow: hidden;
+      display: grid;
+      grid-template-rows: 60px 1fr;
+      max-height: calc(100vh - 180px);
+      min-height: 660px;
+    }
+
+    /* ── Editor header ── */
+    .editor-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 0 16px;
+      border-bottom: 1px solid rgba(202,196,208,.65);
+      background: rgba(255,251,254,.9);
+      backdrop-filter: blur(16px);
+      z-index: 20;
+    }
+    .editor-header-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+    }
+    .btn-back {
+      height: 38px;
+      padding: 0 14px;
+      border-radius: var(--radius-full);
+      background: transparent;
+      color: var(--on-variant);
+      font-size: 13px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+      border: 1px solid var(--outline-variant);
+      transition: all .18s ease;
+      flex-shrink: 0;
+    }
+    .btn-back:hover {
+      color: var(--primary);
+      border-color: rgba(103,80,164,.4);
+      background: rgba(234,221,255,.4);
+    }
+    .btn-back.history-active {
+      color: var(--primary);
+      border-color: rgba(103,80,164,.5);
+      background: rgba(103,80,164,.12);
+    }
+    /* AI button active state */
+    .btn.ai-active {
+      color: var(--primary) !important;
+      border-color: rgba(103,80,164,.5) !important;
+      background: rgba(103,80,164,.12) !important;
+    }
+    .editor-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+    }
+    .editor-title .brand-mark {
+      width: 30px; height: 30px;
+      display: grid; place-items: center;
+      border-radius: 10px;
+      background: var(--primary);
+      color: var(--on-primary);
+      font-size: 13px; font-weight: 900;
+      flex-shrink: 0;
+    }
+    .editor-title strong {
+      font-size: 14px; font-weight: 800;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+    .credit-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      height: 34px;
+      padding: 0 12px;
+      border-radius: var(--radius-full);
+      color: var(--primary);
+      background: var(--primary-container);
+      font-size: 12px;
+      font-weight: 900;
+    }
+    .btn {
+      height: 38px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 0 16px;
+      border-radius: var(--radius-full);
+      border: 0;
+      font-size: 13px;
+      font-weight: 800;
+      white-space: nowrap;
+      transition: all .18s ease;
+    }
+    .btn:hover { transform: translateY(-1px); }
+    .btn-primary {
+      color: var(--on-primary);
+      background: var(--primary);
+      box-shadow: 0 10px 24px rgba(103,80,164,.22);
+    }
+    .btn-primary:hover { background: var(--primary-dim); box-shadow: var(--shadow-3); }
+    .btn-secondary {
+      color: var(--primary);
+      background: var(--surface);
+      border: 1px solid var(--outline-variant);
+    }
+    .btn-secondary:hover {
+      border-color: rgba(103,80,164,.5);
+      background: rgba(234,221,255,.48);
+    }
+    .btn-ghost {
+      color: var(--on-variant);
+      background: transparent;
+      border: 1px solid var(--outline-variant);
+    }
+    .btn-ghost:hover { background: rgba(103,80,164,.06); }
+    .btn-sm { height: 32px; padding: 0 12px; font-size: 12px; }
+
+    /* ── Editor body: 3-column ── */
+    .editor-body {
+      display: grid;
+      grid-template-columns: 88px 1fr 380px;
+      min-height: 0;
+      overflow: clip;
+      transition: grid-template-columns .28s ease;
+    }
+    .editor-body.panel-closed { grid-template-columns: 88px 1fr 0; }
+    .editor-body.no-rail { grid-template-columns: 0 1fr 420px; }
+    .editor-body.no-rail.panel-closed { grid-template-columns: 0 1fr 0; }
+
+    /* ════ FIX #1: Slide-out History Panel (same height as context panel) ════ */
+    .editor-body { position: relative; }
+    .history-panel-slide {
+      position: absolute;
+      top: 0; left: 0; bottom: 0;
+      width: 380px;
+      max-width: 85vw;
+      background: var(--surface);
+      border-right: 1px solid rgba(202,196,208,.7);
+      box-shadow: var(--shadow-3);
+      display: flex;
+      flex-direction: column;
+      z-index: 30;
+      transform: translateX(-100%);
+      transition: transform .28s cubic-bezier(.2,0,0,1);
+    }
+    .history-panel-slide.open {
+      transform: translateX(0);
+    }
+    .history-backdrop {
+      position: absolute;
+      inset: 0;
+      z-index: 25;
+      background: rgba(28,27,31,.24);
+      backdrop-filter: blur(3px);
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity .2s ease;
+    }
+    .history-backdrop.show {
+      pointer-events: auto;
+      opacity: 1;
+    }
+    .history-head {
+      height: 54px;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 16px;
+      border-bottom: 1px solid rgba(202,196,208,.55);
+      flex-shrink: 0;
+    }
+    .history-head h3 {
+      font-size: 15px; font-weight: 900;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .history-scroll {
+      flex: 1; overflow-y: auto; padding: 12px 16px;
+    }
+    .history-card {
+      padding: 12px 14px;
+      border-radius: var(--radius-lg);
+      background: var(--surface-low);
+      border: 1px solid rgba(202,196,208,.6);
+      margin-bottom: 8px;
+      cursor: pointer;
+      transition: all .18s ease;
+    }
+    .history-card:hover {
+      background: var(--surface);
+      border-color: var(--primary);
+      box-shadow: var(--shadow-2);
+      transform: translateX(4px);
+    }
+    .history-card.current {
+      background: var(--primary-container);
+      border-color: rgba(103,80,164,.3);
+    }
+    .history-card .hc-name {
+      font-weight: 800; font-size: 13px; margin-bottom: 2px;
+    }
+    .history-card .hc-date {
+      font-size: 11px; color: var(--outline);
+    }
+    .history-card .hc-meta {
+      display: flex; gap: 8px; margin-top: 4px;
+      font-size: 11px; color: var(--on-variant);
+    }
+    }
+    .history-empty .big-icon { font-size: 40px; margin-bottom: 10px; }
+    .history-empty {
+      text-align: center; padding: 40px 20px; color: var(--outline); display: none;
+    }
+
+    /* ── Module rail ── */
+    .module-rail {
+      min-height: 0;
+      padding: 10px 8px;
+      border-right: 1px solid rgba(202,196,208,.65);
+      background: var(--surface);
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      user-select: none;
+    }
+    .rail-divider {
+      width: 48px;
+      height: 1px;
+      background: rgba(202,196,208,.5);
+      margin: 2px 0;
+    }
+    .rail-ai-entry {
+      width: 68px;
+      min-height: 46px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      padding: 6px 4px;
+      border-radius: 16px;
+      color: var(--primary);
+      background: var(--primary-container);
+      border: 1.5px solid rgba(103,80,164,.26);
+      font-size: 10px;
+      font-weight: 900;
+      text-align: center;
+      cursor: pointer;
+      transition: all .18s ease;
+    }
+    .rail-ai-entry:hover {
+      background: var(--primary);
+      color: var(--on-primary);
+      transform: scale(1.06);
+      box-shadow: 0 6px 16px rgba(103,80,164,.3);
+    }
+    .rail-ai-entry .item-icon { font-size: 18px; line-height: 1; }
+    .rail-divider {
+      width: 48px;
+      height: 1px;
+      background: rgba(202,196,208,.5);
+      margin: 4px 0;
+    }
+    .module-item {
+      width: 68px;
+      min-height: 52px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      padding: 6px 4px;
+      border-radius: 16px;
+      color: var(--on-variant);
+      background: transparent;
+      border: 1.5px solid transparent;
+      font-size: 10px;
+      font-weight: 800;
+      text-align: center;
+      cursor: grab;
+      transition: all .18s ease;
+      position: relative;
+    }
+    .module-item:active { cursor: grabbing; }
+    .module-item .item-icon { font-size: 18px; line-height: 1; transition: transform .18s ease; }
+    .module-item:hover { color: var(--primary); background: rgba(103,80,164,.06); }
+    .module-item:hover .item-icon { transform: scale(1.1); }
+    .module-item.active {
+      color: var(--primary);
+      background: var(--primary-container);
+      border-color: rgba(103,80,164,.2);
+    }
+    .module-item .drag-handle {
+      position: absolute;
+      top: 2px;
+      font-size: 7px;
+      color: var(--outline-variant);
+      letter-spacing: 1px;
+      opacity: 0;
+      transition: opacity .15s;
+    }
+    .module-item:hover .drag-handle { opacity: 1; }
+    .add-module {
+      width: 68px;
+      min-height: 40px;
+      margin: 12px 0 0;
+      border: 1.5px dashed var(--outline-variant);
+      border-radius: 16px;
+      color: var(--primary);
+      background: transparent;
+      font-size: 10px;
+      font-weight: 900;
+      cursor: pointer;
+      transition: all .18s ease;
+    }
+    .add-module:hover { border-color: var(--primary); background: var(--primary-container); }
+
+    .lang-toggle {
+      width: 56px;
+      margin: 4px auto 0;
+      height: 28px;
+      border-radius: var(--radius-full);
+      border: 1px solid var(--outline-variant);
+      background: transparent;
+      color: var(--outline);
+      font-size: 10px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: all .18s;
+      flex-shrink: 0;
+    }
+    .lang-toggle:hover {
+      color: var(--primary);
+      border-color: rgba(103,80,164,.4);
+      background: rgba(103,80,164,.06);
+    }
+
+    /* ── Preview area ── */
+    .preview-area {
+      min-width: 0;
+      min-height: 0;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 28px;
+      overflow: auto;
+      background:
+        radial-gradient(circle, rgba(202,196,208,.52) 1px, transparent 1px),
+        #e9ecf1;
+      background-size: 22px 22px;
+    }
+    .a4-paper {
+      width: min(720px, 100%);
+      background: #fff;
+      padding: 44px 52px;
+      border-radius: 3px;
+      box-shadow: 0 20px 52px rgba(28,27,31,.16);
+      transition: box-shadow .24s ease;
+    }
+    .a4-paper:hover { box-shadow: 0 24px 60px rgba(28,27,31,.2); }
+    .resume-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 24px;
+      padding-bottom: 22px;
+      margin-bottom: 6px;
+      cursor: pointer;
+      border-radius: var(--radius-md);
+      transition: background .18s ease;
+    }
+    .resume-head:hover,
+    .resume-head.highlight {
+      background: linear-gradient(90deg, rgba(234,221,255,.28), transparent 80%);
+    }
+    .resume-head h2 { font-size: 30px; font-weight: 900; margin-bottom: 5px; }
+    .resume-head .subtitle { color: var(--on-variant); font-size: 13px; line-height: 1.7; }
+    .photo-placeholder {
+      width: 72px; height: 90px;
+      border-radius: 8px;
+      background: var(--primary-container);
+      border: 1.5px solid rgba(103,80,164,.18);
+      flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 28px;
+    }
+    .resume-section {
+      position: relative;
+      padding: 16px 44px 14px 0;
+      border-top: 1px solid rgba(202,196,208,.7);
+      cursor: pointer;
+      border-radius: var(--radius-md);
+      transition: background .18s ease, outline .18s ease;
+    }
+    .resume-section:hover,
+    .resume-section.highlight {
+      background: linear-gradient(90deg, rgba(234,221,255,.25), transparent 82%);
+      outline: 1px solid rgba(103,80,164,.16);
+      outline-offset: 5px;
+    }
+    .resume-section h3 {
+      color: var(--primary);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+      font-weight: 800;
+    }
+    .resume-section .company-line { font-weight: 700; font-size: 13px; margin-bottom: 4px; }
+    .resume-section .date-line { color: var(--outline); font-size: 11px; margin-bottom: 6px; }
+    .resume-section p, .resume-section li { color: var(--on-variant); font-size: 12px; line-height: 1.72; }
+    .resume-section ul { margin: 0; padding-left: 16px; list-style: disc; }
+    .resume-section ul li { margin-bottom: 2px; }
+    .spark-btn {
+      position: absolute;
+      top: 14px; right: 0;
+      width: 30px; height: 30px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      background: var(--primary-container);
+      color: var(--primary);
+      font-size: 13px; cursor: pointer;
+      opacity: 1; transform: scale(1);
+      transition: all .18s ease; border: 0;
+    }
+    .spark-btn:hover { background: var(--primary); color: var(--on-primary); transform: scale(1.1); }
+
+    /* ── Context panel (right) ── */
+    .context-panel {
+      min-width: 0; min-height: 0;
+      display: flex; flex-direction: column;
+      border-left: 1px solid rgba(202,196,208,.65);
+      background: var(--surface);
+      overflow: visible;
+      transition: transform .28s ease, opacity .18s ease;
+    }
+    .editor-body.panel-closed .context-panel {
+      opacity: 0; transform: translateX(20px); pointer-events: none;
+    }
+    .panel-head {
+      height: 54px;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 16px;
+      border-bottom: 1px solid rgba(202,196,208,.55);
+      flex-shrink: 0;
+    }
+    .panel-head .panel-label {
+      font-size: 11px; color: var(--on-variant); font-weight: 700;
+    }
+    .panel-head strong { font-size: 14px; font-weight: 800; }
+    .icon-btn {
+      width: 36px; height: 36px;
+      display: grid; place-items: center;
+      border-radius: 50%;
+      color: var(--on-variant);
+      background: transparent;
+      font-size: 16px;
+      transition: all .18s ease;
+    }
+    .icon-btn:hover { color: var(--primary); background: rgba(103,80,164,.08); }
+
+    /* ════ KEY FIX #4: Sticky tabs + capsules ════ */
+    .panel-body {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .panel-sticky-top {
+      flex-shrink: 0;
+      padding: 12px 14px 8px;
+      background: var(--surface);
+      border-bottom: 1px solid rgba(202,196,208,.3);
+      z-index: 5;
+    }
+    .panel-scroll-area {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      padding: 0 14px 14px;
+    }
+    .panel-tabs {
+      display: flex;
+      gap: 4px;
+      padding: 3px;
+      border-radius: var(--radius-full);
+      background: var(--surface-container);
+      margin-bottom: 10px;
+      border: 1px solid rgba(202,196,208,.45);
+    }
+    .panel-tab {
+      flex: 1;
+      height: 34px;
+      border-radius: var(--radius-full);
+      background: transparent;
+      color: var(--on-variant);
+      font-size: 12px;
+      font-weight: 800;
+      transition: all .18s ease;
+    }
+    .panel-tab.active {
+      color: var(--primary);
+      background: var(--surface);
+      box-shadow: var(--shadow-1);
+    }
+    .ai-capsules {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    }
+    .ai-capsule {
+      height: 38px;
+      border: 0;
+      border-radius: var(--radius-full);
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--primary);
+      background: var(--primary-container);
+      transition: all .18s ease;
+    }
+    .ai-capsule:hover { background: var(--primary); color: var(--on-primary); transform: translateY(-1px); }
+
+    /* Panel: Form mode */
+    .panel-mode { display: none; flex-direction: column; flex: 1; min-height: 0; }
+    .panel-mode.active { display: flex; }
+    .form-wrap { flex: 1; overflow-y: auto; padding: 0 14px; }
+    .form-bottom { flex-shrink: 0; padding: 12px 14px; border-top: 1px solid rgba(202,196,208,.3); }
+
+    /* ── Module actions bar (rename / hide / delete) ── */
+    .module-actions-bar {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 14px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid rgba(202,196,208,.35);
+    }
+    .module-name-edit {
+      flex: 1;
+      height: 34px;
+      padding: 0 10px;
+      border: 1px solid var(--outline-variant);
+      border-radius: var(--radius-sm);
+      background: var(--surface-low);
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--on-surface);
+      outline: none;
+    }
+    .module-name-edit:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(103,80,164,.08);
+    }
+    .action-chip {
+      height: 34px;
+      width: 34px;
+      display: grid; place-items: center;
+      border-radius: var(--radius-sm);
+      background: var(--surface-low);
+      border: 1px solid var(--outline-variant);
+      font-size: 14px;
+      cursor: pointer;
+      transition: all .15s ease;
+      color: var(--on-variant);
+    }
+    .action-chip:hover { border-color: var(--outline); background: var(--surface-container); }
+    .action-chip.danger:hover { border-color: var(--error); color: var(--error); background: var(--error-container); }
+
+    /* ── Formatting toolbar ── */
+    .format-bar {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      padding: 6px 8px;
+      margin-bottom: 8px;
+      border-radius: var(--radius-md);
+      background: var(--surface-container);
+      border: 1px solid rgba(202,196,208,.45);
+    }
+    .fmt-btn {
+      height: 28px;
+      width: 28px;
+      display: grid; place-items: center;
+      border-radius: 6px;
+      background: transparent;
+      border: 0;
+      font-size: 13px;
+      cursor: pointer;
+      color: var(--on-variant);
+      transition: all .12s ease;
+    }
+    .fmt-btn:hover { background: var(--surface-high); color: var(--primary); }
+    .fmt-btn:active { background: var(--primary-container); }
+    .fmt-divider { width: 1px; height: 18px; background: rgba(202,196,208,.6); margin: 0 4px; }
+    .text-area {
+      width: 100%;
+      border: 1px solid var(--outline-variant);
+      border-radius: var(--radius-md);
+      background: var(--surface-low);
+      color: var(--on-surface);
+      font-size: 13px;
+      outline: none;
+      transition: all .18s ease;
+      min-height: 110px;
+      padding: 10px 12px;
+      resize: vertical;
+      line-height: 1.65;
+    }
+    .text-area:focus {
+      background: var(--surface);
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px rgba(103,80,164,.1);
+    }
+
+    /* ── Sub-items (work experience, education, projects etc.) ── */
+    .sub-items-list {
+      display: flex; flex-direction: column; gap: 10px;
+      margin-bottom: 10px;
+    }
+    .sub-item {
+      padding: 12px;
+      border-radius: var(--radius-md);
+      background: var(--surface-low);
+      border: 1px solid rgba(202,196,208,.5);
+      position: relative;
+    }
+    .sub-item .sub-item-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 8px;
+    }
+    .sub-item .sub-item-num {
+      font-size: 11px; font-weight: 900; color: var(--primary);
+      background: var(--primary-container);
+      padding: 2px 8px; border-radius: var(--radius-full);
+    }
+    .sub-item .sub-item-remove {
+      width: 24px; height: 24px;
+      border-radius: 50%;
+      display: grid; place-items: center;
+      background: transparent; border: 0;
+      font-size: 12px; cursor: pointer;
+      color: var(--outline);
+      transition: all .15s;
+    }
+    .sub-item .sub-item-remove:hover { color: var(--error); background: var(--error-container); }
+    .sub-item .text-input,
+    .sub-item .text-area {
+      background: var(--surface);
+      margin-bottom: 6px;
+    }
+    .sub-item .text-area { min-height: 72px; font-size: 12px; }
+    .add-sub-btn {
+      display: flex; align-items: center; justify-content: center;
+      gap: 6px;
+      width: 100%; height: 38px;
+      border-radius: var(--radius-md);
+      border: 1.5px dashed var(--outline-variant);
+      background: transparent;
+      color: var(--primary);
+      font-size: 12px; font-weight: 800;
+      cursor: pointer;
+      transition: all .18s ease;
+    }
+    .add-sub-btn:hover {
+      border-color: var(--primary);
+      background: var(--primary-container);
+    }
+
+    /* ── Upload menu ── */
+    .upload-trigger {
+      position: relative;
+      display: inline-flex;
+    }
+    .upload-menu {
+      position: absolute;
+      left: 0;
+      bottom: calc(100% + 8px);
+      padding: 4px;
+      border-radius: var(--radius-lg);
+      background: var(--surface);
+      border: 1px solid rgba(202,196,208,.6);
+      box-shadow: var(--shadow-2);
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(6px);
+      transition: all .18s ease;
+      z-index: 40;
+      min-width: 160px;
+    }
+    .upload-trigger:hover .upload-menu,
+    .upload-menu:hover {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateY(0);
+    }
+    .upload-option {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 12px;
+      border-radius: var(--radius-sm);
+      border: 0; background: transparent;
+      color: var(--on-surface);
+      font-size: 12px; font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all .12s;
+    }
+    .upload-option:hover { background: var(--primary-container); color: var(--primary); }
+    .upload-option .uo-icon {
+      width: 28px; height: 28px;
+      border-radius: 8px;
+      display: grid; place-items: center;
+      background: var(--surface-container);
+      font-size: 13px;
+    }
+    .upload-option small {
+      color: var(--outline); font-weight: 600; font-size: 10px;
+    }
+
+    /* Upload overlay (fixed positioning, no clipping) */
+    .upload-overlay {
+      position: fixed;
+      z-index: 999;
+      display: none;
+      flex-direction: column;
+      gap: 2px;
+      padding: 6px;
+      min-width: 180px;
+      background: var(--surface);
+      border-radius: var(--radius-lg);
+      box-shadow: 0 8px 24px rgba(0,0,0,.18), 0 0 0 1px rgba(202,196,208,.5);
+    }
+    .upload-overlay.show { display: flex; }
+    .upload-overlay .upload-option {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 12px;
+      border-radius: var(--radius-md);
+      border: none;
+      background: transparent;
+      font-size: 13px; font-weight: 700;
+      color: var(--on-surface);
+      cursor: pointer;
+      text-align: left;
+      transition: background .12s;
+    }
+    .upload-overlay .upload-option:hover { background: var(--surface-low); }
+    .upload-overlay .upload-option small { color: var(--outline); font-weight: 600; font-size: 10px; }
+
+    /* ── JD Match inline input area ── */
+    .jd-input-area {
+      margin-top: 8px;
+      padding: 12px;
+      border-radius: var(--radius-lg);
+      background: var(--surface-low);
+      border: 1px solid rgba(103,80,164,.25);
+      display: none;
+    }
+    .jd-input-area.show { display: block; }
+    .jd-input-area .jd-label {
+      font-size: 12px; font-weight: 800;
+      color: var(--primary);
+      margin-bottom: 8px;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .jd-input-area .text-area {
+      min-height: 80px;
+      margin-bottom: 8px;
+      font-size: 12px;
+    }
+    .jd-input-actions {
+      display: flex; gap: 6px;
+      align-items: center;
+    }
+    .jd-upload-btn {
+      display: flex; align-items: center; gap: 4px;
+      height: 32px;
+      padding: 0 12px;
+      border-radius: var(--radius-full);
+      border: 1.5px dashed var(--primary);
+      background: transparent;
+      color: var(--primary);
+      font-size: 11px; font-weight: 800;
+      cursor: pointer;
+      transition: all .15s;
+    }
+    .jd-upload-btn:hover { background: var(--primary-container); }
+    .form-row { margin-bottom: 12px; }
+    .form-row label {
+      display: block; margin-bottom: 5px;
+      color: var(--on-variant); font-size: 11px; font-weight: 900;
+    }
+    .text-input {
+      width: 100%;
+      border: 1px solid var(--outline-variant);
+      border-radius: var(--radius-md);
+      background: var(--surface-low);
+      color: var(--on-surface);
+      font-size: 13px;
+      outline: none;
+      transition: all .18s ease;
+    }
+    .text-input { height: 40px; padding: 0 12px; }
+    .text-input:focus {
+      background: var(--surface);
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px rgba(103,80,164,.1);
+    }
+
+    /* Panel: AI mode */
+    .chat-area {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding-bottom: 8px;
+    }
+    .chat-bubble {
+      padding: 10px 12px;
+      border-radius: var(--radius-lg);
+      font-size: 12px;
+      line-height: 1.6;
+      max-width: 94%;
+    }
+    .chat-ai { background: var(--surface-low); color: var(--on-surface); align-self: flex-start; border-bottom-left-radius: 4px; }
+    .chat-user { background: var(--primary); color: var(--on-primary); align-self: flex-end; border-bottom-right-radius: 4px; }
+    .chat-ai .typing-cursor {
+      display: inline-block;
+      width: 2px; height: 13px;
+      background: var(--primary); margin-left: 2px;
+      animation: blink 1s infinite; vertical-align: text-bottom;
+    }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+    .chat-input-row {
+      flex-shrink: 0;
+      display: flex;
+      gap: 6px;
+      padding: 10px 14px;
+      border-top: 1px solid rgba(202,196,208,.35);
+      background: linear-gradient(180deg, rgba(255,251,254,0), var(--surface) 30%);
+      overflow: visible;
+      position: relative;
+      z-index: 25;
+    }
+    .chat-input-row .text-input {
+      flex: 1; border-radius: var(--radius-full); font-size: 12px; height: 38px;
+    }
+
+    /* ── Wizard/Conversation-first screen ── */
+    .wizard-shell {
+      flex: 1;
+      margin: 0 20px 20px;
+      border-radius: var(--radius-2xl);
+      background: var(--surface);
+      border: 1px solid rgba(202,196,208,.6);
+      box-shadow: var(--shadow-2);
+      overflow: hidden;
+      display: grid;
+      grid-template-rows: 60px 1fr;
+      max-height: calc(100vh - 180px);
+      min-height: 660px;
+    }
+    .wizard-body {
+      display: grid;
+      grid-template-columns: 520px 1fr;
+      min-height: 0;
+      overflow: hidden;
+    }
+    .wizard-chat-panel {
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid rgba(202,196,208,.55);
+      background: var(--surface);
+    }
+    .wizard-chat-head {
+      flex-shrink: 0;
+      padding: 12px 16px;
+      border-bottom: 1px solid rgba(202,196,208,.45);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .wizard-chat-head .wiz-label {
+      font-size: 12px; color: var(--on-variant); font-weight: 700;
+    }
+    .wizard-chat-head .wiz-status {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--primary);
+    }
+    .wiz-pulse {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--primary);
+      animation: pulse-dot 1.6s infinite;
+    }
+    @keyframes pulse-dot {
+      0%,100% { box-shadow: 0 0 0 0 rgba(103,80,164,.4); }
+      50% { box-shadow: 0 0 0 8px rgba(103,80,164,0); }
+    }
+    .wizard-chat-area {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .wiz-bubble {
+      padding: 12px 14px;
+      border-radius: var(--radius-lg);
+      font-size: 13px;
+      line-height: 1.65;
+      max-width: 92%;
+    }
+    .wiz-ai { background: var(--surface-low); align-self: flex-start; border-bottom-left-radius: 4px; }
+    .wiz-user { background: var(--primary); color: var(--on-primary); align-self: flex-end; border-bottom-right-radius: 4px; }
+    .wizard-chat-input {
+      flex-shrink: 0;
+      padding: 12px 16px;
+      border-top: 1px solid rgba(202,196,208,.35);
+      display: flex;
+      gap: 8px;
+    }
+    .wizard-preview-area {
+      min-width: 0; min-height: 0;
+      display: flex; align-items: flex-start; justify-content: center;
+      padding: 28px; overflow: auto;
+      background: radial-gradient(circle, rgba(202,196,208,.45) 1px, transparent 1px), #eef0f4;
+      background-size: 22px 22px;
+    }
+    .wizard-preview-area .preview-status {
+      display: flex; flex-direction: column; align-items: center; gap: 12px;
+      color: var(--on-variant); text-align: center;
+      margin-top: 120px;
+    }
+    .wizard-preview-area .preview-status .big-icon { font-size: 48px; opacity: .6; }
+
+    /* ── Toast ── */
+    .toast {
+      position: fixed;
+      left: 50%; bottom: 60px;
+      transform: translateX(-50%) translateY(12px);
+      z-index: 200; opacity: 0; pointer-events: none;
+      padding: 10px 20px;
+      border-radius: var(--radius-full);
+      background: var(--on-surface);
+      color: var(--surface);
+      font-size: 13px; font-weight: 700;
+      box-shadow: var(--shadow-2);
+      transition: opacity .2s ease, transform .2s ease;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    .resume-section.panel-open {
+      background: linear-gradient(90deg, rgba(234,221,255,.4), transparent 82%);
+      outline: 2px solid rgba(103,80,164,.28);
+      outline-offset: 5px;
+    }
+
+    /* ── Legend ── */
+    .legend {
+      display: flex; flex-wrap: wrap; justify-content: center;
+      gap: 16px; padding: 12px 20px; font-size: 12px; color: var(--on-variant);
+      flex-shrink: 0;
+    }
+    .legend span { display: flex; align-items: center; gap: 6px; }
+    .legend .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; }
+    .dot-rail { background: var(--primary-container); }
+    .dot-preview { background: #e9ecf1; }
+    .dot-panel { background: var(--surface-container); }
+    .dot-wizard { background: var(--primary); }
+
+    .highlight-fix { color: var(--success); font-weight: 800; }
+    .badge-fixed {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 2px 8px; border-radius: var(--radius-full);
+      background: var(--success-container); color: var(--success);
+      font-size: 10px; font-weight: 900;
+    }
+
+    /* Responsive */
+    @media (max-width: 1100px) {
+      .editor-body, .editor-body.panel-closed { grid-template-columns: 78px 1fr; }
+      .context-panel {
+        position: fixed; top: 60px; right: 0; bottom: 0;
+        width: min(380px, calc(100vw - 78px)); z-index: 50; box-shadow: var(--shadow-3);
+      }
+      .wizard-body { grid-template-columns: 1fr; }
+      .wizard-preview-area { display: none; }
+    }
+    @media (max-width: 700px) {
+      .view-switch-bar button { font-size: 11px; padding: 0 12px; height: 34px; }
+      .editor-shell, .wizard-shell { margin: 0; border-radius: 0; max-height: none; }
+      .editor-body, .editor-body.panel-closed { grid-template-columns: 64px 1fr; }
+      .module-item { width: 52px; min-height: 46px; font-size: 9px; }
+      .module-item .item-icon { font-size: 16px; }
+      .add-module { width: 52px; font-size: 9px; }
+      .a4-paper { padding: 28px 22px; }
+      .editor-header { padding: 0 10px; gap: 6px; }
+      .btn-back { padding: 0 10px; font-size: 11px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ===== View Switcher ===== -->
+  <div class="view-switch-bar">
+    <button class="active" onclick="showScreen('screen-edit')" id="btnScreenEdit">📝 编辑已有简历</button>
+    <span class="divider"></span>
+    <button onclick="showScreen('screen-newuser')" id="btnScreenNewUser">🆕 新用户首次进入</button>
+  </div>
+
+  <!-- ═══════════════════ SCREEN 1: Editor Mode ═══════════════════ -->
+  <div class="screen active" id="screen-edit">
+
+    <div class="editor-shell">
+      <!-- Header -->
+      <header class="editor-header">
+        <div class="editor-header-left">
+          <!-- ★ FIX #1: History panel (Dashboard as slide-out) -->
+          <button class="btn-back" onclick="toggleHistory()" title="历史简历列表">📋 历史</button>
+          <!-- ★ FIX #5: New Resume button -->
+          <button class="btn-back" onclick="showToast('新建简历 — Wizard / 空白 / 导入 / 模板')" title="新建简历" style="color:var(--primary);border-color:rgba(103,80,164,.4);">＋ 新建</button>
+          <div class="editor-title">
+            <span class="brand-mark">🦆</span>
+            <strong>产品经理 - AI 方向</strong>
+          </div>
+        </div>
+        <div class="header-actions">
+          <!-- ★ FIX #2: AI助手 入口移至右上角 -->
+          <button class="btn btn-secondary btn-sm" onclick="toggleAIFromHeader()" title="打开 AI 助手面板" style="color:var(--primary);border-color:rgba(103,80,164,.4);">✨ AI 助手</button>
+          <span class="credit-pill">🔋 7/10</span>
+          <button class="btn btn-primary btn-sm" id="exportBtn" onclick="showToast('导出菜单: PDF / PNG / 无水印导出')">导出</button>
+        </div>
+      </header>
+
+      <!-- Body -->
+      <div class="editor-body" id="editEditorBody">
+
+        <!-- ═══ FIX #1: History slide-out panel inside editor-body ═══ -->
+        <div class="history-backdrop" id="historyBackdrop" onclick="closeHistory()"></div>
+        <aside class="history-panel-slide" id="historySlidePanel">
+          <div class="history-head">
+            <h3>📋 简历历史</h3>
+            <button class="icon-btn" onclick="closeHistory()">✕</button>
+          </div>
+          <div class="history-scroll">
+            <div class="history-card current" onclick="showToast('当前正在编辑这份简历')">
+              <div class="hc-name">产品经理 - AI 方向</div>
+              <div class="hc-date">修改于 2 天前</div>
+              <div class="hc-meta">
+                <span>🔋 已使用 8 次 AI</span>
+                <span>📝 7/8 模块</span>
+              </div>
+            </div>
+            <div class="history-card" onclick="showToast('切换到「海外运营负责人」')">
+              <div class="hc-name">海外运营负责人</div>
+              <div class="hc-date">修改于 昨天</div>
+              <div class="hc-meta">
+                <span>🔋 已使用 4 次 AI</span>
+                <span>📝 6/8 模块</span>
+              </div>
+            </div>
+            <div class="history-card" onclick="showToast('切换到「德语本地化PM」')">
+              <div class="hc-name">德语本地化PM</div>
+              <div class="hc-date">修改于 3 天前</div>
+              <div class="hc-meta">
+                <span>🔋 已使用 2 次 AI</span>
+                <span>📝 5/8 模块</span>
+              </div>
+            </div>
+            <div class="history-card" onclick="showToast('切换到「AI 产品实习生」')">
+              <div class="hc-name">AI 产品实习生</div>
+              <div class="hc-date">修改于 1 周前</div>
+              <div class="hc-meta">
+                <span>🔋 已使用 1 次 AI</span>
+                <span>📝 4/8 模块</span>
+              </div>
+            </div>
+          </div>
+        </aside>
+
+        <!-- ① Module Rail -->
+        <aside class="module-rail" id="editModuleRail">
+          <!-- ★ FIX #2: Remove from rail, move to header -->
+          <div class="module-item active" data-section="personal" onclick="selectModule(this, 'personal', 'edit')">
+            <span class="drag-handle">⋮⋮</span>
+            <span class="item-icon">👤</span>
+            个人信息
+          </div>
+          <div class="module-item" data-section="summary" onclick="selectModule(this, 'summary', 'edit')">
+            <span class="drag-handle">⋮⋮</span>
+            <span class="item-icon">🧭</span>
+            概述
+          </div>
+          <div class="module-item" data-section="work" onclick="selectModule(this, 'work', 'edit')">
+            <span class="drag-handle">⋮⋮</span>
+            <span class="item-icon">💼</span>
+            工作
+          </div>
+          <div class="module-item" data-section="projects" onclick="selectModule(this, 'projects', 'edit')">
+            <span class="drag-handle">⋮⋮</span>
+            <span class="item-icon">🚀</span>
+            AI实践
+          </div>
+          <div class="module-item" data-section="education" onclick="selectModule(this, 'education', 'edit')">
+            <span class="drag-handle">⋮⋮</span>
+            <span class="item-icon">🎓</span>
+            教育
+          </div>
+          <div class="module-item" data-section="skills" onclick="selectModule(this, 'skills', 'edit')">
+            <span class="drag-handle">⋮⋮</span>
+            <span class="item-icon">🏷️</span>
+            技能
+          </div>
+          <div class="module-item" data-section="languages" onclick="selectModule(this, 'languages', 'edit')">
+            <span class="drag-handle">⋮⋮</span>
+            <span class="item-icon">🌐</span>
+            语言
+          </div>
+          <div class="module-item" data-section="selfeval" onclick="selectModule(this, 'selfeval', 'edit')">
+            <span class="drag-handle">⋮⋮</span>
+            <span class="item-icon">💬</span>
+            自评
+          </div>
+          <button class="add-module" onclick="showToast('打开自定义模块弹窗')">＋添加</button>
+          <button class="lang-toggle" onclick="showToast('切换语言: 🇨🇳 中文 ⇄ 🇺🇸 English')" title="切换语言">CN / EN</button>
+        </aside>
+
+        <!-- ② Preview -->
+        <main class="preview-area">
+          <article class="a4-paper" id="editPaper">
+            <div class="resume-head" id="editPreview-personal" onclick="selectPreviewSection('personal','edit')">
+              <div>
+                <h2>郭欣灵</h2>
+                <div class="subtitle">AI 产品经理 / 海外运营负责人</div>
+                <div class="subtitle" style="font-size:11px;color:var(--outline);margin-top:2px;">北京 · guoxinling.cn · 137****7045</div>
+              </div>
+              <div class="photo-placeholder">👤</div>
+            </div>
+            <section class="resume-section" id="editPreview-summary" onclick="selectPreviewSection('summary','edit')">
+              <button class="spark-btn" onclick="event.stopPropagation();triggerAI('summary','edit')" title="AI 优化">✨</button>
+              <h3>个人概述</h3>
+              <p>8 年互联网与海外游戏发行经验，近年深耕 AI 产品与自动化工作流。擅长将业务问题拆解为可落地的产品方案，具备从 0 到 1 独立构建 6 款 AI 工具的全栈实践能力。</p>
+            </section>
+            <section class="resume-section" id="editPreview-work" onclick="selectPreviewSection('work','edit')">
+              <button class="spark-btn" onclick="event.stopPropagation();triggerAI('work','edit')" title="AI 优化">✨</button>
+              <h3>工作经历</h3>
+              <p class="company-line">某头部游戏公司 · 海外运营负责人</p>
+              <p class="date-line">2018 — 2023</p>
+              <ul>
+                <li>主导德国市场全链路发行策略，统筹本地化、UA 增长、商业化与跨团队协作，实现 3 亿人民币流水。</li>
+                <li>从 0 到 1 推进 3 款产品的海外上线，沉淀市场策略 SOP 与数据复盘机制。</li>
+              </ul>
+            </section>
+            <section class="resume-section" id="editPreview-projects" onclick="selectPreviewSection('projects','edit')">
+              <button class="spark-btn" onclick="event.stopPropagation();triggerAI('projects','edit')" title="AI 优化">✨</button>
+              <h3>AI 产品实践</h3>
+              <p class="company-line">简历编辑器 · AI 求职工具</p>
+              <p class="date-line">2025 — 至今</p>
+              <ul>
+                <li>设计对话式简历生成向导，集成 JD 匹配分析、OCR 截图识别、面试预测等 AI 能力。</li>
+              </ul>
+            </section>
+            <section class="resume-section" id="editPreview-education" onclick="selectPreviewSection('education','edit')">
+              <button class="spark-btn" onclick="event.stopPropagation();triggerAI('education','edit')" title="AI 优化">✨</button>
+              <h3>教育背景</h3>
+              <p class="company-line">北京外国语大学 · 德语语言文学 学士</p>
+              <p class="date-line">2011 — 2015</p>
+              <ul><li>德语专业八级，在校期间获国家奖学金、校级优秀毕业生。</li></ul>
+            </section>
+            <section class="resume-section" id="editPreview-skills" onclick="selectPreviewSection('skills','edit')">
+              <h3>专业技能</h3>
+              <p>AI 产品设计 / LLM 应用开发 / 海外游戏发行 / 数据分析 / React · TypeScript · Node.js / Prompt Engineering / 德语（C2）· 英语（流利）</p>
+            </section>
+          </article>
+        </main>
+
+        <!-- ③ Context Panel -->
+        <aside class="context-panel" id="editContextPanel">
+          <div class="panel-head">
+            <div>
+              <p class="panel-label" id="editPanelSectionLabel">个人信息</p>
+              <strong id="editPanelTitle">编辑个人信息</strong>
+            </div>
+            <button class="icon-btn" onclick="closeEditPanel()">✕</button>
+          </div>
+
+          <div class="panel-body">
+            <!-- ★ FIX #4: Sticky tabs row (doesn't scroll with content) -->
+            <div class="panel-sticky-top">
+              <div class="panel-tabs">
+                <button class="panel-tab active" id="editTabEdit" onclick="switchEditTab('edit')">📝 手动编辑</button>
+                <button class="panel-tab" id="editTabAI" onclick="switchEditTab('ai')">✨ AI 对话</button>
+              </div>
+              <!-- ★ FIX #4: Sticky AI capsules (always visible, even with long chat) -->
+              <div class="ai-capsules" id="editCapsules" style="display:none">
+                <button class="ai-capsule" onclick="triggerEditAIAction('polish')">✨ 润色经历</button>
+                <button class="ai-capsule" onclick="triggerEditAIAction('adapt')">🎯 JD 匹配</button>
+                <button class="ai-capsule" onclick="triggerEditAIAction('diagnose')">🔍 诊断简历</button>
+                <button class="ai-capsule" onclick="triggerEditAIAction('interview')">💬 面试预测</button>
+              </div>
+            </div>
+
+            <!-- Scrollable content area -->
+            <div class="panel-scroll-area">
+              <!-- Edit Form -->
+              <div class="panel-mode active" id="editPanelForm">
+                <!-- ★ 3.1+3.2 Module actions bar -->
+                <div class="module-actions-bar">
+                  <input class="module-name-edit" value="个人信息" id="editModuleName" title="修改模块名称" />
+                  <button class="action-chip" onclick="showToast('模块已隐藏')" title="隐藏模块">👁️</button>
+                  <button class="action-chip danger" onclick="showToast('模块已删除')" title="删除模块">🗑️</button>
+                </div>
+
+                <!-- ★ 1. Sub-items area (shown for work/education/projects) -->
+                <div id="editSubItems" style="display:none">
+                  <div class="sub-items-list" id="editSubItemsList">
+                    <!-- Dynamically populated -->
+                  </div>
+                  <button class="add-sub-btn" onclick="addSubItem()">
+                    ＋ 添加一段经历
+                  </button>
+                  <div style="height:12px"></div>
+                </div>
+
+                <!-- Regular fields (shown when not using sub-items) -->
+                <div id="editRegularFields">
+                  <div class="form-row">
+                    <label id="editFieldLabel1">姓名</label>
+                    <input class="text-input" value="郭欣灵" />
+                  </div>
+                  <div class="form-row">
+                    <label id="editFieldLabel2">求职意向</label>
+                    <input class="text-input" value="AI 产品经理 / 海外运营负责人" />
+                  </div>
+                  <div class="form-row">
+                    <label id="editFieldLabel3">联系方式</label>
+                    <input class="text-input" value="北京 · guoxinling.cn · 137****7045" />
+                  </div>
+                  <div class="form-row" id="editPhotoRow">
+                    <label>照片</label>
+                    <div style="display:flex;align-items:center;gap:10px">
+                      <div class="photo-placeholder" style="width:44px;height:56px;font-size:18px;">👤</div>
+                      <button class="btn btn-secondary btn-sm">上传</button>
+                      <button class="btn btn-ghost btn-sm" style="color:var(--error)">移除</button>
+                    </div>
+                  </div>
+                  <div class="form-row" id="editTextareaRow" style="display:none">
+                    <label id="editTextareaLabel">详细内容</label>
+                    <!-- Formatting toolbar -->
+                    <div class="format-bar">
+                      <button class="fmt-btn" onclick="showToast('加粗')" title="加粗">B</button>
+                      <button class="fmt-btn" onclick="showToast('斜体')" title="斜体"><i>I</i></button>
+                      <div class="fmt-divider"></div>
+                      <button class="fmt-btn" onclick="showToast('无序列表')" title="无序列表">•≡</button>
+                      <button class="fmt-btn" onclick="showToast('有序列表')" title="有序列表">1.</button>
+                      <button class="fmt-btn" onclick="showToast('添加 dash')" title="Dash">—</button>
+                      <div class="fmt-divider"></div>
+                      <button class="fmt-btn" onclick="showToast('自动换行')" title="自动换行">↵</button>
+                      <button class="fmt-btn" onclick="showToast('添加标点')" title="智能标点">，。</button>
+                    </div>
+                    <textarea class="text-area" id="editTextarea"></textarea>
+                  </div>
+                </div>
+
+                <div class="form-bottom">
+                  <button class="btn btn-primary" style="width:100%" onclick="switchEditTab('ai')">✨ 用 AI 优化这个模块</button>
+                </div>
+              </div>
+
+              <!-- AI Chat -->
+              <div class="panel-mode" id="editPanelAI" style="flex:1;min-height:0">
+                <!-- ★ 2. JD Match inline input area -->
+                <div class="jd-input-area" id="editJdInput">
+                  <div class="jd-label">🎯 粘贴目标岗位 JD 或上传截图</div>
+                  <textarea class="text-area" placeholder="将招聘 JD 粘贴到这里…&#10;例如：岗位职责、任职要求、加分项等" id="editJdText"></textarea>
+                  <div class="jd-input-actions">
+                    <button class="jd-upload-btn" onclick="showToast('选择 JD 截图/图片')">🖼️ 上传截图</button>
+                    <button class="btn btn-primary btn-sm" onclick="submitJdMatch()">开始匹配分析 →</button>
+                    <button class="btn btn-ghost btn-sm" onclick="closeJdInput()">取消</button>
+                  </div>
+                </div>
+                <div class="chat-area" id="editChatArea">
+                  <div class="chat-bubble chat-ai chat-placeholder">你好！选中了「个人信息」模块。你可以直接告诉我想怎么改，或点击上方胶囊快捷操作。</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Chat input (outside scroll, with upload + button) -->
+            <div class="chat-input-row" id="editChatInputRow" style="display:none">
+              <button data-upload class="btn btn-ghost btn-sm" style="width:36px;height:36px;padding:0;border-radius:50%;font-size:18px;flex-shrink:0" title="导入简历">＋</button>
+              <input class="text-input" id="editChatInput" placeholder="输入你的需求…" onkeydown="if(event.key==='Enter')sendEditChat()" style="flex:1" />
+              <button class="btn btn-primary btn-sm" onclick="sendEditChat()">发送</button>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════ SCREEN 2: Wizard / Conversation-first ═══════════════════ -->
+  <div class="screen" id="screen-wizard">
+
+    <div class="wizard-shell">
+      <!-- Header (same as Editor, with Dashboard + New entries) -->
+      <header class="editor-header">
+        <div class="editor-header-left">
+          <!-- ★ FIX #1: History panel -->
+          <button class="btn-back" onclick="toggleHistory()">📋 历史</button>
+          <!-- ★ FIX #5: New Resume button -->
+          <button class="btn-back" onclick="showToast('新建简历')" style="color:var(--primary);border-color:rgba(103,80,164,.4);">＋ 新建</button>
+          <div class="editor-title">
+            <span class="brand-mark">🦆</span>
+            <strong>未命名简历</strong>
+          </div>
+        </div>
+        <div class="header-actions">
+          <span class="credit-pill">🔋 7/10</span>
+          <button class="btn btn-primary btn-sm" id="wizardDoneBtn" onclick="wizardFinish()">完成编辑 →</button>
+        </div>
+      </header>
+
+      <div class="wizard-body">
+        <!-- Left: AI Chat Panel -->
+        <div class="wizard-chat-panel">
+          <div class="wizard-chat-head">
+            <span class="wiz-label">AI 简历向导</span>
+            <span class="wiz-status"><span class="wiz-pulse"></span> 对话中</span>
+          </div>
+
+          <!-- ★ FIX #4: Sticky AI capsules in wizard too -->
+          <div class="panel-sticky-top">
+            <div class="ai-capsules" style="display:grid">
+              <button class="ai-capsule" onclick="wizardCapsule('polish')">✨ 润色经历</button>
+              <button class="ai-capsule" onclick="wizardCapsule('adapt')">🎯 JD 匹配</button>
+              <button class="ai-capsule" onclick="wizardCapsule('diagnose')">🔍 诊断简历</button>
+              <button class="ai-capsule" onclick="wizardCapsule('interview')">💬 面试预测</button>
+            </div>
+          </div>
+
+          <div class="wizard-chat-area" id="wizardChatArea">
+            <div class="wiz-bubble wiz-ai">
+              你好！我是简历鸭的 AI 助手 🦆<br><br>
+              我会通过几个问题了解你的背景，然后帮你生成一份完整的简历。<br><br>
+              首先，请告诉我：<br>
+              <strong>1. 你的姓名和求职方向是什么？</strong><br>
+              <strong>2. 你目前所在的行业和城市？</strong>
+            </div>
+            <div class="wiz-bubble wiz-user">
+              我叫李明，想做 AI 产品经理。目前在深圳，之前在互联网教育行业做了 3 年的运营经理。
+            </div>
+            <div class="wiz-bubble wiz-ai">
+              收到！接下来我想了解一下你的教育背景和工作经历：<br><br>
+              <strong>3. 你的最高学历和毕业院校？</strong><br>
+              <strong>4. 过去的工作中，有没有具体的项目或成果可以分享？</strong><br><br>
+              （你可以逐条回复，我会帮你整理成简历格式）
+            </div>
+            <div class="wiz-bubble wiz-user">
+              我是中山大学市场营销本科，2019 年毕业。在上家公司主导了一个 AI 客服机器人的项目，从需求调研到上线用了 4 个月，节省了 40% 的人工客服成本。
+            </div>
+            <div class="wiz-bubble wiz-ai">
+              很棒的成果！我在右侧已经开始生成你的简历草稿👇<br><br>
+              接下来问一下技能和语言方面：<br>
+              <strong>5. 你使用过哪些工具或技术？有没有 AI 相关的实践经验？</strong>
+            </div>
+          </div>
+
+          <div class="wizard-chat-input">
+            <input class="text-input" id="wizardChatInput" placeholder="输入你的回答…" onkeydown="if(event.key==='Enter')sendWizardChat()" style="flex:1" />
+            <button class="btn btn-primary btn-sm" onclick="sendWizardChat()">发送</button>
+          </div>
+        </div>
+
+        <!-- Right: Live Preview (real-time generated resume) -->
+        <div class="wizard-preview-area">
+          <article class="a4-paper" style="width:min(100%, 480px);padding:36px 40px;">
+            <div class="resume-head">
+              <div>
+                <h2 style="font-size:26px">李明</h2>
+                <div class="subtitle">AI 产品经理</div>
+                <div class="subtitle" style="font-size:11px;color:var(--outline);margin-top:2px;">深圳</div>
+              </div>
+              <div class="photo-placeholder" style="width:64px;height:80px;font-size:24px;">👤</div>
+            </div>
+            <section class="resume-section" style="cursor:default">
+              <h3>个人概述</h3>
+              <p>3 年互联网教育行业运营经验，成功主导 AI 客服机器人项目从 0 到 1。擅长需求调研、产品规划和跨团队协作，致力于成为 AI 产品方向的专业人才。</p>
+            </section>
+            <section class="resume-section" style="cursor:default">
+              <h3>工作经历</h3>
+              <p class="company-line">某在线教育公司 · 运营经理</p>
+              <p class="date-line">2020 — 2023</p>
+              <ul>
+                <li>主导 AI 客服机器人项目，4 个月完成需求→上线闭环，节省 40% 人工客服成本。</li>
+                <li>负责用户运营策略，管理 10 人团队，年度用户留存率提升 22%。</li>
+              </ul>
+            </section>
+            <section class="resume-section" style="cursor:default;opacity:.5">
+              <h3>教育背景</h3>
+              <p class="company-line">中山大学 · 市场营销 本科</p>
+              <p class="date-line">2015 — 2019</p>
+            </section>
+            <div style="text-align:center;padding:20px;color:var(--outline-variant);font-size:11px;">
+              AI 正在根据对话内容实时更新…
+            </div>
+          </article>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════ SCREEN 3: New User First Time ═══════════════════ -->
+  <div class="screen" id="screen-newuser">
+
+    <div class="editor-shell">
+      <header class="editor-header">
+        <div class="editor-header-left">
+          <button class="btn-back" onclick="showToast('返回首页')">← 首页</button>
+          <!-- ★ 3. Unified 新建 in top-left -->
+          <button class="btn-back" onclick="showToast('新建 — 对话创建 / 模板选择 / 导入简历')" style="color:var(--primary);border-color:rgba(103,80,164,.4);">＋ 新建</button>
+          <div class="editor-title">
+            <span class="brand-mark">🦆</span>
+            <strong>未命名简历</strong>
+          </div>
+        </div>
+        <div class="header-actions">
+          <button class="btn btn-secondary btn-sm" onclick="showToast('AI 助手已打开')" style="color:var(--primary);border-color:rgba(103,80,164,.4);">✨ AI 助手</button>
+          <span class="credit-pill">🔋 10/10</span>
+          <button class="btn btn-primary btn-sm" id="exportBtnNew" onclick="showToast('请先填写简历内容后再导出')">导出</button>
+        </div>
+      </header>
+
+      <div class="editor-body" id="newEditorBody">
+        <!-- Module Rail -->
+        <aside class="module-rail">
+          <div class="module-item active"><span class="item-icon">👤</span>信息</div>
+          <div class="module-item"><span class="item-icon">🧭</span>概述</div>
+          <div class="module-item"><span class="item-icon">💼</span>工作</div>
+          <div class="module-item"><span class="item-icon">🚀</span>AI实践</div>
+          <div class="module-item"><span class="item-icon">🎓</span>教育</div>
+          <div class="module-item"><span class="item-icon">🏷️</span>技能</div>
+          <div class="module-item"><span class="item-icon">🌐</span>语言</div>
+          <div class="module-item"><span class="item-icon">💬</span>自评</div>
+          <button class="add-module" onclick="showToast('添加自定义模块')">＋添加</button>
+          <button class="lang-toggle" onclick="showToast('切换语言: 🇨🇳 中文 ⇄ 🇺🇸 English')" title="切换语言">CN / EN</button>
+        </aside>
+
+        <!-- Empty Preview -->
+        <main class="preview-area">
+          <article class="a4-paper" style="display:flex;flex-direction:column;justify-content:center;min-height:calc(100% - 56px);padding:40px 44px;gap:24px">
+            <!-- Header -->
+            <div style="text-align:center;margin-bottom:8px">
+              <div style="font-size:44px;opacity:.3;margin-bottom:10px">📄</div>
+              <h2 style="font-size:20px;font-weight:900;color:var(--on-surface);margin-bottom:4px">空白简历</h2>
+              <p style="color:var(--on-variant);font-size:12px">3 种方式开始填写你的简历</p>
+            </div>
+
+            <!-- Card 1: AI Chat -->
+            <div style="display:flex;align-items:flex-start;gap:14px;padding:16px 18px;border-radius:var(--radius-lg);background:var(--primary-container);border:1px solid rgba(103,80,164,.18)">
+              <div style="width:36px;height:36px;border-radius:50%;background:var(--primary);color:var(--on-primary);display:grid;place-items:center;font-size:16px;flex-shrink:0">✨</div>
+              <div>
+                <strong style="font-size:14px;color:var(--primary)">AI 对话创建</strong>
+                <p style="font-size:11px;color:var(--on-variant);line-height:1.6;margin-top:4px">在右侧面板跟 AI 聊天，告诉它你的经历，AI 自动生成简历。最适合第一次写简历。</p>
+                <span style="display:inline-flex;align-items:center;gap:4px;margin-top:6px;font-size:10px;color:var(--primary);font-weight:800">👉 看右侧 →</span>
+              </div>
+            </div>
+
+            <!-- Card 2: Manual Edit -->
+            <div style="display:flex;align-items:flex-start;gap:14px;padding:16px 18px;border-radius:var(--radius-lg);background:var(--surface-low);border:1px solid rgba(202,196,208,.5)">
+              <div style="width:36px;height:36px;border-radius:50%;background:var(--surface-container);color:var(--on-variant);display:grid;place-items:center;font-size:16px;flex-shrink:0">📝</div>
+              <div>
+                <strong style="font-size:14px;color:var(--on-surface)">手动逐模块填写</strong>
+                <p style="font-size:11px;color:var(--on-variant);line-height:1.6;margin-top:4px">点击左侧导航栏的模块 → 右侧弹出编辑表单 → 逐项填写。适合有明确内容要录入。</p>
+                <span style="display:inline-flex;align-items:center;gap:4px;margin-top:6px;font-size:10px;color:var(--on-variant);font-weight:800">👈 点左边试试</span>
+              </div>
+            </div>
+
+            <!-- Card 3: Import -->
+            <div style="display:flex;align-items:flex-start;gap:14px;padding:16px 18px;border-radius:var(--radius-lg);background:var(--surface-low);border:1px solid rgba(202,196,208,.5)">
+              <div style="width:36px;height:36px;border-radius:50%;background:var(--surface-container);color:var(--on-variant);display:grid;place-items:center;font-size:16px;flex-shrink:0">📤</div>
+              <div>
+                <strong style="font-size:14px;color:var(--on-surface)">导入已有简历</strong>
+                <p style="font-size:11px;color:var(--on-variant);line-height:1.6;margin-top:4px">上传 PDF/图片/Word → AI 自动识别并填充到各模块 → 再手动微调或 AI 润色。</p>
+                <span style="display:inline-flex;align-items:center;gap:4px;margin-top:6px;font-size:10px;color:var(--on-variant);font-weight:800">📎 右上角「＋ 新建」</span>
+              </div>
+            </div>
+
+            <!-- Footer tip -->
+            <div style="text-align:center;padding-top:4px;font-size:10px;color:var(--outline);line-height:1.6">
+              左侧模块栏🔄拖拽排序  ·  右侧面板可切换 📝编辑 / ✨AI  ·  所有修改实时预览
+            </div>
+          </article>
+        </main>
+
+        <!-- ★ 2. Right Panel with dual tabs (same as logged-in) -->
+        <aside class="context-panel">
+          <div class="panel-head">
+            <div>
+              <p class="panel-label">AI 简历助手</p>
+              <strong>对话式创建简历</strong>
+            </div>
+            <button class="icon-btn" onclick="showToast('面板关闭')">✕</button>
+          </div>
+          <div class="panel-body">
+            <!-- Sticky tabs -->
+            <div class="panel-sticky-top">
+              <div class="panel-tabs">
+                <button class="panel-tab active" id="newUserTabEdit" onclick="switchNewUserTab('edit')">📝 手动编辑</button>
+                <button class="panel-tab" id="newUserTabAI" onclick="switchNewUserTab('ai')">✨ AI 对话</button>
+              </div>
+              <div class="ai-capsules" style="display:grid" id="newUserCapsules">
+                <button class="ai-capsule" onclick="showToast('润色经历')">✨ 润色经历</button>
+                <button class="ai-capsule" onclick="openNewUserJdInput()">🎯 JD 匹配</button>
+                <button class="ai-capsule" onclick="showToast('诊断简历')">🔍 诊断简历</button>
+                <button class="ai-capsule" onclick="showToast('面试预测')">💬 面试预测</button>
+              </div>
+            </div>
+
+            <!-- Edit mode -->
+            <div class="panel-mode active" id="newUserEdit" style="flex:1;min-height:0;overflow-y:auto;padding:0 14px 14px">
+              <div style="text-align:center;padding:40px 16px;color:var(--on-variant)">
+                <div style="font-size:36px;margin-bottom:12px;opacity:.4">📝</div>
+                <p style="font-size:13px;font-weight:700;margin-bottom:6px">手动编辑模式</p>
+                <p style="font-size:11px;line-height:1.6">
+                  点击左侧模块导航栏的任意模块，<br>这里会弹出对应的编辑表单。
+                </p>
+                <p style="font-size:11px;color:var(--outline);margin-top:8px">
+                  你可以修改模块名称、<br>拖动排序、隐藏或删除模块。
+                </p>
+              </div>
+            </div>
+
+            <!-- AI mode - active with welcome chat -->
+            <div class="panel-mode" id="newUserAI" style="display:none;flex:1;min-height:0;flex-direction:column">
+              <div class="panel-scroll-area">
+                <!-- ★ 2. JD Match inline input -->
+                <div class="jd-input-area" id="newUserJdInput">
+                  <div class="jd-label">🎯 粘贴目标岗位 JD 或上传截图</div>
+                  <textarea class="text-area" placeholder="将招聘 JD 粘贴到这里…&#10;例如：岗位职责、任职要求、加分项等" id="newUserJdText"></textarea>
+                  <div class="jd-input-actions">
+                    <button class="jd-upload-btn" onclick="showToast('选择 JD 截图/图片')">🖼️ 上传截图</button>
+                    <button class="btn btn-primary btn-sm" onclick="submitNewUserJdMatch()">开始匹配分析 →</button>
+                    <button class="btn btn-ghost btn-sm" onclick="document.getElementById('newUserJdInput').classList.remove('show')">取消</button>
+                  </div>
+                </div>
+                <div class="chat-area" id="newUserChatArea">
+                  <div class="chat-bubble chat-ai chat-placeholder" style="max-width:100%;width:100%">
+                    👋 欢迎来到简历鸭！🦆<br><br>
+                    我是你的 AI 简历助手，可以帮你：<br><br>
+                    ✨ <strong>从零创建</strong> — 告诉我你的背景，我帮你写<br>
+                    📄 <strong>导入优化</strong> — 上传现有简历，我帮你润色<br>
+                    🎯 <strong>岗位匹配</strong> — 粘贴 JD，定制化修改<br><br>
+                    直接对话或点击上方胶囊快捷开始。
+                  </div>
+                  <div class="chat-bubble chat-user chat-placeholder">我想从零开始写一份 AI 产品经理的简历</div>
+                  <div class="chat-bubble chat-ai chat-placeholder">
+                    太好了！让我来帮你一步步完成。<br><br>
+                    首先，请告诉我：<br>
+                    <strong>1. 你的姓名？</strong><br>
+                    <strong>2. 你之前的经历？</strong><br>
+                    <strong>3. 你的最高学历？</strong><br><br>
+                    不用一次性回答，慢慢聊～
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="chat-input-row">
+              <button data-upload class="btn btn-ghost btn-sm" style="width:36px;height:36px;padding:0;border-radius:50%;font-size:18px;flex-shrink:0" title="导入简历">＋</button>
+              <input class="text-input" id="newUserChatInput" placeholder="告诉 AI 你的背景..." onkeydown="if(event.key==='Enter')sendNewUserChat()" style="flex:1" />
+              <button class="btn btn-primary btn-sm" onclick="sendNewUserChat()">发送</button>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </div>
+
+  <!-- Legend -->
+  <div class="legend">
+    <span><span class="dot dot-rail"></span> ✅ 工作/教育/项目 支持多段子模块 +「＋ 添加」</span>
+    <span><span class="dot dot-panel"></span> ✅ 新用户：双Tab（手动/AI）| JD匹配 内联输入 | 导入＋</span>
+    <span><span class="dot dot-wizard"></span> ✅ 历史/AI：选中态 + 点击收回 | 上传弹窗 fixed 不遮挡</span>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <!-- Upload popup overlay (fixed, no clipping) -->
+  <div class="upload-overlay" id="uploadMenuOverlay">
+    <button class="upload-option" onclick="showToast('选择 Markdown 文件');document.getElementById('uploadMenuOverlay').classList.remove('show')">
+      <span class="uo-icon">📝</span><span>Markdown <small>.md</small></span>
+    </button>
+    <button class="upload-option" onclick="showToast('选择图片文件（截图/拍照）');document.getElementById('uploadMenuOverlay').classList.remove('show')">
+      <span class="uo-icon">🖼️</span><span>图片 <small>.png .jpg</small></span>
+    </button>
+    <button class="upload-option" onclick="showToast('选择 Word 文件');document.getElementById('uploadMenuOverlay').classList.remove('show')">
+      <span class="uo-icon">📄</span><span>Word <small>.docx</small></span>
+    </button>
+  </div>
+
+  <script>
+    // ── Screen switching ──
+    function showScreen(name) {
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.getElementById(name).classList.add('active');
+      document.querySelectorAll('.view-switch-bar button').forEach(b => b.classList.remove('active'));
+      if (name === 'screen-edit') document.getElementById('btnScreenEdit').classList.add('active');
+      if (name === 'screen-newuser') document.getElementById('btnScreenNewUser').classList.add('active');
+    }
+
+    // ═══ FIX #1: History Panel toggle (inside editor-body) ═══
+    function toggleHistory() {
+      const panel = document.getElementById('historySlidePanel');
+      const backdrop = document.getElementById('historyBackdrop');
+      const isOpen = panel.classList.contains('open');
+      if (isOpen) {
+        panel.classList.remove('open');
+        backdrop.classList.remove('show');
+        document.querySelectorAll('.btn-back[onclick*="toggleHistory"]').forEach(b => b.classList.remove('history-active'));
+      } else {
+        panel.classList.add('open');
+        backdrop.classList.add('show');
+        document.querySelectorAll('.btn-back[onclick*="toggleHistory"]').forEach(b => b.classList.add('history-active'));
+      }
+    }
+    function closeHistory() {
+      document.getElementById('historySlidePanel').classList.remove('open');
+      document.getElementById('historyBackdrop').classList.remove('show');
+      document.querySelectorAll('.btn-back[onclick*="toggleHistory"]').forEach(b => b.classList.remove('history-active'));
+    }
+
+    // ═══ #2: AI toggle from header (toggle open/close, backdrop close) ═══
+    let aiEditorOpen = false;
+    function toggleAIFromHeader() {
+      const body = document.getElementById('editEditorBody');
+      const btn = document.querySelector('#screen-edit .header-actions [onclick*="toggleAIFromHeader"]');
+      if (body.classList.contains('panel-closed')) {
+        // Open
+        body.classList.remove('panel-closed');
+        editPanelOpen = true;
+        aiEditorOpen = true;
+        switchEditTab('ai');
+        if (btn) btn.classList.add('ai-active');
+        showToast('✨ AI 助手已打开');
+      } else if (editPanelTab === 'ai' && aiEditorOpen) {
+        // Close (only if AI tab was opened from header)
+        closeEditPanel();
+        aiEditorOpen = false;
+        if (btn) btn.classList.remove('ai-active');
+        showToast('AI 助手已关闭');
+      } else {
+        // Panel open but on edit tab → switch to AI
+        switchEditTab('ai');
+        aiEditorOpen = true;
+        if (btn) btn.classList.add('ai-active');
+      }
+    }
+
+    // ── Click preview area to close AI panel ──
+    document.addEventListener('click', function(e) {
+      const preview = document.querySelector('#editEditorBody .preview-area');
+      if (!preview || !aiEditorOpen) return;
+      // Check if click target is inside the preview area (not panel or rail)
+      if (preview.contains(e.target)) {
+        closeEditPanel();
+      }
+    });
+
+    // ── Upload menu: fixed positioning (show→measure→position to avoid offsetHeight=0) ──
+    document.addEventListener('click', function(e) {
+      const btn = e.target.closest('[data-upload]');
+      if (!btn) {
+        const openMenu = document.getElementById('uploadMenuOverlay');
+        if (openMenu && !e.target.closest('#uploadMenuOverlay')) {
+          openMenu.classList.remove('show');
+        }
+        return;
+      }
+      e.stopPropagation();
+      const menu = document.getElementById('uploadMenuOverlay');
+      if (!menu) return;
+      // Toggle off if already open
+      if (menu.classList.contains('show')) {
+        menu.classList.remove('show');
+        return;
+      }
+      // Show first so we can measure height
+      menu.style.visibility = 'hidden';
+      menu.classList.add('show');
+      const rect = btn.getBoundingClientRect();
+      const menuH = menu.offsetHeight;
+      // Position: above the + button, left-aligned with it
+      const top = rect.top - menuH - 8;
+      const left = rect.left;
+      menu.style.left = left + 'px';
+      menu.style.top = Math.max(top, 8) + 'px';
+      menu.style.visibility = 'visible';
+    });
+
+    // ═══ EDITOR SCREEN LOGIC ═══
+    let editActiveSection = 'personal';
+    let editPanelTab = 'edit';
+    let editPanelOpen = true;
+    let toastTimer = null;
+
+    // Init
+    setTimeout(() => {
+      const firstModule = document.querySelector('#editModuleRail .module-item[data-section="personal"]');
+      if (firstModule) selectModule(firstModule, 'personal', 'edit');
+    }, 100);
+
+    function closeEditPanel() {
+      document.getElementById('editEditorBody').classList.add('panel-closed');
+      editPanelOpen = false;
+      aiEditorOpen = false;
+      const btn = document.querySelector('#screen-edit .header-actions [onclick*="toggleAIFromHeader"]');
+      if (btn) btn.classList.remove('ai-active');
+    }
+
+    function selectModule(el, section, screen) {
+      const rail = document.getElementById(screen === 'wizard' ? 'wizardModuleRail' : 'editModuleRail');
+      if (!rail) return;
+      rail.querySelectorAll('.module-item').forEach(m => m.classList.remove('active'));
+      el.classList.add('active');
+
+      const previewEl = document.getElementById((screen === 'wizard' ? 'wizardPreview-' : 'editPreview-') + section);
+      document.querySelectorAll('#' + (screen === 'wizard' ? 'screen-wizard' : 'screen-edit') + ' .resume-section, #' + (screen === 'wizard' ? 'screen-wizard' : 'screen-edit') + ' .resume-head').forEach(s => s.classList.remove('panel-open'));
+      if (previewEl) previewEl.classList.add('panel-open');
+
+      const body = document.getElementById(screen === 'wizard' ? 'wizardEditorBody' : 'editEditorBody');
+      if (body) { body.classList.remove('panel-closed'); }
+      editPanelOpen = true;
+      editActiveSection = section;
+      aiEditorOpen = false; // ← module click switches to manual edit, not AI
+
+      if (screen === 'edit') updateEditPanel(section);
+    }
+
+    function selectPreviewSection(section, screen) {
+      const rail = document.getElementById(screen === 'wizard' ? 'wizardModuleRail' : 'editModuleRail');
+      if (!rail) return;
+      const railEl = rail.querySelector(`.module-item[data-section="${section}"]`);
+      if (railEl) selectModule(railEl, section, screen);
+    }
+
+    function updateEditPanel(section) {
+      const data = getSectionData(section);
+      document.getElementById('editPanelSectionLabel').textContent = data.label;
+      document.getElementById('editPanelTitle').textContent = '编辑' + data.label;
+      document.getElementById('editModuleName').value = data.label;
+
+      // ★ 1. Sub-items for list-type modules
+      const subItemsArea = document.getElementById('editSubItems');
+      const regularFields = document.getElementById('editRegularFields');
+      if (data.hasSubItems) {
+        subItemsArea.style.display = 'block';
+        regularFields.style.display = 'none';
+        document.getElementById('editSubItemsList').innerHTML = renderSubItems(data);
+      } else {
+        subItemsArea.style.display = 'none';
+        regularFields.style.display = 'block';
+        document.getElementById('editFieldLabel1').textContent = data.field1;
+        document.getElementById('editFieldLabel2').textContent = data.field2;
+        document.getElementById('editFieldLabel3').textContent = data.field3;
+        const inputs = document.querySelectorAll('#editRegularFields .text-input');
+        if (inputs[0]) inputs[0].value = data.value1;
+        if (inputs[1]) inputs[1].value = data.value2;
+        if (inputs[2]) inputs[2].value = data.value3;
+        const photoRow = document.getElementById('editPhotoRow');
+        if (photoRow) photoRow.style.display = section === 'personal' ? 'block' : 'none';
+        const textareaRow = document.getElementById('editTextareaRow');
+        const textarea = document.getElementById('editTextarea');
+        if (textareaRow && textarea) {
+          textareaRow.style.display = data.hasTextarea ? 'block' : 'none';
+          if (data.textareaLabel) document.getElementById('editTextareaLabel').textContent = data.textareaLabel;
+          if (data.textareaValue) textarea.value = data.textareaValue;
+        }
+      }
+    }
+
+    function renderSubItems(data) {
+      const fields = data.subItemFields; // ['公司','职位','时间','描述']
+      return data.subItems.map((item, idx) => `
+        <div class="sub-item">
+          <div class="sub-item-header">
+            <span class="sub-item-num">#${idx + 1}</span>
+            <button class="sub-item-remove" onclick="this.closest('.sub-item').remove();showToast('已移除第${idx+1}段')" title="移除">✕</button>
+          </div>
+          <input class="text-input" placeholder="${fields[0]}" value="${item[0] || ''}" style="margin-bottom:6px" />
+          <input class="text-input" placeholder="${fields[1]}" value="${item[1] || ''}" style="margin-bottom:6px" />
+          <input class="text-input" placeholder="${fields[2]}" value="${item[2] || ''}" style="margin-bottom:8px" />
+          <label style="font-size:11px;font-weight:900;color:var(--on-variant);margin-bottom:4px;display:block">${fields[3]}</label>
+          <textarea class="text-area" placeholder="每行一条工作描述">${item[3] || ''}</textarea>
+        </div>
+      `).join('');
+    }
+
+    function addSubItem() {
+      const section = editActiveSection;
+      const data = getSectionData(section);
+      if (!data.hasSubItems) return;
+      const list = document.getElementById('editSubItemsList');
+      const fields = data.subItemFields;
+      const div = document.createElement('div');
+      div.className = 'sub-item';
+      const idx = list.children.length + 1;
+      div.innerHTML = `
+        <div class="sub-item-header">
+          <span class="sub-item-num">#${idx}</span>
+          <button class="sub-item-remove" onclick="this.closest('.sub-item').remove();renumberSubItems()" title="移除">✕</button>
+        </div>
+        <input class="text-input" placeholder="${fields[0]}" style="margin-bottom:6px" />
+        <input class="text-input" placeholder="${fields[1]}" style="margin-bottom:6px" />
+        <input class="text-input" placeholder="${fields[2]}" style="margin-bottom:8px" />
+        <label style="font-size:11px;font-weight:900;color:var(--on-variant);margin-bottom:4px;display:block">${fields[3]}</label>
+        <textarea class="text-area" placeholder="每行一条工作描述"></textarea>
+      `;
+      list.appendChild(div);
+      showToast('已添加新段落');
+    }
+
+    function renumberSubItems() {
+      const list = document.getElementById('editSubItemsList');
+      list.querySelectorAll('.sub-item-num').forEach((el, i) => { el.textContent = '#' + (i + 1); });
+    }
+
+    function getSectionData(section) {
+      const data = {
+        personal: { label:'个人信息', field1:'姓名', value1:'郭欣灵', field2:'求职意向', value2:'AI 产品经理 / 海外运营负责人', field3:'联系方式', value3:'北京 · guoxinling.cn · 137****7045', hasTextarea:false, hasSubItems:false },
+        summary: { label:'个人概述', field1:'中文概述', value1:'8年互联网与海外游戏发行经验', field2:'英文概述(可选)', value2:'8 years in internet & overseas game publishing', field3:'', value3:'', hasTextarea:true, textareaLabel:'详细内容', textareaValue:'8 年互联网与海外游戏发行经验，近年深耕 AI 产品与自动化工作流。擅长将业务问题拆解为可落地的产品方案，具备从 0 到 1 独立构建 6 款 AI 工具的全栈实践能力。', hasSubItems:false },
+        work: { label:'工作经历', hasSubItems:true,
+          subItemFields: ['公司名称', '职位', '时间', '工作描述（每行一条）'],
+          subItems: [
+            ['某头部游戏公司', '海外运营负责人', '2018 — 2023', '主导德国市场全链路发行策略，统筹本地化、UA 增长、商业化与跨团队协作，实现 3 亿人民币流水。\n从 0 到 1 推进 3 款产品的海外上线，沉淀市场策略 SOP 与数据复盘机制。\n搭建本地化质检流程，将翻译错误率从 12% 降至 2% 以下。'],
+            ['某互联网教育公司', '运营经理', '2016 — 2018', '管理 10 人运营团队，年度用户留存率提升 22%。\n策划并执行多场线上活动，单场最高 UV 50 万+。'],
+          ]
+        },
+        projects: { label:'AI 产品实践', hasSubItems:true,
+          subItemFields: ['产品/项目名称', '你的角色', '时间', '产品描述（每行一条）'],
+          subItems: [
+            ['简历编辑器 · AI 求职工具', '全栈独立开发者', '2025 — 至今', '设计对话式简历生成向导，集成 JD 匹配分析、OCR 截图识别、面试预测等 AI 能力。\n全栈独立开发（React + TypeScript + Zustand），支持 PDF/PNG 导出与中英双语切换。'],
+            ['AI 自动化工作流工具集', '产品 & 开发者', '2024 — 2025', '独立开发 6 款 AI 效率工具，覆盖文本处理、图片生成、数据分析场景。\n累计服务 200+ 用户，日活跃用户 40+。'],
+          ]
+        },
+        education: { label:'教育背景', hasSubItems:true,
+          subItemFields: ['学校', '学位/专业', '时间', '亮点（每行一条）'],
+          subItems: [
+            ['北京外国语大学', '德语语言文学 学士', '2011 — 2015', '德语专业八级，在校期间获国家奖学金、校级优秀毕业生。\n参与中德文化交流项目，担任翻译志愿者。'],
+          ]
+        },
+        skills: { label:'专业技能', field1:'技能分类', value1:'', field2:'技能列表', value2:'AI 产品设计 / LLM 应用开发 / 海外游戏发行', field3:'', value3:'', hasTextarea:false, hasSubItems:false },
+        languages: { label:'语言能力', field1:'语言', value1:'德语', field2:'水平', value2:'C2 专业八级', field3:'', value3:'', hasTextarea:false, hasSubItems:false },
+        selfeval: { label:'自我评价', field1:'中文评价', value1:'', field2:'英文评价(可选)', value2:'', field3:'', value3:'', hasTextarea:true, textareaLabel:'详细内容', textareaValue:'结果导向的产品人，善于在模糊需求中提炼可执行方案。', hasSubItems:false },
+      };
+      return data[section] || data.personal;
+    }
+
+    function switchEditTab(tab) {
+      editPanelTab = tab;
+      const isAI = tab === 'ai';
+      document.getElementById('editTabEdit').classList.toggle('active', !isAI);
+      document.getElementById('editTabAI').classList.toggle('active', isAI);
+      document.getElementById('editPanelForm').classList.toggle('active', !isAI);
+      document.getElementById('editPanelAI').classList.toggle('active', isAI);
+      document.getElementById('editCapsules').style.display = isAI ? 'grid' : 'none';
+      document.getElementById('editChatInputRow').style.display = isAI ? 'flex' : 'none';
+
+      if (isAI) {
+        const chatArea = document.getElementById('editChatArea');
+        chatArea.scrollTop = chatArea.scrollHeight;
+      }
+    }
+
+    function triggerAI(section, screen) {
+      const body = document.getElementById(screen === 'wizard' ? 'wizardEditorBody' : 'editEditorBody');
+      if (body) body.classList.remove('panel-closed');
+      editPanelOpen = true;
+      const rail = document.getElementById(screen === 'wizard' ? 'wizardModuleRail' : 'editModuleRail');
+      if (rail) {
+        const railEl = rail.querySelector(`.module-item[data-section="${section}"]`);
+        if (railEl) selectModule(railEl, section, screen);
+      }
+      if (screen === 'edit') switchEditTab('ai');
+      const labels = { personal:'个人信息', summary:'个人概述', work:'工作经历', projects:'AI 产品实践', education:'教育背景', skills:'专业技能', languages:'语言能力', selfeval:'自我评价' };
+      if (screen === 'edit') {
+        addEditChat('user', `帮我优化「${labels[section] || section}」部分`);
+        setTimeout(() => addEditChat('ai', `好的！我来看看「${labels[section] || section}」。建议从量化成果、动作动词、业务影响三个方向优化。需要我直接帮你改写吗？`), 700);
+      }
+      showToast(`已切换到 ${labels[section]} AI 对话`);
+    }
+
+    function triggerEditAIAction(action) {
+      const labels = { polish:'润色经历', adapt:'JD 匹配', diagnose:'诊断简历', interview:'面试预测' };
+      if (action === 'adapt') {
+        // Show JD input area, hide initial placeholder bubble
+        document.getElementById('editJdInput').classList.add('show');
+        document.getElementById('editJdText').focus();
+        const ph = document.querySelector('#editChatArea .chat-placeholder');
+        if (ph) ph.style.display = 'none';
+        showToast('请粘贴目标岗位 JD 或上传截图');
+        return;
+      }
+      addEditChat('user', `使用「${labels[action]}」功能`);
+      setTimeout(() => {
+        const replies = {
+          polish:'我会列出你的工作经历，让你选择 STAR 法则、结果导向或精炼压缩三种润色风格。',
+          diagnose:'我将从结构完整度、表达专业度、岗位匹配度、竞争差异化四个维度诊断整份简历。',
+          interview:'我会基于当前简历生成 10 道面试深挖问题，覆盖经历、能力、场景假设等多个类别。',
+        };
+        addEditChat('ai', replies[action] || '好的，我来帮你处理。');
+      }, 600);
+    }
+
+    function submitJdMatch() {
+      const jdText = document.getElementById('editJdText').value.trim();
+      if (!jdText) { showToast('请先粘贴 JD 内容'); return; }
+      const ph = document.querySelector('#editChatArea .chat-placeholder');
+      if (ph) ph.remove();
+      addEditChat('user', '使用「🎯 JD 匹配」功能');
+      addEditChat('ai', '正在分析岗位匹配度…<br><br>我将从<strong>关键词匹配</strong>、<strong>经验缺口</strong>、<strong>表述建议</strong>三个维度分析。');
+      closeJdInput();
+      showToast('JD 匹配分析已开始');
+    }
+
+    function closeJdInput() {
+      document.getElementById('editJdInput').classList.remove('show');
+      document.getElementById('editJdText').value = '';
+    }
+
+    function sendEditChat() {
+      const input = document.getElementById('editChatInput');
+      const text = input.value.trim();
+      if (!text) return;
+      addEditChat('user', text);
+      input.value = '';
+      setTimeout(() => addEditChat('ai', '收到！正在处理…<span class="typing-cursor"></span>'), 700);
+    }
+
+    function addEditChat(role, text) {
+      const chatArea = document.getElementById('editChatArea');
+      chatArea.querySelectorAll('.chat-placeholder').forEach(el => el.remove());
+      const div = document.createElement('div');
+      div.className = `chat-bubble chat-${role}`;
+      div.innerHTML = text;
+      chatArea.appendChild(div);
+      chatArea.scrollTop = chatArea.scrollHeight;
+    }
+
+    // ═══ WIZARD SCREEN LOGIC ═══
+    function sendWizardChat() {
+      const input = document.getElementById('wizardChatInput');
+      const text = input.value.trim();
+      if (!text) return;
+      const chatArea = document.getElementById('wizardChatArea');
+      const div = document.createElement('div');
+      div.className = 'wiz-bubble wiz-user';
+      div.textContent = text;
+      chatArea.appendChild(div);
+      input.value = '';
+      chatArea.scrollTop = chatArea.scrollHeight;
+
+      setTimeout(() => {
+        const aiDiv = document.createElement('div');
+        aiDiv.className = 'wiz-bubble wiz-ai';
+        aiDiv.innerHTML = '收到！我已经更新了简历预览。接下来想了解：<br><br><strong>你还有其他想补充的经历或技能吗？</strong><br>比如：项目经验、语言能力、证书等。';
+        chatArea.appendChild(aiDiv);
+        chatArea.scrollTop = chatArea.scrollHeight;
+      }, 1000);
+    }
+
+    function wizardCapsule(action) {
+      const labels = { polish:'润色经历', adapt:'JD 匹配', diagnose:'诊断简历', interview:'面试预测' };
+      const chatArea = document.getElementById('wizardChatArea');
+      const div = document.createElement('div');
+      div.className = 'wiz-bubble wiz-user';
+      div.textContent = `使用「${labels[action]}」功能`;
+      chatArea.appendChild(div);
+      chatArea.scrollTop = chatArea.scrollHeight;
+      setTimeout(() => {
+        const aiDiv = document.createElement('div');
+        aiDiv.className = 'wiz-bubble wiz-ai';
+        aiDiv.innerHTML = `好的，我来帮你做<strong>${labels[action]}</strong>。请稍候…`;
+        chatArea.appendChild(aiDiv);
+        chatArea.scrollTop = chatArea.scrollHeight;
+      }, 600);
+    }
+
+    function wizardFinish() {
+      showToast('对话式创建完成！切换到编辑模式可继续精修');
+      showScreen('screen-edit');
+    }
+
+    function sendNewUserChat() {
+      const input = document.getElementById('newUserChatInput');
+      const text = input.value.trim();
+      if (!text) return;
+      const chatArea = document.getElementById('newUserChatArea');
+      chatArea.querySelectorAll('.chat-placeholder').forEach(el => el.remove());
+      const div = document.createElement('div');
+      div.className = 'chat-bubble chat-user';
+      div.textContent = text;
+      chatArea.appendChild(div);
+      input.value = '';
+      chatArea.scrollTop = chatArea.scrollHeight;
+      setTimeout(() => {
+        const aiDiv = document.createElement('div');
+        aiDiv.className = 'chat-bubble chat-ai';
+        aiDiv.innerHTML = '收到！我会根据你的信息来完善简历。继续告诉我更多细节。<span class="typing-cursor"></span>';
+        chatArea.appendChild(aiDiv);
+        chatArea.scrollTop = chatArea.scrollHeight;
+      }, 800);
+    }
+
+    // ═══ New User dual-tab switch ═══
+    function switchNewUserTab(tab) {
+      const isAI = tab === 'ai';
+      document.getElementById('newUserTabEdit').classList.toggle('active', !isAI);
+      document.getElementById('newUserTabAI').classList.toggle('active', isAI);
+      document.getElementById('newUserEdit').classList.toggle('active', !isAI);
+      document.getElementById('newUserEdit').style.display = isAI ? 'none' : 'flex';
+      document.getElementById('newUserAI').classList.toggle('active', isAI);
+      document.getElementById('newUserAI').style.display = isAI ? 'flex' : 'none';
+      document.getElementById('newUserCapsules').style.display = isAI ? 'grid' : 'none';
+      // Update panel head
+      const headLabel = document.querySelector('#screen-newuser .panel-label');
+      const headTitle = document.querySelector('#screen-newuser .panel-head strong');
+      if (headLabel) headLabel.textContent = isAI ? 'AI 简历助手' : '手动编辑';
+      if (headTitle) headTitle.textContent = isAI ? '对话式创建简历' : '逐模块填写';
+      if (isAI) {
+        const chatArea = document.getElementById('newUserChatArea');
+        if (chatArea) chatArea.scrollTop = chatArea.scrollHeight;
+      }
+    }
+
+    // ═══ New User JD Match ═══
+    function openNewUserJdInput() {
+      document.getElementById('newUserJdInput').classList.add('show');
+      document.getElementById('newUserJdText').focus();
+      document.querySelectorAll('#newUserChatArea .chat-placeholder').forEach(el => el.style.display = 'none');
+      showToast('请粘贴目标岗位 JD 或上传截图');
+    }
+    function submitNewUserJdMatch() {
+      const jdText = document.getElementById('newUserJdText').value.trim();
+      if (!jdText) { showToast('请先粘贴 JD 内容'); return; }
+      const chatArea = document.getElementById('newUserChatArea');
+      chatArea.querySelectorAll('.chat-placeholder').forEach(el => el.remove());
+      const userDiv = document.createElement('div');
+      userDiv.className = 'chat-bubble chat-user';
+      userDiv.textContent = '使用「🎯 JD 匹配」分析';
+      chatArea.appendChild(userDiv);
+      const aiDiv = document.createElement('div');
+      aiDiv.className = 'chat-bubble chat-ai';
+      aiDiv.innerHTML = '正在分析岗位匹配度…<br><br>从<strong>关键词匹配</strong>、<strong>经验缺口</strong>、<strong>表述建议</strong>三个维度分析。';
+      chatArea.appendChild(aiDiv);
+      chatArea.scrollTop = chatArea.scrollHeight;
+      document.getElementById('newUserJdInput').classList.remove('show');
+      document.getElementById('newUserJdText').value = '';
+      showToast('JD 匹配分析已开始');
+    }
+
+    // ═══ Shared ═══
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      toast.textContent = msg;
+      toast.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toast.classList.remove('show'), 2000);
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        const activeScreen = document.querySelector('.screen.active');
+        if (activeScreen && activeScreen.id === 'screen-edit') closeEditPanel();
+      }
+    });
+  </script>
+</body>
+</html>
