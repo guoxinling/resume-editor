@@ -55,10 +55,6 @@ interface AIStore extends AIPanelState {
   setAdaptResult: (result: AdaptResult | null) => void
   setAdaptLoading: (loading: boolean) => void
   setAdaptError: (error: string | null) => void
-  // 诊断修改跟踪
-  appliedModIds: string[]
-  markModApplied: (modKey: string) => void
-  clearAppliedMods: () => void
   // Interview
   setInterviewQuestions: (questions: InterviewQuestion[]) => void
   setInterviewLoading: (loading: boolean) => void
@@ -85,7 +81,6 @@ const initialPanel: AIPanelState = {
   adaptResult: null,
   adaptLoading: false,
   adaptError: null,
-  appliedModIds: [],
   interviewQuestions: [],
   interviewLoading: false,
   interviewError: null,
@@ -115,8 +110,6 @@ export const useAIStore = create<AIStore>((set) => ({
   setAdaptResult: (result) => set({ adaptResult: result }),
   setAdaptLoading: (loading) => set({ adaptLoading: loading }),
   setAdaptError: (error) => set({ adaptError: error }),
-  markModApplied: (modKey) => set((s) => ({ appliedModIds: s.appliedModIds.includes(modKey) ? s.appliedModIds : [...s.appliedModIds, modKey] })),
-  clearAppliedMods: () => set({ appliedModIds: [] }),
   setInterviewQuestions: (questions) => set({ interviewQuestions: questions }),
   setInterviewLoading: (loading) => set({ interviewLoading: loading }),
   setInterviewError: (error) => set({ interviewError: error }),

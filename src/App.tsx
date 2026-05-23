@@ -6,18 +6,13 @@ import PreviewPanel from './components/PreviewPanel'
 import DraftManager from './components/DraftManager'
 import AIPanel from './components/ai/AIPanel'
 import LandingPage from './components/LandingPage'
-import NewResumeModal from './components/NewResumeModal'
-import HistoryPanel from './components/HistoryPanel'
-import CreditsPanel from './components/CreditsPanel'
-import SettingsEntry from './components/SettingsEntry'
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useAutoSave } from './utils/autoSave'
-import { listDrafts, loadDraft } from './utils/storage'
-import { useCreditsStore } from './store/creditsStore'
-import type { DraftMeta, ResumeData } from './types/resume'
+import { loadDraft } from './utils/storage'
+import type { ResumeData } from './types/resume'
 
 const AUTO_SAVE_DRAFT_ID = 'auto-save'
-const TEMPLATE_NAMES = ['经典商务', '极简白纸', '科技产品', '海外双语']
+const LANDING_KEY = 'resume-has-visited'
 
 /** Migrate old stored data to the current schema (safe against missing/extra fields). */
 function migrateData(raw: unknown): ResumeData {
@@ -85,35 +80,29 @@ function migrateData(raw: unknown): ResumeData {
 
 export default function App() {
   const [showDrafts, setShowDrafts] = useState(false)
-  const [showNewResume, setShowNewResume] = useState(false)
-  const [showCredits, setShowCredits] = useState(false)
   const [loaded, setLoaded] = useState(false)
   const [loadError, setLoadError] = useState<string | null>(null)
-  const [page, setPage] = useState<'landing' | 'editor'>('landing')
-  const [drafts, setDrafts] = useState<DraftMeta[]>([])
-  const [isLoggedIn] = useState(() => localStorage.getItem('jianliya-demo-logged-in') === '1')
   const loadData = useResumeStore((s) => s.loadData)
-  const setDraftInfo = useResumeStore((s) => s.setDraftInfo)
-  const resetResume = useResumeStore((s) => s.reset)
+
+  // Landing page
+  const [showLanding, setShowLanding] = useState(() => {
+    return localStorage.getItem(LANDING_KEY) !== '1'
+  })
 
   // Responsive: editor visibility toggle for small screens
   const [showEditor, setShowEditor] = useState(true)
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const isPanelOpen = useAIStore((s) => s.isOpen)
-  const credits = useCreditsStore()
-
-  const refreshDrafts = useCallback(() => {
-    listDrafts().then((all) => setDrafts(all.filter((draft) => draft.id !== AUTO_SAVE_DRAFT_ID)))
-  }, [])
 
   const handleLandingWizard = () => {
-    setPage('editor')
+    setShowLanding(false)
+    localStorage.setItem(LANDING_KEY, '1')
     useAIStore.getState().setActiveTab('wizard')
     useAIStore.getState().openPanel()
   }
 
   const handleLandingImport = () => {
-    setPage('editor')
+    setShowLanding(false)
+    localStorage.setItem(LANDING_KEY, '1')
     // Trigger file input after landing page unmounts
     setTimeout(() => fileInputRef.current?.click(), 300)
   }
@@ -141,36 +130,8 @@ export default function App() {
   }, [loadData])
 
   const handleDraftContinue = () => {
-    setPage('editor')
-  }
-
-  const handleBlankResume = () => {
-    setShowNewResume(false)
-    resetResume()
-    setPage('editor')
-  }
-
-  const handleTemplateSelect = (templateIndex: number) => {
-    setShowNewResume(false)
-    resetResume()
-    setDraftInfo(null, `${TEMPLATE_NAMES[templateIndex] || '模板'}简历`)
-    setPage('editor')
-  }
-
-  const handleViewAllTemplates = () => {
-    setShowNewResume(false)
-    window.location.hash = 'templates'
-    setPage('landing')
-  }
-
-  const handleLoadHistoryResume = async (id: string) => {
-    const data = await loadDraft(id)
-    const meta = drafts.find((draft) => draft.id === id)
-    if (data) {
-      loadData(data)
-      setDraftInfo(id, meta?.name || '未命名简历')
-      setPage('editor')
-    }
+    setShowLanding(false)
+    localStorage.setItem(LANDING_KEY, '1')
   }
 
   useAutoSave()
@@ -212,10 +173,6 @@ export default function App() {
     return () => { cancelled = true }
   }, [loadData])
 
-  useEffect(() => {
-    refreshDrafts()
-  }, [refreshDrafts, page, showDrafts])
-
   if (!loaded) return null
 
   if (loadError) {
@@ -234,7 +191,7 @@ export default function App() {
     )
   }
 
-  if (page === 'landing') {
+  if (showLanding) {
     return (
       <LandingPage
         onImportClick={handleLandingImport}
@@ -246,28 +203,19 @@ export default function App() {
 
   return (
     <div className="h-screen flex items-center justify-center bg-gray-100 lg:p-3">
-      {/* Main content wrapper — shifts left when AI panel opens */}
-      <div className={`w-full transition-[margin-right] duration-300 ease-out ${isPanelOpen ? 'lg:mr-[520px]' : ''}`}>
-      <div className="flex flex-col lg:rounded-2xl bg-white lg:shadow-lg lg:shadow-gray-200/40 overflow-hidden max-w-[1440px] mx-auto h-full lg:max-h-[calc(100vh-24px)]">
+      <div className="flex flex-col lg:rounded-2xl bg-white lg:shadow-lg lg:shadow-gray-200/40 overflow-hidden w-full max-w-[1440px] h-full lg:max-h-[calc(100vh-24px)]">
         <Toolbar
           onOpenDrafts={() => setShowDrafts(true)}
-          onNewClick={() => setShowNewResume(true)}
-          onCreditsClick={() => setShowCredits((open) => !open)}
           showEditor={showEditor}
           onToggleEditor={() => setShowEditor(!showEditor)}
           onGoHome={() => {
-            setPage('landing')
+            localStorage.removeItem(LANDING_KEY)
+            setShowLanding(true)
           }}
         />
 
         {/* ── Editor + Preview (responsive) ── */}
         <div className="flex-1 flex overflow-hidden relative">
-          <HistoryPanel
-            isLoggedIn={isLoggedIn}
-            resumes={drafts}
-            onLoadResume={handleLoadHistoryResume}
-          />
-
           {/* Desktop sidebar editor — hidden by default on mobile */}
           <div className={`hidden lg:flex ${showEditor ? 'lg:flex' : 'lg:hidden'}`}>
             <EditorPanel />
@@ -306,22 +254,6 @@ export default function App() {
       </button>
 
       {showDrafts && <DraftManager onClose={() => setShowDrafts(false)} />}
-      <NewResumeModal
-        isOpen={showNewResume}
-        onClose={() => setShowNewResume(false)}
-        onWizardClick={() => { setShowNewResume(false); handleLandingWizard() }}
-        onImportClick={() => { setShowNewResume(false); handleLandingImport() }}
-        onBlankClick={handleBlankResume}
-        onTemplateSelect={handleTemplateSelect}
-        onViewAllTemplates={handleViewAllTemplates}
-      />
-      <CreditsPanel
-        isOpen={showCredits}
-        onClose={() => setShowCredits(false)}
-        daily={Math.max(0, credits.dailyTotal - credits.dailyUsed)}
-        total={credits.dailyTotal + credits.purchased}
-      />
-      <SettingsEntry isLoggedIn={isLoggedIn} />
       <AIPanel />
       {/* Hidden file input for landing page import trigger */}
       <input
@@ -331,7 +263,6 @@ export default function App() {
         className="hidden"
         onChange={handleLandingFileImport}
       />
-      </div>
     </div>
   )
 }

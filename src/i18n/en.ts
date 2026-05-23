@@ -1,7 +1,7 @@
 import { zh } from './zh'
 
 export const en = {
-  appTitle: 'Jianliya',
+  appTitle: 'Resume Editor',
   toolbar: {
     import: 'Import MD',
     exportPdf: 'Export PDF',

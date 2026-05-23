@@ -1,0 +1,1258 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>简历鸭 Editor 重设计 — Material You 效果图</title>
+  <style>
+    :root {
+      --primary: #6750a4;
+      --primary-dim: #5f479e;
+      --on-primary: #ffffff;
+      --primary-container: #eaddff;
+      --on-primary-container: #21005d;
+      --secondary-container: #e8def8;
+      --surface: #fffbfe;
+      --surface-low: #f7f2fa;
+      --surface-container: #f3edf7;
+      --surface-high: #ece6f0;
+      --on-surface: #1c1b1f;
+      --on-variant: #49454f;
+      --outline: #79747e;
+      --outline-variant: #cac4d0;
+      --success: #1b873f;
+      --success-container: #d2f2e0;
+      --error: #b3261e;
+      --error-container: #f9dedc;
+      --shadow-1: 0 1px 2px rgba(28,27,31,.08), 0 1px 3px rgba(28,27,31,.06);
+      --shadow-2: 0 8px 24px rgba(28,27,31,.08);
+      --shadow-3: 0 18px 48px rgba(103,80,164,.16);
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --radius-xl: 24px;
+      --radius-2xl: 32px;
+      --radius-full: 999px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: "Inter", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+      color: var(--on-surface);
+      background: linear-gradient(180deg, #fffbfe 0%, #f8f3fb 52%, #fffbfe 100%);
+      -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    button, input, textarea { font: inherit; }
+    button { cursor: pointer; border: 0; }
+    a { color: inherit; text-decoration: none; }
+
+    /* ── Page header ── */
+    .page-header {
+      text-align: center;
+      padding: 28px 20px 18px;
+      flex-shrink: 0;
+    }
+    .page-header .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      border-radius: var(--radius-full);
+      background: var(--primary-container);
+      color: var(--primary);
+      font-size: 12px;
+      font-weight: 900;
+    }
+    .page-header h1 {
+      font-size: 26px;
+      font-weight: 900;
+      margin: 12px 0 4px;
+      letter-spacing: 0;
+    }
+    .page-header p {
+      color: var(--on-variant);
+      font-size: 14px;
+    }
+
+    /* ── Layout switcher ── */
+    .switcher {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      padding: 4px;
+      margin: 0 auto 20px;
+      border-radius: var(--radius-full);
+      background: var(--surface-container);
+      width: fit-content;
+      border: 1px solid rgba(202,196,208,.65);
+    }
+    .switcher button {
+      height: 36px;
+      padding: 0 20px;
+      border-radius: var(--radius-full);
+      background: transparent;
+      color: var(--on-variant);
+      font-size: 14px;
+      font-weight: 700;
+      transition: all .18s ease;
+    }
+    .switcher button.active {
+      color: var(--primary);
+      background: var(--surface);
+      box-shadow: var(--shadow-1);
+    }
+
+    /* ── Editor shell ── */
+    .editor-shell {
+      flex: 1;
+      margin: 0 20px 20px;
+      border-radius: var(--radius-2xl);
+      background: var(--surface);
+      border: 1px solid rgba(202,196,208,.6);
+      box-shadow: var(--shadow-2);
+      overflow: hidden;
+      display: grid;
+      grid-template-rows: 60px 1fr;
+      max-height: calc(100vh - 200px);
+      min-height: 700px;
+    }
+
+    /* ── Editor header ── */
+    .editor-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 0 18px;
+      border-bottom: 1px solid rgba(202,196,208,.65);
+      background: rgba(255,251,254,.9);
+      backdrop-filter: blur(16px);
+      z-index: 20;
+    }
+    .editor-title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+    .editor-title .brand-mark {
+      width: 32px; height: 32px;
+      display: grid; place-items: center;
+      border-radius: 12px;
+      background: var(--primary);
+      color: var(--on-primary);
+      font-size: 14px; font-weight: 900;
+    }
+    .editor-title strong {
+      font-size: 15px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-weight: 800;
+    }
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .credit-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      height: 36px;
+      padding: 0 12px;
+      border-radius: var(--radius-full);
+      color: var(--primary);
+      background: var(--primary-container);
+      font-size: 13px;
+      font-weight: 900;
+    }
+    .btn {
+      height: 40px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 0 18px;
+      border-radius: var(--radius-full);
+      border: 0;
+      font-size: 13px;
+      font-weight: 800;
+      white-space: nowrap;
+      transition: transform .18s ease, box-shadow .18s ease, background .18s ease;
+    }
+    .btn:hover { transform: translateY(-1px); }
+    .btn-primary {
+      color: var(--on-primary);
+      background: var(--primary);
+      box-shadow: 0 10px 24px rgba(103,80,164,.22);
+    }
+    .btn-primary:hover { background: var(--primary-dim); box-shadow: var(--shadow-3); }
+    .btn-secondary {
+      color: var(--primary);
+      background: var(--surface);
+      border: 1px solid var(--outline-variant);
+    }
+    .btn-secondary:hover {
+      border-color: rgba(103,80,164,.5);
+      background: rgba(234,221,255,.48);
+    }
+    .btn-ghost {
+      color: var(--on-variant);
+      background: transparent;
+      border: 1px solid var(--outline-variant);
+    }
+    .btn-ghost:hover { background: rgba(103,80,164,.06); }
+    .btn-sm {
+      height: 32px;
+      padding: 0 12px;
+      font-size: 12px;
+    }
+
+    /* ── Editor body: 3-column grid ── */
+    .editor-body {
+      display: grid;
+      grid-template-columns: 88px 1fr 380px;
+      min-height: 0;
+      overflow: hidden;
+      transition: grid-template-columns .28s ease;
+    }
+    .editor-body.panel-closed {
+      grid-template-columns: 88px 1fr 0;
+    }
+
+    /* ── Module rail (left) ── */
+    .module-rail {
+      min-height: 0;
+      padding: 12px 10px;
+      border-right: 1px solid rgba(202,196,208,.65);
+      background: var(--surface);
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      user-select: none;
+    }
+    .module-item {
+      width: 68px;
+      min-height: 64px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      padding: 8px 4px;
+      border-radius: 18px;
+      color: var(--on-variant);
+      background: transparent;
+      border: 1.5px solid transparent;
+      font-size: 11px;
+      font-weight: 800;
+      text-align: center;
+      cursor: grab;
+      transition: all .18s ease;
+    }
+    .module-item:active { cursor: grabbing; }
+    .module-item .item-icon {
+      font-size: 20px;
+      line-height: 1;
+      transition: transform .18s ease;
+    }
+    .module-item:hover { color: var(--primary); background: rgba(103,80,164,.06); }
+    .module-item:hover .item-icon { transform: scale(1.1); }
+    .module-item.active {
+      color: var(--primary);
+      background: var(--primary-container);
+      border-color: rgba(103,80,164,.2);
+    }
+    .module-item.dragging {
+      opacity: .4;
+      border-color: var(--primary);
+      border-style: dashed;
+    }
+    .module-item .drag-handle {
+      font-size: 8px;
+      color: var(--outline-variant);
+      margin-bottom: -2px;
+      letter-spacing: 2px;
+    }
+    .add-module {
+      width: 68px;
+      min-height: 44px;
+      margin-top: auto;
+      border: 1.5px dashed var(--outline-variant);
+      border-radius: 18px;
+      color: var(--primary);
+      background: transparent;
+      font-size: 11px;
+      font-weight: 900;
+      cursor: pointer;
+      transition: all .18s ease;
+    }
+    .add-module:hover {
+      border-color: var(--primary);
+      background: var(--primary-container);
+    }
+
+    /* ── Preview area (center) ── */
+    .preview-area {
+      min-width: 0;
+      min-height: 0;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 32px;
+      overflow: auto;
+      background:
+        radial-gradient(circle, rgba(202,196,208,.58) 1px, transparent 1px),
+        #e9ecf1;
+      background-size: 22px 22px;
+    }
+    /** Paper sheet **/
+    .a4-paper {
+      width: min(720px, 100%);
+      background: #fff;
+      padding: 48px 56px;
+      border-radius: 3px;
+      box-shadow: 0 20px 52px rgba(28,27,31,.16);
+      transition: box-shadow .24s ease;
+    }
+    .a4-paper:hover { box-shadow: 0 24px 60px rgba(28,27,31,.2); }
+
+    /* Resume header */
+    .resume-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 24px;
+      padding-bottom: 24px;
+      margin-bottom: 8px;
+      cursor: pointer;
+      position: relative;
+      transition: background .18s ease;
+      border-radius: var(--radius-md);
+    }
+    .resume-head:hover,
+    .resume-head.highlight {
+      background: linear-gradient(90deg, rgba(234,221,255,.3), transparent 80%);
+    }
+    .resume-head h2 {
+      font-size: 32px;
+      font-weight: 900;
+      margin-bottom: 6px;
+    }
+    .resume-head .subtitle {
+      color: var(--on-variant);
+      font-size: 14px;
+      line-height: 1.7;
+    }
+    .photo-placeholder {
+      width: 76px; height: 96px;
+      border-radius: 8px;
+      background: var(--primary-container);
+      border: 1.5px solid rgba(103,80,164,.18);
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+    }
+
+    /* Resume sections */
+    .resume-section {
+      position: relative;
+      padding: 18px 46px 16px 0;
+      border-top: 1px solid rgba(202,196,208,.7);
+      cursor: pointer;
+      border-radius: var(--radius-md);
+      transition: background .18s ease, outline .18s ease;
+    }
+    .resume-section:hover,
+    .resume-section.highlight {
+      background: linear-gradient(90deg, rgba(234,221,255,.28), transparent 82%);
+      outline: 1px solid rgba(103,80,164,.18);
+      outline-offset: 6px;
+    }
+    .resume-section h3 {
+      color: var(--primary);
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 10px;
+      font-weight: 800;
+    }
+    .resume-section .company-line {
+      font-weight: 700;
+      font-size: 14px;
+      margin-bottom: 6px;
+    }
+    .resume-section .date-line {
+      color: var(--outline);
+      font-size: 12px;
+      margin-bottom: 8px;
+    }
+    .resume-section p,
+    .resume-section li {
+      color: var(--on-variant);
+      font-size: 13px;
+      line-height: 1.75;
+    }
+    .resume-section ul {
+      margin: 0;
+      padding-left: 18px;
+      list-style: disc;
+    }
+    .resume-section ul li { margin-bottom: 3px; }
+
+    /* Sparkle AI button on each section */
+    .spark-btn {
+      position: absolute;
+      top: 16px;
+      right: 0;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--primary-container);
+      color: var(--primary);
+      font-size: 14px;
+      cursor: pointer;
+      opacity: 0;
+      transform: scale(.8);
+      transition: all .18s ease;
+      border: 0;
+    }
+    .resume-section:hover .spark-btn,
+    .spark-btn:hover {
+      opacity: 1;
+      transform: scale(1);
+    }
+    .spark-btn:hover {
+      background: var(--primary);
+      color: var(--on-primary);
+    }
+
+    /* ── Context panel (right) ── */
+    .context-panel {
+      min-width: 0;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      border-left: 1px solid rgba(202,196,208,.65);
+      background: var(--surface);
+      overflow: hidden;
+      transition: transform .28s ease, opacity .18s ease;
+    }
+    .editor-body.panel-closed .context-panel {
+      opacity: 0;
+      transform: translateX(20px);
+      pointer-events: none;
+    }
+    .panel-head {
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      border-bottom: 1px solid rgba(202,196,208,.55);
+      flex-shrink: 0;
+    }
+    .panel-head .panel-label {
+      font-size: 13px;
+      color: var(--on-variant);
+      font-weight: 700;
+    }
+    .panel-head strong {
+      font-size: 15px;
+      font-weight: 800;
+    }
+    .icon-btn {
+      width: 38px; height: 38px;
+      display: grid; place-items: center;
+      border-radius: 50%;
+      color: var(--on-variant);
+      background: transparent;
+      font-size: 18px;
+      transition: all .18s ease;
+    }
+    .icon-btn:hover { color: var(--primary); background: rgba(103,80,164,.08); }
+
+    .panel-body {
+      flex: 1;
+      min-height: 0;
+      padding: 16px;
+      overflow-y: auto;
+    }
+
+    /* Panel: Form mode */
+    .panel-mode { display: none; }
+    .panel-mode.active { display: block; }
+
+    .form-row { margin-bottom: 14px; }
+    .form-row label {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--on-variant);
+      font-size: 12px;
+      font-weight: 900;
+    }
+    .text-input, .text-area {
+      width: 100%;
+      border: 1px solid var(--outline-variant);
+      border-radius: var(--radius-md);
+      background: var(--surface-low);
+      color: var(--on-surface);
+      font-size: 14px;
+      outline: none;
+      transition: all .18s ease;
+    }
+    .text-input {
+      height: 42px;
+      padding: 0 12px;
+    }
+    .text-area {
+      min-height: 130px;
+      padding: 12px;
+      resize: vertical;
+      line-height: 1.7;
+    }
+    .text-input:focus, .text-area:focus {
+      background: var(--surface);
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px rgba(103,80,164,.1);
+    }
+    .form-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 16px;
+    }
+
+    /* Panel: AI mode */
+    .ai-capsules {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .ai-capsule {
+      height: 42px;
+      border: 0;
+      border-radius: var(--radius-full);
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--primary);
+      background: var(--primary-container);
+      transition: all .18s ease;
+    }
+    .ai-capsule:hover {
+      background: var(--primary);
+      color: var(--on-primary);
+      transform: translateY(-1px);
+    }
+    .ai-capsule.pressed {
+      background: var(--primary);
+      color: var(--on-primary);
+    }
+
+    .chat-area {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .chat-bubble {
+      padding: 12px 14px;
+      border-radius: var(--radius-lg);
+      font-size: 13px;
+      line-height: 1.65;
+      max-width: 92%;
+    }
+    .chat-ai {
+      background: var(--surface-low);
+      color: var(--on-surface);
+      align-self: flex-start;
+    }
+    .chat-ai.first {
+      border-bottom-left-radius: 4px;
+    }
+    .chat-user {
+      background: var(--primary);
+      color: var(--on-primary);
+      align-self: flex-end;
+      border-bottom-right-radius: 4px;
+    }
+    .chat-ai .typing-cursor {
+      display: inline-block;
+      width: 2px;
+      height: 14px;
+      background: var(--primary);
+      margin-left: 2px;
+      animation: blink 1s infinite;
+      vertical-align: text-bottom;
+    }
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+    .chat-input-row {
+      display: flex;
+      gap: 8px;
+      margin-top: auto;
+      padding-top: 12px;
+      border-top: 1px solid rgba(202,196,208,.4);
+      position: sticky;
+      bottom: 0;
+      background: linear-gradient(180deg, rgba(255,251,254,0), var(--surface) 30%);
+    }
+    .chat-input-row .text-input {
+      flex: 1;
+      border-radius: var(--radius-full);
+      font-size: 13px;
+    }
+
+    /* Quick-switch tabs */
+    .panel-tabs {
+      display: flex;
+      gap: 4px;
+      padding: 3px;
+      border-radius: var(--radius-full);
+      background: var(--surface-container);
+      margin-bottom: 16px;
+      border: 1px solid rgba(202,196,208,.45);
+    }
+    .panel-tab {
+      flex: 1;
+      height: 34px;
+      border-radius: var(--radius-full);
+      background: transparent;
+      color: var(--on-variant);
+      font-size: 12px;
+      font-weight: 800;
+      transition: all .18s ease;
+    }
+    .panel-tab.active {
+      color: var(--primary);
+      background: var(--surface);
+      box-shadow: var(--shadow-1);
+    }
+
+    /* ── Tooltip ── */
+    .tooltip {
+      position: absolute;
+      bottom: calc(100% + 8px);
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 6px 12px;
+      border-radius: var(--radius-sm);
+      background: var(--on-surface);
+      color: var(--surface);
+      font-size: 11px;
+      font-weight: 700;
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .15s ease;
+    }
+    .has-tooltip { position: relative; }
+    .has-tooltip:hover .tooltip { opacity: 1; }
+
+    /* ── Resize handle ── */
+    .resize-hint {
+      position: absolute;
+      left: -3px;
+      top: 0;
+      bottom: 0;
+      width: 6px;
+      cursor: col-resize;
+      z-index: 5;
+    }
+
+    /* ── Responsive hints ── */
+    @media (max-width: 1100px) {
+      .editor-body, .editor-body.panel-closed {
+        grid-template-columns: 78px 1fr;
+      }
+      .context-panel {
+        position: fixed;
+        top: 60px; right: 0; bottom: 0;
+        width: min(380px, calc(100vw - 78px));
+        z-index: 50;
+        box-shadow: var(--shadow-3);
+      }
+    }
+    @media (max-width: 700px) {
+      .editor-shell { margin: 0; border-radius: 0; max-height: none; }
+      .editor-body, .editor-body.panel-closed {
+        grid-template-columns: 64px 1fr;
+      }
+      .module-item { width: 52px; min-height: 54px; font-size: 10px; }
+      .module-item .item-icon { font-size: 16px; }
+      .add-module { width: 52px; font-size: 10px; }
+      .a4-paper { padding: 32px 24px; }
+    }
+
+    /* ── Floating legend ── */
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 16px;
+      padding: 16px 20px;
+      font-size: 12px;
+      color: var(--on-variant);
+    }
+    .legend span { display: flex; align-items: center; gap: 6px; }
+    .legend .dot {
+      display: inline-block;
+      width: 8px; height: 8px;
+      border-radius: 50%;
+    }
+    .dot-rail { background: var(--primary-container); }
+    .dot-preview { background: #e9ecf1; }
+    .dot-panel { background: var(--surface-container); }
+  </style>
+</head>
+<body>
+
+  <div class="page-header">
+    <span class="badge">✨ Material You 重设计 v2</span>
+    <h1>简历编辑器 — 新布局方案</h1>
+    <p>模块导航栏 ➜ 实时预览 ➜ 右侧上下文编辑面板 · 点击预览区任意模块即可编辑</p>
+  </div>
+
+  <div class="switcher">
+    <button class="active" onclick="switchMode('edit')">📝 编辑模式</button>
+    <button onclick="switchMode('ai')">🤖 AI 对话模式</button>
+    <button onclick="switchMode('both')">🔀 双模式对比</button>
+  </div>
+
+  <!-- ===== Editor Shell ===== -->
+  <div class="editor-shell">
+
+    <!-- Header -->
+    <header class="editor-header">
+      <div class="editor-title">
+        <span class="brand-mark">🦆</span>
+        <strong>产品经理 - AI 方向</strong>
+      </div>
+      <div class="header-actions">
+        <span class="credit-pill">🔋 7/10</span>
+        <button class="btn btn-ghost btn-sm">CN / EN</button>
+        <button class="btn btn-secondary btn-sm" onclick="togglePanel()" id="closePanelBtn" style="display:none">✕ 关闭面板</button>
+        <button class="btn btn-primary btn-sm">导出</button>
+      </div>
+    </header>
+
+    <!-- Body -->
+    <div class="editor-body" id="editorBody">
+
+      <!-- ① Module Rail -->
+      <aside class="module-rail" id="moduleRail">
+        <div class="module-item active" data-section="personal" onclick="selectModule(this, 'personal')">
+          <span class="drag-handle">⋮⋮</span>
+          <span class="item-icon">👤</span>
+          个人信息
+        </div>
+        <div class="module-item" data-section="summary" onclick="selectModule(this, 'summary')">
+          <span class="drag-handle">⋮⋮</span>
+          <span class="item-icon">🧭</span>
+          个人概述
+        </div>
+        <div class="module-item" data-section="work" onclick="selectModule(this, 'work')">
+          <span class="drag-handle">⋮⋮</span>
+          <span class="item-icon">💼</span>
+          工作经历
+        </div>
+        <div class="module-item" data-section="projects" onclick="selectModule(this, 'projects')">
+          <span class="drag-handle">⋮⋮</span>
+          <span class="item-icon">🚀</span>
+          AI 实践
+        </div>
+        <div class="module-item" data-section="education" onclick="selectModule(this, 'education')">
+          <span class="drag-handle">⋮⋮</span>
+          <span class="item-icon">🎓</span>
+          教育背景
+        </div>
+        <div class="module-item" data-section="skills" onclick="selectModule(this, 'skills')">
+          <span class="drag-handle">⋮⋮</span>
+          <span class="item-icon">🏷️</span>
+          专业技能
+        </div>
+        <div class="module-item" data-section="languages" onclick="selectModule(this, 'languages')">
+          <span class="drag-handle">⋮⋮</span>
+          <span class="item-icon">🌐</span>
+          语言能力
+        </div>
+        <div class="module-item" data-section="selfeval" onclick="selectModule(this, 'selfeval')">
+          <span class="drag-handle">⋮⋮</span>
+          <span class="item-icon">💬</span>
+          自我评价
+        </div>
+        <button class="add-module" onclick="showToast('打开自定义模块弹窗')">＋<br>添加</button>
+      </aside>
+
+      <!-- ② Preview Area -->
+      <main class="preview-area">
+        <article class="a4-paper">
+
+          <!-- Personal Info -->
+          <div class="resume-head" id="preview-personal" onclick="selectPreviewSection('personal')">
+            <div>
+              <h2>郭欣灵</h2>
+              <div class="subtitle">AI 产品经理 / 海外运营负责人</div>
+              <div class="subtitle" style="font-size:12px;color:var(--outline);margin-top:2px;">北京 · guoxinling.cn · 137****7045</div>
+            </div>
+            <div class="photo-placeholder">👤</div>
+          </div>
+
+          <!-- Summary -->
+          <section class="resume-section" id="preview-summary" onclick="selectPreviewSection('summary')">
+            <button class="spark-btn" onclick="event.stopPropagation(); triggerAI('summary')" title="AI 优化此模块">✨</button>
+            <h3>个人概述</h3>
+            <p>8 年互联网与海外游戏发行经验，近年深耕 AI 产品与自动化工作流。擅长将业务问题拆解为可落地的产品方案，具备从 0 到 1 独立构建 6 款 AI 工具的全栈实践能力。</p>
+          </section>
+
+          <!-- Work Experience -->
+          <section class="resume-section" id="preview-work" onclick="selectPreviewSection('work')">
+            <button class="spark-btn" onclick="event.stopPropagation(); triggerAI('work')" title="AI 优化此模块">✨</button>
+            <h3>工作经历</h3>
+            <p class="company-line">某头部游戏公司 · 海外运营负责人</p>
+            <p class="date-line">2018 — 2023</p>
+            <ul>
+              <li>主导德国市场全链路发行策略，统筹本地化、UA 增长、商业化与跨团队协作，实现 3 亿人民币流水。</li>
+              <li>从 0 到 1 推进 3 款产品的海外上线，沉淀市场策略 SOP 与数据复盘机制。</li>
+              <li>搭建本地化质检流程，将翻译错误率从 12% 降至 2% 以下。</li>
+            </ul>
+          </section>
+
+          <!-- AI Projects -->
+          <section class="resume-section" id="preview-projects" onclick="selectPreviewSection('projects')">
+            <button class="spark-btn" onclick="event.stopPropagation(); triggerAI('projects')" title="AI 优化此模块">✨</button>
+            <h3>AI 产品实践</h3>
+            <p class="company-line">简历编辑器 · AI 求职工具</p>
+            <p class="date-line">2025 — 至今</p>
+            <ul>
+              <li>设计对话式简历生成向导，集成 JD 匹配分析、OCR 截图识别、面试预测等 AI 能力。</li>
+              <li>全栈独立开发（React + TypeScript + Zustand），支持 PDF/PNG 导出与中英双语切换。</li>
+            </ul>
+          </section>
+
+          <!-- Education -->
+          <section class="resume-section" id="preview-education" onclick="selectPreviewSection('education')">
+            <button class="spark-btn" onclick="event.stopPropagation(); triggerAI('education')" title="AI 优化此模块">✨</button>
+            <h3>教育背景</h3>
+            <p class="company-line">北京外国语大学 · 德语语言文学 学士</p>
+            <p class="date-line">2011 — 2015</p>
+            <ul>
+              <li>德语专业八级，在校期间获国家奖学金、校级优秀毕业生。</li>
+              <li>参与中德文化交流项目，担任翻译志愿者。</li>
+            </ul>
+          </section>
+
+          <!-- Skills -->
+          <section class="resume-section" id="preview-skills" onclick="selectPreviewSection('skills')">
+            <h3>专业技能</h3>
+            <p>AI 产品设计 / LLM 应用开发 / 海外游戏发行 / 数据分析 / React · TypeScript · Node.js / Prompt Engineering / 德语（C2）· 英语（流利）</p>
+          </section>
+        </article>
+      </main>
+
+      <!-- ③ Context Panel -->
+      <aside class="context-panel" id="contextPanel">
+
+        <div class="panel-head">
+          <div>
+            <p class="panel-label" id="panelSectionLabel">个人信息</p>
+            <strong id="panelTitle">编辑个人信息</strong>
+          </div>
+          <button class="icon-btn" onclick="closePanel()">✕</button>
+        </div>
+
+        <div class="panel-body">
+
+          <!-- Tabs: Edit / AI -->
+          <div class="panel-tabs">
+            <button class="panel-tab active" id="tabEdit" onclick="switchPanelTab('edit')">📝 编辑</button>
+            <button class="panel-tab" id="tabAI" onclick="switchPanelTab('ai')">✨ AI 助手</button>
+          </div>
+
+          <!-- Edit Form -->
+          <div class="panel-mode active" id="panelEdit">
+            <div class="form-row">
+              <label id="fieldLabel1">姓名</label>
+              <input class="text-input" value="郭欣灵" />
+            </div>
+            <div class="form-row">
+              <label id="fieldLabel2">求职意向</label>
+              <input class="text-input" value="AI 产品经理 / 海外运营负责人" />
+            </div>
+            <div class="form-row">
+              <label id="fieldLabel3">联系方式</label>
+              <input class="text-input" value="北京 · guoxinling.cn · 137****7045" />
+            </div>
+            <div class="form-row">
+              <label>照片</label>
+              <div style="display:flex;align-items:center;gap:10px">
+                <div class="photo-placeholder" style="width:48px;height:60px;font-size:20px;">👤</div>
+                <button class="btn btn-secondary btn-sm">上传照片</button>
+                <button class="btn btn-ghost btn-sm" style="color:var(--error)">移除</button>
+              </div>
+            </div>
+            <div class="form-actions">
+              <button class="btn btn-primary" style="flex:1" onclick="switchPanelTab('ai')">✨ 用 AI 优化</button>
+            </div>
+          </div>
+
+          <!-- AI Chat -->
+          <div class="panel-mode" id="panelAI">
+            <div class="ai-capsules">
+              <button class="ai-capsule" onclick="triggerAIAction('polish')">✨ 润色经历</button>
+              <button class="ai-capsule" onclick="triggerAIAction('adapt')">🎯 JD 匹配</button>
+              <button class="ai-capsule" onclick="triggerAIAction('diagnose')">🔍 诊断简历</button>
+              <button class="ai-capsule" onclick="triggerAIAction('interview')">💬 面试预测</button>
+            </div>
+            <div class="chat-area" id="chatArea">
+              <div class="chat-bubble chat-ai first">你好！我可以帮你优化简历。你可以直接告诉我需要什么帮助，或点击上方胶囊快捷操作。</div>
+            </div>
+            <div class="chat-input-row">
+              <input class="text-input" id="chatInput" placeholder="输入你想做的事…" onkeydown="if(event.key==='Enter')sendChat()" />
+              <button class="btn btn-primary btn-sm" onclick="sendChat()">发送</button>
+            </div>
+          </div>
+
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <div class="legend">
+    <span><span class="dot dot-rail"></span> 模块导航栏：点击切换，支持拖拽排序</span>
+    <span><span class="dot dot-preview"></span> 实时预览：点击模块进入编辑，hover 显示 ✨ 按钮</span>
+    <span><span class="dot dot-panel"></span> 右侧面板：编辑表单 + AI 对话，统一入口</span>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <style>
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 60px;
+      transform: translateX(-50%) translateY(12px);
+      z-index: 200;
+      opacity: 0;
+      pointer-events: none;
+      padding: 10px 20px;
+      border-radius: var(--radius-full);
+      background: var(--on-surface);
+      color: var(--surface);
+      font-size: 13px;
+      font-weight: 700;
+      box-shadow: var(--shadow-2);
+      transition: opacity .2s ease, transform .2s ease;
+    }
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* Active panel highlight */
+    .resume-section.panel-open {
+      background: linear-gradient(90deg, rgba(234,221,255,.42), transparent 82%);
+      outline: 2px solid rgba(103,80,164,.3);
+      outline-offset: 6px;
+    }
+  </style>
+
+  <script>
+    let currentMode = 'edit';
+    let activeSection = 'personal';
+    let panelOpen = true;
+    let panelTab = 'edit';
+    let toastTimer = null;
+
+    // ── Init: open panel with personal section ──
+    selectModule(document.querySelector('.module-item[data-section="personal"]'), 'personal');
+
+    function switchMode(mode) {
+      currentMode = mode;
+      document.querySelectorAll('.switcher button').forEach(b => b.classList.remove('active'));
+      event.target.classList.add('active');
+
+      const panel = document.getElementById('contextPanel');
+      const body = document.getElementById('editorBody');
+      const closeBtn = document.getElementById('closePanelBtn');
+
+      if (mode === 'edit') {
+        body.classList.remove('panel-closed');
+        panelOpen = true;
+        closeBtn.style.display = 'none';
+        switchPanelTab('edit');
+      } else if (mode === 'ai') {
+        body.classList.remove('panel-closed');
+        panelOpen = true;
+        closeBtn.style.display = 'none';
+        switchPanelTab('ai');
+      } else if (mode === 'both') {
+        body.classList.remove('panel-closed');
+        panelOpen = true;
+        closeBtn.style.display = 'inline-flex';
+        // Show both modes: edit on top half, AI on bottom half
+        switchPanelTab('edit');
+        // We'll just keep the tabs and let user switch
+      }
+    }
+
+    function togglePanel() {
+      const body = document.getElementById('editorBody');
+      body.classList.toggle('panel-closed');
+      panelOpen = !body.classList.contains('panel-closed');
+      const btn = document.getElementById('closePanelBtn');
+      btn.textContent = panelOpen ? '✕ 关闭面板' : '☰ 打开面板';
+    }
+
+    function closePanel() {
+      const body = document.getElementById('editorBody');
+      body.classList.add('panel-closed');
+      panelOpen = false;
+    }
+
+    function selectModule(el, section) {
+      activeSection = section;
+      // Update module rail active state
+      document.querySelectorAll('.module-item').forEach(m => m.classList.remove('active'));
+      el.classList.add('active');
+
+      // Update preview highlight
+      document.querySelectorAll('.resume-section, .resume-head').forEach(s => s.classList.remove('panel-open'));
+      const previewEl = document.getElementById('preview-' + section);
+      if (previewEl) previewEl.classList.add('panel-open');
+
+      // Open panel and update content
+      const body = document.getElementById('editorBody');
+      body.classList.remove('panel-closed');
+      panelOpen = true;
+
+      updatePanelContent(section);
+
+      // Close panel button
+      const closeBtn = document.getElementById('closePanelBtn');
+      closeBtn.style.display = currentMode === 'both' ? 'inline-flex' : 'none';
+    }
+
+    function selectPreviewSection(section) {
+      const railEl = document.querySelector(`.module-item[data-section="${section}"]`);
+      if (railEl) selectModule(railEl, section);
+    }
+
+    function updatePanelContent(section) {
+      const sectionData = getSectionData(section);
+      document.getElementById('panelSectionLabel').textContent = sectionData.label;
+      document.getElementById('panelTitle').textContent = '编辑' + sectionData.label;
+      document.getElementById('fieldLabel1').textContent = sectionData.field1;
+      document.getElementById('fieldLabel2').textContent = sectionData.field2;
+      document.getElementById('fieldLabel3').textContent = sectionData.field3;
+
+      // Update form inputs
+      const inputs = document.querySelectorAll('#panelEdit .text-input');
+      if (inputs[0]) inputs[0].value = sectionData.value1;
+      if (inputs[1]) inputs[1].value = sectionData.value2;
+      if (inputs[2]) inputs[2].value = sectionData.value3;
+
+      // Show/hide photo upload (only for personal)
+      const photoRow = document.querySelector('#panelEdit .form-row:nth-child(4)');
+      if (photoRow) photoRow.style.display = section === 'personal' ? 'block' : 'none';
+      if (section === 'personal') photoRow.querySelector('label').textContent = '照片';
+
+      // Show/hide textarea
+      const textareaRow = document.querySelector('#panelEdit .form-row:nth-last-child(2)');
+      if (textareaRow && textareaRow.querySelector('textarea')) {
+        textareaRow.style.display = sectionData.hasTextarea ? 'block' : 'none';
+        if (sectionData.textareaLabel) textareaRow.querySelector('label').textContent = sectionData.textareaLabel;
+        if (sectionData.textareaValue) textareaRow.querySelector('textarea').value = sectionData.textareaValue;
+      }
+    }
+
+    function getSectionData(section) {
+      const data = {
+        personal: {
+          label: '个人信息',
+          field1: '姓名', value1: '郭欣灵',
+          field2: '求职意向', value2: 'AI 产品经理 / 海外运营负责人',
+          field3: '联系方式', value3: '北京 · guoxinling.cn · 137****7045',
+          hasTextarea: false,
+        },
+        summary: {
+          label: '个人概述',
+          field1: '中文概述', value1: '8年互联网与海外游戏发行经验',
+          field2: '英文概述 (可选)', value2: '8 years in internet & overseas game publishing',
+          field3: '', value3: '',
+          hasTextarea: true,
+          textareaLabel: '详细内容',
+          textareaValue: '8 年互联网与海外游戏发行经验，近年深耕 AI 产品与自动化工作流。擅长将业务问题拆解为可落地的产品方案，具备从 0 到 1 独立构建 6 款 AI 工具的全栈实践能力。',
+        },
+        work: {
+          label: '工作经历',
+          field1: '公司名称', value1: '某头部游戏公司',
+          field2: '职位', value2: '海外运营负责人',
+          field3: '时间', value3: '2018 — 2023',
+          hasTextarea: true,
+          textareaLabel: '工作描述（每行一条）',
+          textareaValue: '主导德国市场全链路发行策略，统筹本地化、UA 增长、商业化与跨团队协作，实现 3 亿人民币流水。\n从 0 到 1 推进 3 款产品的海外上线，沉淀市场策略 SOP 与数据复盘机制。\n搭建本地化质检流程，将翻译错误率从 12% 降至 2% 以下。',
+        },
+        projects: {
+          label: 'AI 产品实践',
+          field1: '产品名称', value1: '简历编辑器 · AI 求职工具',
+          field2: '方向', value2: 'AI 效率工具',
+          field3: '时间', value3: '2025 — 至今',
+          hasTextarea: true,
+          textareaLabel: '产品描述',
+          textareaValue: '设计对话式简历生成向导，集成 JD 匹配分析、OCR 截图识别、面试预测等 AI 能力。\n全栈独立开发（React + TypeScript + Zustand），支持 PDF/PNG 导出与中英双语切换。',
+        },
+        education: {
+          label: '教育背景',
+          field1: '学校', value1: '北京外国语大学',
+          field2: '学位/专业', value2: '德语语言文学 学士',
+          field3: '时间', value3: '2011 — 2015',
+          hasTextarea: true,
+          textareaLabel: '亮点（每行一条）',
+          textareaValue: '德语专业八级，在校期间获国家奖学金、校级优秀毕业生。\n参与中德文化交流项目，担任翻译志愿者。',
+        },
+        skills: {
+          label: '专业技能',
+          field1: '技能分类', value1: '',
+          field2: '技能列表', value2: 'AI 产品设计 / LLM 应用开发 / 海外游戏发行',
+          field3: '', value3: '',
+          hasTextarea: false,
+        },
+        languages: {
+          label: '语言能力',
+          field1: '语言', value1: '德语',
+          field2: '水平', value2: 'C2 专业八级',
+          field3: '', value3: '',
+          hasTextarea: false,
+        },
+        selfeval: {
+          label: '自我评价',
+          field1: '中文评价', value1: '',
+          field2: '英文评价 (可选)', value2: '',
+          field3: '', value3: '',
+          hasTextarea: true,
+          textareaLabel: '详细内容',
+          textareaValue: '结果导向的产品人，善于在模糊需求中提炼可执行方案。具备跨文化沟通与远程协作经验，能独立完成从需求到上线的完整产品闭环。',
+        },
+      };
+      return data[section] || data.personal;
+    }
+
+    function switchPanelTab(tab) {
+      panelTab = tab;
+      document.getElementById('tabEdit').classList.toggle('active', tab === 'edit');
+      document.getElementById('tabAI').classList.toggle('active', tab === 'ai');
+      document.getElementById('panelEdit').classList.toggle('active', tab === 'edit');
+      document.getElementById('panelAI').classList.toggle('active', tab === 'ai');
+
+      if (tab === 'ai') {
+        // Scroll chat to bottom
+        const chatArea = document.getElementById('chatArea');
+        chatArea.scrollTop = chatArea.scrollHeight;
+      }
+    }
+
+    function triggerAI(section) {
+      // Open panel and switch to AI tab
+      const body = document.getElementById('editorBody');
+      body.classList.remove('panel-closed');
+      panelOpen = true;
+
+      const railEl = document.querySelector(`.module-item[data-section="${section}"]`);
+      if (railEl) selectModule(railEl, section);
+
+      switchPanelTab('ai');
+
+      // Add a contextual message
+      const sectionLabels = {
+        personal: '个人信息', summary: '个人概述', work: '工作经历',
+        projects: 'AI 产品实践', education: '教育背景', skills: '专业技能',
+        languages: '语言能力', selfeval: '自我评价',
+      };
+      addChatMessage('user', `帮我优化「${sectionLabels[section] || section}」部分`);
+      setTimeout(() => {
+        addChatMessage('ai', `好的！我来看看你的「${sectionLabels[section] || section}」。建议从这几个方面优化：\n\n1. <strong>量化成果</strong> — 用具体数字替代模糊描述\n2. <strong>动作动词</strong> — 用「主导」「搭建」「优化」开头\n3. <strong>业务影响</strong> — 说明你的工作带来了什么变化\n\n需要我直接帮你改写吗？`);
+      }, 800);
+
+      showToast(`已切换到 ${sectionLabels[section]} AI 对话`);
+    }
+
+    function triggerAIAction(action) {
+      const labels = { polish: '润色经历', adapt: 'JD 匹配', diagnose: '诊断简历', interview: '面试预测' };
+      addChatMessage('user', `使用「${labels[action]}」功能`);
+      setTimeout(() => {
+        const aiReplies = {
+          polish: `我会列出你的工作经历，让你选择 STAR 法则、结果导向或精炼压缩三种润色风格。建议优先润色最近一段经历，效果最明显。`,
+          adapt: `请粘贴目标岗位 JD，或上传岗位截图。我将从匹配度、缺失关键词和可应用修改三个维度分析，并给出具体建议。`,
+          diagnose: `我将从<strong>结构完整度</strong>、<strong>表达专业度</strong>、<strong>岗位匹配度</strong>、<strong>竞争差异化</strong>四个维度诊断整份简历。预计需要扫描 8 个模块。`,
+          interview: `我会基于你当前的简历生成 10 道面试深挖问题，覆盖经历、能力、场景假设等多个类别。答案建议默认折叠，方便你自行思考。`,
+        };
+        addChatMessage('ai', aiReplies[action] || '好的，我来帮你处理。');
+      }, 600);
+
+      // Highlight capsule briefly
+      const capsules = document.querySelectorAll('.ai-capsule');
+      capsules.forEach(c => c.classList.remove('pressed'));
+      event.target.classList.add('pressed');
+      setTimeout(() => event.target.classList.remove('pressed'), 1200);
+    }
+
+    function sendChat() {
+      const input = document.getElementById('chatInput');
+      const text = input.value.trim();
+      if (!text) return;
+      addChatMessage('user', text);
+      input.value = '';
+      setTimeout(() => {
+        addChatMessage('ai', '收到！我会根据你的需求进行处理。<span class="typing-cursor"></span>');
+      }, 700);
+    }
+
+    function addChatMessage(role, text) {
+      const chatArea = document.getElementById('chatArea');
+      const div = document.createElement('div');
+      div.className = `chat-bubble chat-${role}`;
+      div.innerHTML = text;
+      chatArea.appendChild(div);
+      chatArea.scrollTop = chatArea.scrollHeight;
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      toast.textContent = msg;
+      toast.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toast.classList.remove('show'), 2000);
+    }
+
+    // ── Click on preview sections to open editor ──
+    document.querySelectorAll('.resume-section').forEach(section => {
+      // Already handled by onclick in HTML
+    });
+
+    // ── Keyboard shortcut ──
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        closePanel();
+      }
+    });
+  </script>
+</body>
+</html>
