@@ -14,6 +14,11 @@ import type { ResumeData } from './types/resume'
 const AUTO_SAVE_DRAFT_ID = 'auto-save'
 const LANDING_KEY = 'resume-has-visited'
 
+type LandingImportProgress = {
+  message: string
+  progress: number
+}
+
 /** Migrate old stored data to the current schema (safe against missing/extra fields). */
 function migrateData(raw: unknown): ResumeData {
   const d = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>
@@ -82,6 +87,8 @@ export default function App() {
   const [showDrafts, setShowDrafts] = useState(false)
   const [loaded, setLoaded] = useState(false)
   const [loadError, setLoadError] = useState<string | null>(null)
+  const [landingImporting, setLandingImporting] = useState(false)
+  const [landingImportProgress, setLandingImportProgress] = useState<LandingImportProgress | null>(null)
   const loadData = useResumeStore((s) => s.loadData)
 
   // Landing page
@@ -112,21 +119,45 @@ export default function App() {
     if (!file) return
     e.target.value = ''
 
+    setLandingImporting(true)
+    setLandingImportProgress({ message: '准备导入…', progress: 5 })
+
     const ext = file.name.split('.').pop()?.toLowerCase() || ''
-    if (ext === 'md' || ext === 'txt') {
-      try {
+    try {
+      if (ext === 'md' || ext === 'txt') {
+        setLandingImportProgress({ message: '正在读取文件…', progress: 25 })
         const { parseMarkdownResume } = await import('./utils/markdownParser')
         const text = await file.text()
+        setLandingImportProgress({ message: '正在解析简历内容…', progress: 70 })
         const parsed = parseMarkdownResume(text)
-        if (parsed) loadData(parsed)
-      } catch { /* ignore */ }
-      return
-    }
+        if (!parsed) throw new Error('无法解析文件内容')
+        loadData(parsed)
+        setLandingImportProgress({ message: '导入成功，正在进入编辑器…', progress: 100 })
+        window.setTimeout(() => {
+          setLandingImporting(false)
+          setLandingImportProgress(null)
+        }, 1200)
+        return
+      }
 
-    // PDF / Image → dynamic import
-    const { importResumeFromFile } = await import('./services/resumeImport')
-    const result = await importResumeFromFile(file, () => {})
-    loadData(result)
+      // PDF / Image → dynamic import
+      const { importResumeFromFile } = await import('./services/resumeImport')
+      const result = await importResumeFromFile(file, (progress) => {
+        setLandingImportProgress({ message: progress.message, progress: progress.progress })
+      })
+      loadData(result)
+      setLandingImportProgress({ message: '导入成功，正在进入编辑器…', progress: 100 })
+      window.setTimeout(() => {
+        setLandingImporting(false)
+        setLandingImportProgress(null)
+      }, 1200)
+    } catch (err: any) {
+      setLandingImportProgress({ message: `导入失败：${err?.message || '请检查文件后重试'}`, progress: 0 })
+      window.setTimeout(() => {
+        setLandingImporting(false)
+        setLandingImportProgress(null)
+      }, 3000)
+    }
   }, [loadData])
 
   const handleDraftContinue = () => {
@@ -255,6 +286,31 @@ export default function App() {
 
       {showDrafts && <DraftManager onClose={() => setShowDrafts(false)} />}
       <AIPanel />
+      {landingImporting && landingImportProgress && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 px-4 backdrop-blur-sm">
+          <div className="w-full max-w-[380px] rounded-2xl bg-white p-6 text-center shadow-2xl">
+            <div className="mb-3 text-3xl">
+              {landingImportProgress.progress >= 100 ? '✅' : landingImportProgress.message.startsWith('导入失败') ? '❌' : '📄'}
+            </div>
+            <div className="mb-3 text-[14px] font-semibold leading-6 text-gray-800">
+              {landingImportProgress.message}
+            </div>
+            <div className="h-1.5 w-full overflow-hidden rounded-full bg-gray-200">
+              <div
+                className={`h-full rounded-full transition-all duration-300 ${
+                  landingImportProgress.message.startsWith('导入失败')
+                    ? 'bg-red-500'
+                    : 'bg-gradient-to-r from-[#4F46E5] to-[#7C3AED]'
+                }`}
+                style={{ width: `${Math.min(Math.max(landingImportProgress.progress, 0), 100)}%` }}
+              />
+            </div>
+            {landingImportProgress.progress < 100 && !landingImportProgress.message.startsWith('导入失败') && (
+              <p className="mt-2 text-[11px] font-medium text-gray-400">正在处理，请稍候…</p>
+            )}
+          </div>
+        </div>
+      )}
       {/* Hidden file input for landing page import trigger */}
       <input
         ref={fileInputRef}
