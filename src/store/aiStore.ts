@@ -1,35 +1,12 @@
 import { create } from 'zustand'
-import type { AIConfig, AITab, AIPanelState, PolishMode, AdaptResult, InterviewQuestion, PolishCustomSource } from '../types/ai'
-
-// 默认配置
-const defaultConfig: AIConfig = {
-  apiKey: '',
-  baseURL: 'https://api.deepseek.com/v1',
-  model: 'deepseek-v4-pro',
-}
-
-// 从 localStorage 恢复配置
-function loadConfig(): AIConfig {
-  try {
-    const stored = localStorage.getItem('ai-config')
-    if (stored) return { ...defaultConfig, ...JSON.parse(stored) }
-  } catch { /* ignore */ }
-  return defaultConfig
-}
-
-function saveConfig(config: AIConfig) {
-  localStorage.setItem('ai-config', JSON.stringify(config))
-}
+import type { AITab, AIPanelState, PolishMode, AdaptResult, InterviewQuestion, PolishCustomSource } from '../types/ai'
 
 interface AIStore extends AIPanelState {
-  config: AIConfig
   // Panel
   openPanel: () => void
   closePanel: () => void
   togglePanel: () => void
   setActiveTab: (tab: AITab) => void
-  // Config
-  setConfig: (config: AIConfig) => void
   // Polish
   selectExperience: (id: string | null) => void
   setPolishMode: (mode: PolishMode) => void
@@ -87,13 +64,11 @@ const initialPanel: AIPanelState = {
 }
 
 export const useAIStore = create<AIStore>((set) => ({
-  config: loadConfig(),
   ...initialPanel,
   openPanel: () => set({ isOpen: true }),
   closePanel: () => set({ isOpen: false }),
   togglePanel: () => set((s) => ({ isOpen: !s.isOpen })),
   setActiveTab: (tab) => set({ activeTab: tab }),
-  setConfig: (config) => { saveConfig(config); set({ config }) },
   selectExperience: (id) => set({ selectedExpId: id, polishResult: null, polishError: null }),
   selectProject: (id) => set({ polishProjectId: id, polishResult: null, polishError: null }),
   selectSelfEvaluation: () => set({ polishSelfEvaluation: true, polishResult: null, polishError: null }),

@@ -4,7 +4,6 @@ import Wizard from './Wizard'
 import ExperiencePolish from './ExperiencePolish'
 import JDAdapt from './JDAdapt'
 import InterviewPredict from './InterviewPredict'
-import ConfigPanel from './ConfigPanel'
 
 export default function AIPanel() {
   const isOpen = useAIStore((s) => s.isOpen)
@@ -53,7 +52,6 @@ export default function AIPanel() {
             {activeTab === 'polish' && <ExperiencePolish />}
             {activeTab === 'adapt' && <JDAdapt />}
             {activeTab === 'interview' && <InterviewPredict />}
-            {activeTab === 'config' && <ConfigPanel />}
           </div>
         )}
       </div>

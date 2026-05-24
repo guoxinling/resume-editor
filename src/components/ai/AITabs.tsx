@@ -6,7 +6,6 @@ const tabs: { key: AITab; icon: string; label: string }[] = [
   { key: 'polish', icon: '✨', label: '经历润色' },
   { key: 'adapt', icon: '🎯', label: '岗位适配' },
   { key: 'interview', icon: '💬', label: '面试预测' },
-  { key: 'config', icon: '⚙️', label: '配置' },
 ]
 
 export default function AITabs() {

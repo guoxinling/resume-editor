@@ -1,5 +1,4 @@
 import type { ChatMessage } from '../types/ai'
-import { useAIStore } from '../store/aiStore'
 
 interface StreamCallbacks {
   onToken: (token: string) => void
@@ -12,22 +11,13 @@ export async function streamChat(
   callbacks: StreamCallbacks,
   abortSignal?: AbortSignal,
 ): Promise<void> {
-  const { config } = useAIStore.getState()
-
-  if (!config.apiKey) {
-    callbacks.onError('API Key 未配置，请在设置中添加')
-    return
-  }
-
   try {
-    const response = await fetch(`${config.baseURL}/chat/completions`, {
+    const response = await fetch('/api/chat', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${config.apiKey}`,
       },
       body: JSON.stringify({
-        model: config.model,
         messages,
         stream: true,
       }),
@@ -35,9 +25,9 @@ export async function streamChat(
     })
 
     if (!response.ok) {
-      if (response.status === 401) callbacks.onError('API Key 无效，请在设置中检查')
+      if (response.status === 401) callbacks.onError('AI 服务鉴权失败，请稍后重试')
       else if (response.status === 429) callbacks.onError('请求频率过高，请稍后再试')
-      else callbacks.onError(`请求失败 (${response.status})`)
+      else callbacks.onError('AI 服务暂时不可用，请稍后重试')
       return
     }
 
@@ -85,27 +75,21 @@ export async function streamChat(
 
 /** Non-streaming chat — used for adapt / interview results */
 export async function chatComplete(messages: ChatMessage[]): Promise<string> {
-  const { config } = useAIStore.getState()
-
-  if (!config.apiKey) throw new Error('API Key 未配置')
-
-  const response = await fetch(`${config.baseURL}/chat/completions`, {
+  const response = await fetch('/api/chat', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${config.apiKey}`,
     },
     body: JSON.stringify({
-      model: config.model,
       messages,
       stream: false,
     }),
   })
 
   if (!response.ok) {
-    if (response.status === 401) throw new Error('API Key 无效')
+    if (response.status === 401) throw new Error('AI 服务鉴权失败')
     if (response.status === 429) throw new Error('请求频率过高')
-    throw new Error(`请求失败 (${response.status})`)
+    throw new Error('AI 服务暂时不可用，请稍后重试')
   }
 
   const data = await response.json()
