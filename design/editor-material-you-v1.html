@@ -1,0 +1,448 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>简历鸭 Editor Material You Mockup</title>
+  <style>
+    :root {
+      --bg: #fffbfe;
+      --surface: #fffbfe;
+      --surface-variant: #f3edf7;
+      --primary: #6750a4;
+      --primary-dark: #4f378b;
+      --primary-container: #eaddff;
+      --secondary-container: #d7f4e3;
+      --tertiary-container: #ffd8e4;
+      --warning-container: #fff3d6;
+      --outline: #cac4d0;
+      --text: #1c1b1f;
+      --muted: #49454f;
+      --soft: #79747e;
+      --shadow: 0 18px 48px rgba(103, 80, 164, 0.14);
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: linear-gradient(180deg, #fffbfe 0%, #f8f3fb 54%, #fffbfe 100%);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif;
+    }
+
+    button { font: inherit; }
+
+    .app {
+      min-height: 100vh;
+      padding: 14px;
+      display: grid;
+      grid-template-rows: 64px minmax(0, 1fr);
+      gap: 14px;
+    }
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 14px;
+      border: 1px solid rgba(202, 196, 208, 0.78);
+      border-radius: 24px;
+      background: rgba(255, 251, 254, 0.86);
+      backdrop-filter: blur(18px);
+      box-shadow: 0 10px 30px rgba(103, 80, 164, 0.08);
+    }
+
+    .brand, .toolbar-group, .resume-name {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .logo {
+      display: grid;
+      place-items: center;
+      width: 40px;
+      height: 40px;
+      border-radius: 14px;
+      color: white;
+      font-weight: 900;
+      background: var(--primary);
+      box-shadow: 0 8px 18px rgba(103, 80, 164, 0.24);
+    }
+
+    .brand strong { font-size: 15px; }
+    .brand span { color: var(--soft); font-size: 12px; font-weight: 700; }
+
+    .chip, .icon-btn, .primary-btn {
+      border: 0;
+      height: 38px;
+      border-radius: 999px;
+      padding: 0 14px;
+      font-size: 13px;
+      font-weight: 850;
+      cursor: default;
+    }
+
+    .chip { color: var(--primary); background: var(--primary-container); }
+    .icon-btn {
+      width: 38px;
+      padding: 0;
+      color: var(--muted);
+      background: var(--surface-variant);
+    }
+    .primary-btn {
+      color: white;
+      background: var(--primary);
+      box-shadow: 0 12px 28px rgba(103, 80, 164, 0.22);
+    }
+
+    .main {
+      min-height: 0;
+      display: grid;
+      grid-template-columns: 420px minmax(460px, 1fr);
+      gap: 14px;
+      transition: margin-right 260ms ease;
+    }
+    .main.ai-open { margin-right: 430px; }
+
+    .editor, .preview-shell, .ai-drawer {
+      border: 1px solid rgba(202, 196, 208, 0.72);
+      border-radius: 28px;
+      background: rgba(255, 251, 254, 0.92);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .panel-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      min-height: 58px;
+      padding: 14px 18px;
+      border-bottom: 1px solid rgba(202, 196, 208, 0.58);
+      background: var(--surface-variant);
+    }
+
+    .panel-head h2 {
+      margin: 0;
+      font-size: 15px;
+      line-height: 1;
+    }
+
+    .panel-head p {
+      margin: 5px 0 0;
+      color: var(--soft);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .section-list {
+      height: calc(100vh - 150px);
+      overflow: auto;
+      padding: 14px;
+    }
+
+    .section-card {
+      margin-bottom: 12px;
+      padding: 14px;
+      border: 1px solid rgba(202, 196, 208, 0.6);
+      border-radius: 22px;
+      background: white;
+    }
+
+    .section-card.active {
+      border-color: rgba(103, 80, 164, 0.34);
+      background: var(--primary-container);
+    }
+
+    .section-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+      font-weight: 950;
+    }
+
+    .field {
+      display: grid;
+      gap: 6px;
+      margin-top: 10px;
+    }
+    .field label {
+      color: var(--soft);
+      font-size: 11px;
+      font-weight: 850;
+    }
+    .input, .textarea {
+      width: 100%;
+      border: 1px solid rgba(202, 196, 208, 0.8);
+      border-radius: 16px;
+      background: rgba(255, 251, 254, 0.84);
+      padding: 11px 12px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .textarea { min-height: 90px; line-height: 1.7; }
+
+    .preview-shell {
+      display: grid;
+      grid-template-rows: 58px minmax(0, 1fr);
+      background: var(--surface-variant);
+    }
+
+    .preview-area {
+      min-height: 0;
+      overflow: auto;
+      padding: 28px;
+      display: grid;
+      place-items: start center;
+    }
+
+    .paper {
+      width: min(100%, 760px);
+      min-height: 980px;
+      padding: 54px 60px;
+      background: white;
+      box-shadow: 0 18px 50px rgba(28, 27, 31, 0.14);
+    }
+
+    .paper h1 {
+      margin: 0 0 8px;
+      font-size: 34px;
+      letter-spacing: 0;
+    }
+    .paper .meta {
+      color: var(--soft);
+      font-size: 13px;
+      font-weight: 750;
+      margin-bottom: 28px;
+    }
+    .paper h3 {
+      margin: 26px 0 10px;
+      color: var(--primary);
+      font-size: 15px;
+      border-bottom: 2px solid var(--primary-container);
+      padding-bottom: 7px;
+    }
+    .paper p, .paper li {
+      color: #2d2a32;
+      font-size: 13px;
+      line-height: 1.75;
+    }
+
+    .ai-drawer {
+      position: fixed;
+      right: 14px;
+      top: 92px;
+      bottom: 14px;
+      width: 410px;
+      display: grid;
+      grid-template-rows: auto auto minmax(0, 1fr);
+      animation: slide-in 260ms ease both;
+    }
+
+    @keyframes slide-in {
+      from { transform: translateX(30px); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+
+    .tabs {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+      padding: 12px;
+      background: var(--surface);
+    }
+    .tab {
+      border: 0;
+      border-radius: 999px;
+      padding: 8px 4px;
+      color: var(--muted);
+      background: transparent;
+      font-size: 12px;
+      font-weight: 850;
+    }
+    .tab.active {
+      color: var(--primary-dark);
+      background: var(--primary-container);
+    }
+
+    .ai-content {
+      overflow: auto;
+      padding: 14px;
+      background: #faf7ff;
+    }
+
+    .ai-card {
+      margin-bottom: 12px;
+      border-radius: 22px;
+      padding: 14px;
+      border: 1px solid rgba(202, 196, 208, 0.62);
+      background: white;
+    }
+
+    .answer {
+      margin-top: 10px;
+      padding: 12px;
+      border-radius: 18px;
+      background: var(--secondary-container);
+      color: #113d20;
+      font-size: 12px;
+      line-height: 1.7;
+      font-weight: 750;
+    }
+
+    .mobile-note {
+      display: none;
+      margin-top: 12px;
+      color: var(--soft);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    @media (max-width: 980px) {
+      .app { padding: 10px; }
+      .toolbar { border-radius: 20px; }
+      .toolbar-group .chip:nth-child(n+2), .brand span { display: none; }
+      .main, .main.ai-open {
+        grid-template-columns: 1fr;
+        margin-right: 0;
+      }
+      .editor { max-height: 52vh; }
+      .section-list { height: 42vh; }
+      .ai-drawer {
+        left: 10px;
+        right: 10px;
+        top: auto;
+        width: auto;
+        height: 72vh;
+        border-radius: 28px 28px 0 0;
+      }
+      .preview-area { padding: 16px; }
+      .paper { padding: 36px 28px; min-height: 760px; }
+      .mobile-note { display: block; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="toolbar">
+      <div class="brand">
+        <div class="logo">鸭</div>
+        <div>
+          <strong>简历鸭</strong>
+          <span>Resume Editor</span>
+        </div>
+      </div>
+      <div class="resume-name">
+        <button class="icon-btn">⌂</button>
+        <button class="chip">产品经理简历</button>
+      </div>
+      <div class="toolbar-group">
+        <button class="chip">导入</button>
+        <button class="chip">保存</button>
+        <button class="chip">草稿</button>
+        <button class="primary-btn">导出 PDF</button>
+        <button class="primary-btn">AI 工具</button>
+      </div>
+    </header>
+
+    <main class="main ai-open">
+      <section class="editor">
+        <div class="panel-head">
+          <div>
+            <h2>编辑简历</h2>
+            <p>模块化填写，实时同步右侧预览</p>
+          </div>
+          <button class="chip">添加模块</button>
+        </div>
+
+        <div class="section-list">
+          <article class="section-card">
+            <div class="section-title">个人信息 <button class="chip">完成</button></div>
+            <div class="field"><label>姓名</label><div class="input">郭欣玲</div></div>
+            <div class="field"><label>求职意向</label><div class="input">AI 产品经理</div></div>
+          </article>
+          <article class="section-card active">
+            <div class="section-title">工作经历 <button class="chip">AI 润色</button></div>
+            <div class="field"><label>公司 / 职位</label><div class="input">某科技公司 · 产品经理</div></div>
+            <div class="field"><label>经历描述</label><div class="textarea">负责 AI 简历编辑器从 0 到 1 的产品设计，梳理简历导入、AI 润色、岗位适配、面试预测等核心流程。</div></div>
+          </article>
+          <article class="section-card">
+            <div class="section-title">项目经历 <button class="chip">展开</button></div>
+            <div class="field"><label>项目</label><div class="input">简历鸭 AI 工作台</div></div>
+          </article>
+          <article class="section-card">
+            <div class="section-title">技能能力 <button class="chip">整理</button></div>
+            <div class="field"><label>技能</label><div class="textarea">AI 产品设计、用户研究、原型设计、数据分析、增长实验</div></div>
+          </article>
+        </div>
+      </section>
+
+      <section class="preview-shell">
+        <div class="panel-head">
+          <div>
+            <h2>A4 实时预览</h2>
+            <p>当前模板：经典商务 · 中文</p>
+          </div>
+          <button class="chip">缩放 92%</button>
+        </div>
+        <div class="preview-area">
+          <article class="paper">
+            <h1>郭欣玲</h1>
+            <div class="meta">AI 产品经理 · 北京 · guoxinling@example.com</div>
+            <h3>个人概述</h3>
+            <p>具备 AI 产品从概念验证到上线增长的完整经验，擅长将复杂能力转化为清晰、可落地的用户工作流。</p>
+            <h3>工作经历</h3>
+            <p><strong>某科技公司 · 产品经理</strong></p>
+            <ul>
+              <li>负责 AI 简历编辑器从 0 到 1 的产品设计，完成导入、润色、适配和导出闭环。</li>
+              <li>通过用户访谈与可用性测试优化新手创建流程，降低首次填写门槛。</li>
+            </ul>
+            <h3>项目经历</h3>
+            <p>简历鸭 AI 工作台：围绕求职者简历撰写、优化和面试准备打造一体化工具。</p>
+          </article>
+        </div>
+      </section>
+    </main>
+
+    <aside class="ai-drawer">
+      <div class="panel-head">
+        <div>
+          <h2>AI 工具箱</h2>
+          <p>服务已由简历鸭托管，无需用户配置 Key</p>
+        </div>
+        <button class="icon-btn">×</button>
+      </div>
+      <div class="tabs">
+        <button class="tab">向导</button>
+        <button class="tab">润色</button>
+        <button class="tab">适配</button>
+        <button class="tab active">面试</button>
+      </div>
+      <div class="ai-content">
+        <div class="ai-card">
+          <strong>1. 你在这个项目里最大的产品决策是什么？</strong>
+          <p>提示：说明背景、权衡、结果和复盘。</p>
+          <div class="answer">参考答案：我最大的决策是把 AI 能力收敛到“写简历、改简历、适配岗位”这条主链路，而不是堆很多分散工具。这样能减少新用户选择成本，也让后续转化路径更清晰。</div>
+        </div>
+        <div class="ai-card">
+          <strong>2. 你如何判断 AI 优化后的简历质量？</strong>
+          <p>提示：可以从结构完整度、关键词匹配、表达质量和用户反馈回答。</p>
+          <div class="answer">参考答案：我会先看结构是否完整，再看岗位关键词是否覆盖，最后看表达是否基于事实、是否有结果导向。上线后还会结合导出率、用户二次修改率和反馈判断效果。</div>
+        </div>
+        <div class="ai-card">
+          <strong>3. 如果用户担心隐私，你会怎么设计？</strong>
+          <p>提示：体现数据边界、透明提示和用户控制权。</p>
+        </div>
+        <p class="mobile-note">移动端示意：AI 工具箱会作为底部抽屉出现。</p>
+      </div>
+    </aside>
+  </div>
+</body>
+</html>
