@@ -87,12 +87,12 @@ export function buildAdaptMessages(
 // ── Phase 6: Interview Prediction ──
 export const interviewPrompt = `你是一位资深的面试教练和技术面试官。
 
-请根据候选人的简历内容，预测面试官最可能提出的 10 个问题。
+请根据候选人的简历内容，预测面试官最可能提出的 10 个问题，并为每个问题给出一段可直接参考的回答。
 
 输出格式（严格按以下 JSON 格式，不要添加任何额外文字）：
 
 [
-  { "question": "面试问题", "hint": "回答要点提示", "category": "分类" }
+  { "question": "面试问题", "hint": "回答要点提示", "answer": "参考答案", "category": "分类" }
 ]
 
 分类包括：自我介绍、项目经历、技术能力、行为面试、职业规划、行业理解、薪资期望
@@ -101,6 +101,9 @@ export const interviewPrompt = `你是一位资深的面试教练和技术面试
 - 覆盖不同分类，每个分类 1-2 题
 - 问题要有深度，避免泛泛而问
 - hint 要具体，给出回答要点
+- answer 要像候选人本人在面试中可以直接说出口的回答，结构清晰，有背景、行动、结果或反思
+- answer 只能基于简历信息组织表达，不要编造公司、数据、项目结果或不存在的经历；如果简历缺少量化数据，可以用“我会进一步补充...”这类谨慎表达
+- 每个 answer 建议 120-220 字，避免空泛鸡汤
 - 所有输出用中文`
 
 export function buildInterviewMessages(

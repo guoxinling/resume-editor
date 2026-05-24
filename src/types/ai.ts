@@ -1,10 +1,3 @@
-// ── AI 配置 ──
-export interface AIConfig {
-  apiKey: string
-  baseURL: string   // 默认 https://api.deepseek.com/v1
-  model: string     // 默认 deepseek-v4-pro
-}
-
 // ── 经历润色 ──
 export type PolishMode = 'star' | 'result' | 'concise'
 
@@ -33,11 +26,12 @@ export interface AdaptResult {
 export interface InterviewQuestion {
   question: string
   hint: string
+  answer?: string
   category: string
 }
 
 // ── AI 面板 Tab ──
-export type AITab = 'wizard' | 'polish' | 'adapt' | 'interview' | 'config'
+export type AITab = 'wizard' | 'polish' | 'adapt' | 'interview'
 
 // ── 自定义润色源 ──
 export type PolishCustomSource = 'summary' | 'summaryEn' | 'free' | 'selfEvaluation' | 'selfEvaluationEn' | 'customSection'

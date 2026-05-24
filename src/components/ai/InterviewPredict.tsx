@@ -1,4 +1,4 @@
-import { useCallback } from 'react'
+import { useCallback, useState } from 'react'
 import { useAIStore } from '../../store/aiStore'
 import { useResumeStore } from '../../store/resumeStore'
 import { chatComplete } from '../../services/aiClient'
@@ -6,6 +6,7 @@ import { buildInterviewMessages } from '../../services/prompts'
 import type { InterviewQuestion } from '../../types/ai'
 
 export default function InterviewPredict() {
+  const [openAnswers, setOpenAnswers] = useState<Set<number>>(new Set())
   const {
     interviewQuestions, interviewLoading, interviewError,
     setInterviewQuestions, setInterviewError, setInterviewLoading,
@@ -50,12 +51,22 @@ export default function InterviewPredict() {
       const json = raw.replace(/```json\s*|```/g, '').trim()
       const questions = JSON.parse(json) as InterviewQuestion[]
       setInterviewQuestions(questions)
+      setOpenAnswers(new Set())
     } catch (err: any) {
       setInterviewError(err.message || '生成失败')
     } finally {
       setInterviewLoading(false)
     }
   }, [buildResumeText, setInterviewLoading, setInterviewError, setInterviewQuestions])
+
+  const toggleAnswer = useCallback((index: number) => {
+    setOpenAnswers((prev) => {
+      const next = new Set(prev)
+      if (next.has(index)) next.delete(index)
+      else next.add(index)
+      return next
+    })
+  }, [])
 
   const btnPrimary = "h-[34px] px-4 rounded-md text-xs font-semibold bg-gradient-to-r from-[#4F46E5] to-[#7C3AED] text-white inline-flex items-center gap-1.5 hover:shadow-lg hover:shadow-indigo-500/20 active:scale-[0.98] transition-all"
 
@@ -91,18 +102,37 @@ export default function InterviewPredict() {
           {interviewQuestions.map((q, i) => (
             <div
               key={i}
-              className="p-3 rounded-lg border border-gray-200 bg-white flex items-start gap-2.5 hover:border-[#7C3AED] hover:bg-indigo-50 transition-all"
+              className="p-3 rounded-lg border border-gray-200 bg-white hover:border-[#7C3AED] hover:bg-indigo-50 transition-all"
             >
-              <span className="w-6 h-6 rounded-full bg-gradient-to-br from-[#4F46E5] to-[#7C3AED] text-white text-[11px] font-bold flex items-center justify-center flex-shrink-0">
-                {i + 1}
-              </span>
-              <div className="flex-1 min-w-0">
-                <div className="text-[13px] font-medium text-gray-800 leading-relaxed">{q.question}</div>
-                <div className="text-[11px] text-gray-400 mt-1 leading-relaxed">{q.hint}</div>
+              <div className="flex items-start gap-2.5">
+                <span className="w-6 h-6 rounded-full bg-gradient-to-br from-[#4F46E5] to-[#7C3AED] text-white text-[11px] font-bold flex items-center justify-center flex-shrink-0">
+                  {i + 1}
+                </span>
+                <div className="flex-1 min-w-0">
+                  <div className="text-[13px] font-medium text-gray-800 leading-relaxed">{q.question}</div>
+                  <div className="text-[11px] text-gray-400 mt-1 leading-relaxed">{q.hint}</div>
+                </div>
+                <span className="text-[10px] px-2 py-0.5 rounded-full font-semibold bg-indigo-50 text-[#7C3AED] whitespace-nowrap flex-shrink-0">
+                  {q.category}
+                </span>
               </div>
-              <span className="text-[10px] px-2 py-0.5 rounded-full font-semibold bg-indigo-50 text-[#7C3AED] whitespace-nowrap flex-shrink-0">
-                {q.category}
-              </span>
+
+              {q.answer && (
+                <div className="mt-3 pl-8">
+                  <button
+                    type="button"
+                    onClick={() => toggleAnswer(i)}
+                    className="h-7 rounded-full bg-[#EEF2FF] px-3 text-[11px] font-semibold text-[#4F46E5] hover:bg-[#E0E7FF] transition-colors"
+                  >
+                    {openAnswers.has(i) ? '收起参考答案' : '查看参考答案'}
+                  </button>
+                  {openAnswers.has(i) && (
+                    <div className="mt-2 rounded-xl border border-indigo-100 bg-indigo-50/70 p-3 text-[12px] leading-6 text-gray-700 whitespace-pre-wrap">
+                      {q.answer}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           ))}
         </div>
