@@ -51,14 +51,14 @@ function SortableWorkCard({ w, index }: { w: ReturnType<typeof useResumeStore.ge
     <div
       ref={setNodeRef}
       style={style}
-      className={`p-3 border border-gray-200 rounded-lg space-y-2 hover:shadow-sm hover:border-gray-300 transition-all relative group sortable-item ${isDragging ? 'dragging' : ''}`}
+      className={`p-3 border border-border-default rounded-2xl bg-bg-hover/60 space-y-2 hover:shadow-sm hover:bg-white transition-all relative group sortable-item ${isDragging ? 'dragging' : ''}`}
     >
       {/* Drag handle + delete */}
       <div className="flex items-center justify-between">
-        <button {...attributes} {...listeners} className="drag-handle text-gray-300 hover:text-gray-500 text-sm px-0.5 select-none" title={t.work.dragToReorder ?? '拖拽排序'}>
+        <button {...attributes} {...listeners} className="drag-handle text-text-muted/50 hover:text-text-secondary text-sm px-0.5 select-none" title={t.work.dragToReorder ?? '拖拽排序'}>
           ⠿
         </button>
-        <button onClick={() => removeWork(w.id)} className="text-gray-300 hover:text-red-500 text-sm leading-none opacity-0 group-hover:opacity-100 transition-opacity" title={t.work.removeWork}>
+        <button onClick={() => removeWork(w.id)} className="text-text-muted/50 hover:text-red-500 text-sm leading-none opacity-0 group-hover:opacity-100 transition-opacity" title={t.work.removeWork}>
           ✕
         </button>
       </div>
@@ -68,11 +68,11 @@ function SortableWorkCard({ w, index }: { w: ReturnType<typeof useResumeStore.ge
           ['company', 'companyEn', 'role', 'roleEn', 'dates', 'datesEn'] as const
         ).filter((f) => shouldShowField(f, lang)) as WorkField[]).map((f) => (
           <div key={f} className={f === 'company' || f === 'companyEn' ? 'col-span-2' : ''}>
-            <label className="block text-[10px] text-gray-400 mb-0.5">{t.work[f]}</label>
+            <label className="block text-[10px] text-text-muted mb-0.5">{t.work[f]}</label>
             <input
               value={w[f]}
               onChange={(e) => updateWork(w.id, f, e.target.value)}
-              className="w-full px-2 py-1 text-xs border border-gray-200 rounded focus:outline-none focus:border-gray-400"
+              className="w-full px-2.5 py-2 text-xs border border-border-default rounded-xl bg-white focus:outline-none focus:border-brand-primary focus:ring-4 focus:ring-accent-muted/80"
               placeholder={t.work[f]}
             />
           </div>
@@ -82,7 +82,7 @@ function SortableWorkCard({ w, index }: { w: ReturnType<typeof useResumeStore.ge
       {lang === 'zh' && (
         <div>
           <div className="flex items-center justify-between mb-1">
-            <label className="text-[10px] text-gray-400">中文描述</label>
+            <label className="text-[10px] text-text-muted">中文描述</label>
             <AIPolishButton onClick={handleAIPolish} />
           </div>
           <MiniToolbar textareaId={`bullets-zh-${w.id}`} />
@@ -91,7 +91,7 @@ function SortableWorkCard({ w, index }: { w: ReturnType<typeof useResumeStore.ge
             value={w.bullets.join('\n')}
             onChange={(e) => setWorkBullets(w.id, e.target.value, 'zh')}
             onKeyDown={handleAutoContinue}
-            className="w-full px-2.5 py-2 text-xs border border-gray-200 rounded-md focus:outline-none focus:border-[#4F46E5] focus:ring-2 focus:ring-indigo-100 resize-y"
+            className="w-full px-2.5 py-2 text-xs border border-border-default rounded-xl bg-white focus:outline-none focus:border-brand-primary focus:ring-4 focus:ring-accent-muted/80 resize-y"
             placeholder={`在此输入工作描述，每行一个要点…\n\n按 Enter 换行，编号/符号/横线自动续接`}
             rows={Math.max(4, w.bullets.length + 1)}
             spellCheck={false}
@@ -102,7 +102,7 @@ function SortableWorkCard({ w, index }: { w: ReturnType<typeof useResumeStore.ge
       {lang === 'en' && (
         <div>
           <div className="flex items-center justify-between mb-1">
-            <label className="text-[10px] text-gray-400">English Description</label>
+            <label className="text-[10px] text-text-muted">English Description</label>
             <AIPolishButton onClick={handleAIPolish} label="AI Polish" />
           </div>
           <MiniToolbar textareaId={`bullets-en-${w.id}`} />
@@ -111,7 +111,7 @@ function SortableWorkCard({ w, index }: { w: ReturnType<typeof useResumeStore.ge
             value={w.bulletsEn.join('\n')}
             onChange={(e) => setWorkBullets(w.id, e.target.value, 'en')}
             onKeyDown={handleAutoContinue}
-            className="w-full px-2.5 py-2 text-xs border border-gray-200 rounded-md focus:outline-none focus:border-[#4F46E5] focus:ring-2 focus:ring-indigo-100 resize-y"
+            className="w-full px-2.5 py-2 text-xs border border-border-default rounded-xl bg-white focus:outline-none focus:border-brand-primary focus:ring-4 focus:ring-accent-muted/80 resize-y"
             placeholder={`Enter bullet points, one per line…\n\nPress Enter for a new bullet`}
             rows={Math.max(4, w.bulletsEn.length + 1)}
             spellCheck={false}
@@ -152,7 +152,7 @@ export default function WorkExperienceForm() {
           </div>
         </SortableContext>
       </DndContext>
-      <button onClick={addWork} className="text-xs text-blue-600 hover:text-blue-800 font-medium">
+      <button onClick={addWork} className="text-xs text-brand-primary hover:text-brand-secondary font-bold">
         {t.work.addWork}
       </button>
     </div>

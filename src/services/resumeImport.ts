@@ -122,7 +122,7 @@ async function structurizeText(
   onProgress({ step: 'ai_analyzing', message: 'AI 正在分析简历结构…', progress: 50 })
 
   const messages = buildStructurizeMessages(text)
-  const raw = await chatComplete(messages)
+  const raw = await chatComplete(messages, 'import_parse')
   const json = raw.replace(/```json\s*|```/g, '').trim()
 
   onProgress({ step: 'ai_analyzing', message: 'AI 分析完成，正在填充…', progress: 90 })

@@ -7,7 +7,7 @@ export default function PreviewPanel() {
 
   return (
     <main className="h-full preview-bg preview-scroll overflow-auto flex justify-center py-8 px-4">
-      <div className="preview-a4 shadow-xl" id="resume-preview" ref={containerRef}>
+      <div className="preview-a4" id="resume-preview" ref={containerRef}>
         <ResumePreview />
       </div>
     </main>

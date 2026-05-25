@@ -1,5 +1,6 @@
 import { useState, type ReactNode } from 'react'
 import { useResumeStore } from '../store/resumeStore'
+import { useAuthStore } from '../store/authStore'
 
 interface Props {
   onImportClick: () => void
@@ -125,16 +126,20 @@ function WorkspacePreview() {
 }
 
 export default function LandingPage({ onImportClick, onDraftContinue, onWizardClick }: Props) {
-  const [loginHint, setLoginHint] = useState(false)
   const [showImportConfirm, setShowImportConfirm] = useState(false)
+  const user = useAuthStore((s) => s.user)
+  const balance = useAuthStore((s) => s.balance)
+  const totalCredits = useAuthStore((s) => s.totalCredits)
+  const openAuthModal = useAuthStore((s) => s.openAuthModal)
+  const openCreditModal = useAuthStore((s) => s.openCreditModal)
+  const signOut = useAuthStore((s) => s.signOut)
   const hasDraft = useResumeStore((s) => {
     const d = s.data
     return !!(d.personalInfo.name || d.personalInfo.email || d.summary || d.workExperience.length > 0 || d.education.length > 0)
   })
 
   const handleLoginClick = () => {
-    setLoginHint(true)
-    window.setTimeout(() => setLoginHint(false), 1800)
+    openAuthModal()
   }
 
   const handleImportClick = () => {
@@ -167,13 +172,32 @@ export default function LandingPage({ onImportClick, onDraftContinue, onWizardCl
           </button>
 
           <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={handleLoginClick}
-              className="hidden h-10 items-center justify-center rounded-full border border-[#CAC4D0] bg-[#FFFBFE] px-4 text-sm font-black text-[#6750A4] shadow-sm transition hover:-translate-y-0.5 hover:bg-[#EADDFF]/55 hover:shadow-md active:translate-y-0 sm:inline-flex"
-            >
-              注册/登录
-            </button>
+            {user ? (
+              <>
+                <button
+                  type="button"
+                  onClick={openCreditModal}
+                  className="hidden h-10 items-center justify-center rounded-full border border-[#CAC4D0] bg-[#FFFBFE] px-4 text-sm font-black text-[#6750A4] shadow-sm transition hover:-translate-y-0.5 hover:bg-[#EADDFF]/55 hover:shadow-md active:translate-y-0 sm:inline-flex"
+                >
+                  {balance ?? 0}/{totalCredits ?? 20}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => signOut()}
+                  className="hidden h-10 items-center justify-center rounded-full border border-[#CAC4D0] bg-[#FFFBFE] px-4 text-sm font-black text-[#49454F] shadow-sm transition hover:-translate-y-0.5 hover:bg-[#F3EDF7] hover:shadow-md active:translate-y-0 sm:inline-flex"
+                >
+                  退出
+                </button>
+              </>
+            ) : (
+              <button
+                type="button"
+                onClick={handleLoginClick}
+                className="hidden h-10 items-center justify-center rounded-full border border-[#CAC4D0] bg-[#FFFBFE] px-4 text-sm font-black text-[#6750A4] shadow-sm transition hover:-translate-y-0.5 hover:bg-[#EADDFF]/55 hover:shadow-md active:translate-y-0 sm:inline-flex"
+              >
+                注册/登录
+              </button>
+            )}
             <button
               type="button"
               onClick={onWizardClick}
@@ -316,12 +340,6 @@ export default function LandingPage({ onImportClick, onDraftContinue, onWizardCl
           </div>
         </section>
       </main>
-
-      {loginHint && (
-        <div className="fixed bottom-5 left-1/2 z-50 -translate-x-1/2 rounded-full bg-[#1C1B1F] px-4 py-2 text-sm font-bold text-white shadow-xl">
-          注册/登录会在账号系统接入后开放
-        </div>
-      )}
 
       {showImportConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#1C1B1F]/38 px-4 backdrop-blur-sm">

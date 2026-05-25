@@ -10,16 +10,22 @@
 }
 
 @layer components {
-  .preview-a4 { width: 210mm; min-height: 297mm; background: white; }
+  .preview-a4 {
+    width: 210mm;
+    min-height: 297mm;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 22px 70px rgba(58, 46, 76, 0.18);
+  }
   @media print { .preview-a4 { box-shadow: none !important; margin: 0 !important; } }
 
   /* —— Preview area paper texture —— */
   .preview-bg {
-    background-color: #e5e7eb;
+    background-color: #f6f7fb;
     background-image:
-      /* subtle dot grid */
-      radial-gradient(circle, #d1d5db 1px, transparent 1px);
-    background-size: 20px 20px;
+      radial-gradient(circle at 1px 1px, rgba(80, 72, 96, 0.055) 1px, transparent 0),
+      linear-gradient(180deg, rgba(246, 247, 251, 0.92), rgba(250, 249, 247, 0.96));
+    background-size: 18px 18px, 100% 100%;
   }
 
   /* —— Editor panel scrollbar —— */
@@ -30,11 +36,11 @@
     background: transparent;
   }
   .editor-scroll::-webkit-scrollbar-thumb {
-    background: #d1d5db;
+    background: #c9cdd6;
     border-radius: 3px;
   }
   .editor-scroll::-webkit-scrollbar-thumb:hover {
-    background: #9ca3af;
+    background: #9398a3;
   }
 
   /* —— Preview panel scrollbar (matches editor) —— */
@@ -45,11 +51,11 @@
     background: transparent;
   }
   .preview-scroll::-webkit-scrollbar-thumb {
-    background: #d1d5db;
+    background: #c9cdd6;
     border-radius: 3px;
   }
   .preview-scroll::-webkit-scrollbar-thumb:hover {
-    background: #9ca3af;
+    background: #9398a3;
   }
 
   /* —— Drag handle —— */
@@ -73,8 +79,8 @@
   /* thin scrollbar for AI panel */
   .scrollbar-thin::-webkit-scrollbar { width: 6px; }
   .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
-  .scrollbar-thin::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
-  .scrollbar-thin::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+  .scrollbar-thin::-webkit-scrollbar-thumb { background: #c9cdd6; border-radius: 3px; }
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover { background: #9398a3; }
 
   /* bounce animation for loading dots */
   @keyframes bounce {

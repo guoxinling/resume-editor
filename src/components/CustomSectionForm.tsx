@@ -24,20 +24,20 @@ export default function CustomSectionForm({ cs }: { cs: CustomSection }) {
       {/* Editable title */}
       <div className="grid grid-cols-2 gap-2">
         <div>
-          <label className="block text-[10px] text-gray-400 mb-0.5">{t.customSection.label}</label>
+          <label className="block text-[10px] text-text-muted mb-0.5">{t.customSection.label}</label>
           <input
             value={cs.label}
             onChange={(e) => updateCustomSection(cs.id, 'label', e.target.value)}
-            className="w-full px-2 py-1 text-xs border border-gray-200 rounded focus:outline-none focus:border-gray-400"
+            className="w-full px-2.5 py-2 text-xs border border-border-default rounded-xl bg-white focus:outline-none focus:border-brand-primary focus:ring-4 focus:ring-accent-muted/80"
             placeholder="模块名称"
           />
         </div>
         <div>
-          <label className="block text-[10px] text-gray-400 mb-0.5">{t.customSection.labelEn}</label>
+          <label className="block text-[10px] text-text-muted mb-0.5">{t.customSection.labelEn}</label>
           <input
             value={cs.labelEn}
             onChange={(e) => updateCustomSection(cs.id, 'labelEn', e.target.value)}
-            className="w-full px-2 py-1 text-xs border border-gray-200 rounded focus:outline-none focus:border-gray-400"
+            className="w-full px-2.5 py-2 text-xs border border-border-default rounded-xl bg-white focus:outline-none focus:border-brand-primary focus:ring-4 focus:ring-accent-muted/80"
             placeholder="Section Name"
           />
         </div>
@@ -47,7 +47,7 @@ export default function CustomSectionForm({ cs }: { cs: CustomSection }) {
       {lang === 'zh' && (
         <div>
           <div className="flex items-center justify-between mb-1">
-            <label className="text-[10px] text-gray-400">内容</label>
+            <label className="text-[10px] text-text-muted">内容</label>
             <AIPolishButton onClick={() => handleAIPolish(cs.content)} />
           </div>
           <MiniToolbar textareaId={`custom-zh-${cs.id}`} />
@@ -56,7 +56,7 @@ export default function CustomSectionForm({ cs }: { cs: CustomSection }) {
             value={cs.content}
             onChange={(e) => updateCustomSection(cs.id, 'content', e.target.value)}
             onKeyDown={handleAutoContinue}
-            className="w-full px-2.5 py-2 text-xs border border-gray-200 rounded-md focus:outline-none focus:border-[#4F46E5] focus:ring-2 focus:ring-indigo-100 resize-y min-h-[80px]"
+            className="w-full px-2.5 py-2 text-xs border border-border-default rounded-xl bg-white focus:outline-none focus:border-brand-primary focus:ring-4 focus:ring-accent-muted/80 resize-y min-h-[80px]"
             placeholder="输入内容…"
           />
         </div>
@@ -64,7 +64,7 @@ export default function CustomSectionForm({ cs }: { cs: CustomSection }) {
       {lang === 'en' && (
         <div>
           <div className="flex items-center justify-between mb-1">
-            <label className="text-[10px] text-gray-400">Content</label>
+            <label className="text-[10px] text-text-muted">Content</label>
             <AIPolishButton onClick={() => handleAIPolish(cs.contentEn)} label="AI Polish" />
           </div>
           <MiniToolbar textareaId={`custom-en-${cs.id}`} />
@@ -73,7 +73,7 @@ export default function CustomSectionForm({ cs }: { cs: CustomSection }) {
             value={cs.contentEn}
             onChange={(e) => updateCustomSection(cs.id, 'contentEn', e.target.value)}
             onKeyDown={handleAutoContinue}
-            className="w-full px-2.5 py-2 text-xs border border-gray-200 rounded-md focus:outline-none focus:border-[#4F46E5] focus:ring-2 focus:ring-indigo-100 resize-y min-h-[80px]"
+            className="w-full px-2.5 py-2 text-xs border border-border-default rounded-xl bg-white focus:outline-none focus:border-brand-primary focus:ring-4 focus:ring-accent-muted/80 resize-y min-h-[80px]"
             placeholder="Enter content..."
           />
         </div>

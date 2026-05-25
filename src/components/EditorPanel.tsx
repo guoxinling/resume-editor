@@ -123,19 +123,19 @@ function SortableSection({
     <section
       ref={setNodeRef}
       style={style}
-      className={`rounded-lg relative ${isDragging ? 'opacity-30 bg-gray-100 shadow-lg z-10' : ''}`}
+      className={`rounded-2xl relative p-3 bg-white border border-border-default/80 shadow-[0_1px_0_rgba(255,255,255,0.9)_inset] ${isDragging ? 'opacity-40 bg-bg-hover shadow-lg z-10' : ''}`}
     >
       {/* Drop indicator */}
       {isOver && !isDragging && (
-        <div className="absolute -top-[5px] left-0 right-0 h-[3px] rounded-full bg-gradient-to-r from-[#4F46E5] to-[#7C3AED] z-20 animate-pulse pointer-events-none" />
+        <div className="absolute -top-[5px] left-0 right-0 h-[3px] rounded-full bg-brand-primary z-20 animate-pulse pointer-events-none" />
       )}
 
       {/* Section header */}
-      <div className={`flex items-center gap-1.5 mb-3 pb-1.5 border-b-2 ${isCustom ? 'border-dashed border-[#7C3AED]/30' : 'border-gray-800'} group`}>
+      <div className={`flex items-center gap-1.5 mb-3 pb-2 border-b ${isCustom ? 'border-dashed border-brand-primary/30' : 'border-border-default'} group`}>
         <button
           {...attributes}
           {...listeners}
-          className="drag-handle text-gray-300 hover:text-gray-500 text-sm px-0.5 select-none shrink-0 cursor-grab active:cursor-grabbing"
+          className="drag-handle text-text-muted/50 hover:text-text-secondary text-sm px-0.5 select-none shrink-0 cursor-grab active:cursor-grabbing"
           title="拖拽排序"
         >
           ⠿
@@ -143,10 +143,10 @@ function SortableSection({
 
         <button
           onClick={onToggle}
-          className="flex items-center gap-1.5 text-sm font-bold text-gray-800 hover:text-brand-primary transition-colors cursor-pointer select-none flex-1 text-left"
+          className="flex items-center gap-1.5 text-sm font-bold text-text-primary hover:text-brand-primary transition-colors cursor-pointer select-none flex-1 text-left"
         >
           <CollapseArrow open={open} />
-          {isCustom && <span className="text-[10px] text-[#7C3AED]">✦</span>}
+          {isCustom && <span className="text-[10px] text-brand-primary">✦</span>}
           {editing ? (
             <input
               ref={editRef}
@@ -168,12 +168,12 @@ function SortableSection({
                 }
               }}
               onClick={(e) => e.stopPropagation()}
-              className="flex-1 px-1.5 py-0.5 text-sm font-bold border-b-2 border-[#4F46E5] bg-transparent outline-none text-gray-800 min-w-0"
+              className="flex-1 px-1.5 py-0.5 text-sm font-bold border-b-2 border-brand-primary bg-transparent outline-none text-text-primary min-w-0"
               autoFocus
             />
           ) : (
             <span
-              className={isCustom ? 'text-[#7C3AED]' : 'text-gray-800 hover:text-[#4F46E5] cursor-text'}
+              className={isCustom ? 'text-brand-primary' : 'text-text-primary hover:text-brand-primary cursor-text'}
               onClick={(e) => {
                 e.stopPropagation()
                 e.preventDefault()
@@ -191,7 +191,7 @@ function SortableSection({
 
         <button
           onClick={onRemove}
-          className="text-gray-300 hover:text-red-500 text-sm leading-none shrink-0 opacity-0 group-hover:opacity-100 transition-opacity px-1"
+          className="text-text-muted/50 hover:text-red-500 text-sm leading-none shrink-0 opacity-0 group-hover:opacity-100 transition-opacity px-1"
           title={isCustom ? '删除此模块' : '隐藏此模块'}
         >
           ✕
@@ -307,13 +307,13 @@ export default function EditorPanel() {
   const photo = data.personalInfo.photo
 
   return (
-    <aside className="lg:h-full w-full lg:w-[480px] shrink-0 bg-white lg:border-r border-gray-200 editor-scroll overflow-y-auto">
+    <aside className="lg:h-full w-full lg:w-[480px] shrink-0 bg-white/95 lg:border-r border-border-default editor-scroll overflow-y-auto">
       <div className="p-4 pb-20">
         {/* ── Photo upload ── */}
-        <div className="flex items-center gap-3 mb-5 pb-4 border-b-2 border-gray-100">
+        <div className="flex items-center gap-3 mb-5 p-3 rounded-2xl bg-bg-hover border border-border-default">
           {photo ? (
             <div className="relative group">
-              <img src={photo} alt="简历照片" crossOrigin="anonymous" className="w-16 h-20 object-cover rounded border border-gray-200" />
+              <img src={photo} alt="简历照片" crossOrigin="anonymous" className="w-16 h-20 object-cover rounded-xl border border-border-default" />
               <button
                 onClick={handleRemovePhoto}
                 className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 text-white text-[10px] rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity leading-none"
@@ -323,17 +323,17 @@ export default function EditorPanel() {
               </button>
             </div>
           ) : (
-            <div className="w-16 h-20 border-2 border-dashed border-gray-300 rounded flex items-center justify-center text-gray-300 text-2xl">
+            <div className="w-16 h-20 border border-dashed border-border-default rounded-xl bg-white flex items-center justify-center text-text-muted text-2xl">
               👤
             </div>
           )}
           <div className="flex flex-col gap-1.5">
             <input ref={photoInputRef} type="file" accept="image/*" onChange={handlePhotoUpload} className="hidden" />
-            <button onClick={() => photoInputRef.current?.click()} className="px-3 py-1.5 text-xs bg-gray-100 hover:bg-gray-200 rounded transition-colors">
+            <button onClick={() => photoInputRef.current?.click()} className="px-3 py-1.5 text-xs bg-accent-muted hover:bg-[#E7D9FA] text-brand-primary rounded-full font-semibold transition-colors">
               {t.personalInfo.uploadPhoto}
             </button>
             {photo && (
-              <button onClick={handleRemovePhoto} className="px-3 py-1.5 text-xs text-red-500 hover:bg-red-50 rounded transition-colors">
+              <button onClick={handleRemovePhoto} className="px-3 py-1.5 text-xs text-red-500 hover:bg-red-50 rounded-full font-semibold transition-colors">
                 {t.personalInfo.removePhoto}
               </button>
             )}
@@ -343,7 +343,7 @@ export default function EditorPanel() {
         {/* ── Draggable sections ── */}
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={() => setOverId(null)} onDragOver={handleDragOver} onDragEnd={handleDragEnd}>
           <SortableContext items={sectionOrder} strategy={verticalListSortingStrategy}>
-            <div className="space-y-6">
+            <div className="space-y-4">
               {sectionOrder.map((key) => (
                 <SortableSection
                   key={key}
@@ -364,28 +364,28 @@ export default function EditorPanel() {
         <div className="mt-6 relative">
           <button
             onClick={() => setShowAddMenu(!showAddMenu)}
-            className="w-full py-2.5 border-2 border-dashed border-indigo-200 rounded-lg text-xs text-indigo-400 hover:border-indigo-400 hover:text-indigo-600 transition-colors font-medium"
+            className="w-full py-3 border border-dashed border-brand-primary/30 rounded-2xl text-xs text-brand-primary bg-accent-muted/40 hover:bg-accent-muted hover:border-brand-primary/50 transition-colors font-bold"
           >
             + {t.addSection}
           </button>
 
           {showAddMenu && (
-            <div className="absolute bottom-full left-0 right-0 mb-1 bg-white border border-gray-200 rounded-lg shadow-lg py-1 z-20">
+            <div className="absolute bottom-full left-0 right-0 mb-1 bg-white border border-border-default rounded-2xl shadow-xl shadow-slate-900/10 p-1.5 z-20">
               {/* Built-in sections that are currently hidden */}
               {hiddenBuiltins.map((key) => (
                 <button
                   key={key}
                   onClick={() => handleAddBuiltin(key)}
-                  className="w-full text-left px-4 py-2 text-xs text-gray-700 hover:bg-indigo-50 hover:text-brand-primary transition-colors"
+                  className="w-full text-left px-4 py-2 text-xs text-text-secondary hover:bg-bg-hover hover:text-brand-primary rounded-xl transition-colors"
                 >
                   {lang === 'zh' ? (sectionLabels[key]?.zh || SECTION_LABELS[key].zh) : (sectionLabels[key]?.en || SECTION_LABELS[key].en)}
                 </button>
               ))}
               {/* Divider + custom section option */}
-              {hiddenBuiltins.length > 0 && <div className="border-t border-gray-100 my-1" />}
+              {hiddenBuiltins.length > 0 && <div className="border-t border-border-default my-1" />}
               <button
                 onClick={handleAddCustom}
-                className="w-full text-left px-4 py-2 text-xs text-[#7C3AED] hover:bg-violet-50 transition-colors font-medium"
+                className="w-full text-left px-4 py-2 text-xs text-brand-primary hover:bg-accent-muted/60 rounded-xl transition-colors font-bold"
               >
                 ✦ {t.addCustomSection}
               </button>
@@ -401,28 +401,28 @@ export default function EditorPanel() {
 
       {/* ── Custom section name prompt modal ── */}
       {showCustomPrompt && (
-        <div className="fixed inset-0 bg-black/30 z-50 flex items-center justify-center">
-          <div className="bg-white rounded-xl shadow-xl p-6 w-[360px] max-w-[90vw]">
-            <h3 className="text-sm font-bold text-gray-800 mb-4">{t.addCustomSection}</h3>
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50 flex items-center justify-center">
+          <div className="bg-white rounded-3xl shadow-2xl shadow-slate-900/15 border border-border-default p-6 w-[360px] max-w-[90vw]">
+            <h3 className="text-sm font-bold text-text-primary mb-4">{t.addCustomSection}</h3>
             <div className="space-y-3">
               <div>
-                <label className="block text-[10px] text-gray-400 mb-1">中文名称</label>
+                <label className="block text-[10px] text-text-muted mb-1">中文名称</label>
                 <input
                   autoFocus
                   value={customLabel}
                   onChange={(e) => setCustomLabel(e.target.value)}
                   onKeyDown={(e) => { if (e.key === 'Enter') confirmCustom() }}
-                  className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-indigo-400"
+                  className="w-full px-3 py-2 text-sm border border-border-default rounded-xl focus:outline-none focus:border-brand-primary focus:ring-4 focus:ring-accent-muted/80"
                   placeholder="如：社会实践、获奖情况…"
                 />
               </div>
               <div>
-                <label className="block text-[10px] text-gray-400 mb-1">English Name</label>
+                <label className="block text-[10px] text-text-muted mb-1">English Name</label>
                 <input
                   value={customLabelEn}
                   onChange={(e) => setCustomLabelEn(e.target.value)}
                   onKeyDown={(e) => { if (e.key === 'Enter') confirmCustom() }}
-                  className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-indigo-400"
+                  className="w-full px-3 py-2 text-sm border border-border-default rounded-xl focus:outline-none focus:border-brand-primary focus:ring-4 focus:ring-accent-muted/80"
                   placeholder="e.g. Social Practice, Awards..."
                 />
               </div>
@@ -430,14 +430,14 @@ export default function EditorPanel() {
             <div className="flex justify-end gap-2 mt-5">
               <button
                 onClick={() => setShowCustomPrompt(false)}
-                className="px-4 py-2 text-xs text-gray-500 hover:bg-gray-100 rounded-lg transition-colors"
+                className="px-4 py-2 text-xs text-text-secondary hover:bg-bg-hover rounded-full transition-colors font-semibold"
               >
                 {t.cancel}
               </button>
               <button
                 onClick={confirmCustom}
                 disabled={!customLabel.trim()}
-                className="px-4 py-2 text-xs bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                className="px-4 py-2 text-xs bg-brand-primary text-white rounded-full hover:brightness-110 transition-colors disabled:opacity-40 disabled:cursor-not-allowed font-semibold"
               >
                 {t.ok}
               </button>

@@ -8,25 +8,25 @@ export default {
       },
       colors: {
         // Brand
-        'brand-primary': '#4F46E5',
-        'brand-secondary': '#7C3AED',
-        'accent': '#7C3AED',
-        'accent-muted': '#EDE9FE',
+        'brand-primary': '#6750A4',
+        'brand-secondary': '#7D5FD3',
+        'accent': '#6750A4',
+        'accent-muted': '#EFE7F8',
 
         // Backgrounds
-        'bg-page': '#F6F8FB',
+        'bg-page': '#FAF9F7',
         'bg-card': '#FFFFFF',
-        'bg-hover': '#F1F5F9',
-        'bg-toolbar': '#FFFFFF',
-        'bg-editor': '#FCFCFD',
+        'bg-hover': '#F6F7FB',
+        'bg-toolbar': '#FAF9F7',
+        'bg-editor': '#FFFFFF',
 
         // Text
-        'text-primary': '#0F172A',
-        'text-secondary': '#64748B',
-        'text-muted': '#8795A6',
+        'text-primary': '#1D1B20',
+        'text-secondary': '#675F6B',
+        'text-muted': '#79717D',
 
         // Border
-        'border-default': '#E2E8F0',
+        'border-default': '#D4D7DF',
 
         // Functional
         'functional-success': '#16A34A',

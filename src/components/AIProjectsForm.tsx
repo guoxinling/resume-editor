@@ -50,11 +50,11 @@ function SortableProjectCard({ p, index }: { p: ReturnType<typeof useResumeStore
 
   const rowInput = (field: ProjField, label: string) => (
     <div>
-      <label className="block text-[10px] text-gray-400 mb-0.5">{label}</label>
+      <label className="block text-[10px] text-text-muted mb-0.5">{label}</label>
       <input
         value={p[field]}
         onChange={(e) => updateProject(p.id, field, e.target.value)}
-        className="w-full px-2 py-1 text-xs border border-gray-200 rounded focus:outline-none focus:border-gray-400"
+        className="w-full px-2.5 py-2 text-xs border border-border-default rounded-xl bg-white focus:outline-none focus:border-brand-primary focus:ring-4 focus:ring-accent-muted/80"
         placeholder={label}
       />
     </div>
@@ -64,14 +64,14 @@ function SortableProjectCard({ p, index }: { p: ReturnType<typeof useResumeStore
     <div
       ref={setNodeRef}
       style={style}
-      className={`p-3 border border-gray-200 rounded-lg space-y-2 hover:shadow-sm hover:border-gray-300 transition-all relative group sortable-item ${isDragging ? 'dragging' : ''}`}
+      className={`p-3 border border-border-default rounded-2xl bg-bg-hover/60 space-y-2 hover:shadow-sm hover:bg-white transition-all relative group sortable-item ${isDragging ? 'dragging' : ''}`}
     >
       {/* Drag handle + delete */}
       <div className="flex items-center justify-between">
-        <button {...attributes} {...listeners} className="drag-handle text-gray-300 hover:text-gray-500 text-sm px-0.5 select-none" title="拖拽排序">
+        <button {...attributes} {...listeners} className="drag-handle text-text-muted/50 hover:text-text-secondary text-sm px-0.5 select-none" title="拖拽排序">
           ⠿
         </button>
-        <button onClick={() => removeProject(p.id)} className="text-gray-300 hover:text-red-500 text-sm leading-none opacity-0 group-hover:opacity-100 transition-opacity" title={t.aiProjects.removeProject}>
+        <button onClick={() => removeProject(p.id)} className="text-text-muted/50 hover:text-red-500 text-sm leading-none opacity-0 group-hover:opacity-100 transition-opacity" title={t.aiProjects.removeProject}>
           ✕
         </button>
       </div>
@@ -91,7 +91,7 @@ function SortableProjectCard({ p, index }: { p: ReturnType<typeof useResumeStore
       {lang === 'zh' && (
         <div>
           <div className="flex items-center justify-between mb-1">
-            <label className="text-[10px] text-gray-400">{t.aiProjects.description}</label>
+            <label className="text-[10px] text-text-muted">{t.aiProjects.description}</label>
             <AIPolishButton onClick={handleAIPolish} />
           </div>
           <MiniToolbar textareaId={`proj-desc-zh-${p.id}`} />
@@ -100,7 +100,7 @@ function SortableProjectCard({ p, index }: { p: ReturnType<typeof useResumeStore
             value={p.description}
             onChange={(e) => updateProject(p.id, 'description', e.target.value)}
             onKeyDown={handleAutoContinue}
-            className="w-full px-2.5 py-2 text-xs border border-gray-200 rounded-md focus:outline-none focus:border-[#4F46E5] focus:ring-2 focus:ring-indigo-100 resize-y"
+            className="w-full px-2.5 py-2 text-xs border border-border-default rounded-xl bg-white focus:outline-none focus:border-brand-primary focus:ring-4 focus:ring-accent-muted/80 resize-y"
             placeholder={`在此输入项目描述，每行一个要点…\n\n按 Enter 换行，编号/符号/横线自动续接`}
             rows={Math.max(4, p.description.split('\n').length + 1)}
             spellCheck={false}
@@ -112,7 +112,7 @@ function SortableProjectCard({ p, index }: { p: ReturnType<typeof useResumeStore
       {lang === 'en' && (
         <div>
           <div className="flex items-center justify-between mb-1">
-            <label className="text-[10px] text-gray-400">{t.aiProjects.descriptionEn}</label>
+            <label className="text-[10px] text-text-muted">{t.aiProjects.descriptionEn}</label>
             <AIPolishButton onClick={handleAIPolish} label="AI Polish" />
           </div>
           <MiniToolbar textareaId={`proj-desc-en-${p.id}`} />
@@ -121,7 +121,7 @@ function SortableProjectCard({ p, index }: { p: ReturnType<typeof useResumeStore
             value={p.descriptionEn}
             onChange={(e) => updateProject(p.id, 'descriptionEn', e.target.value)}
             onKeyDown={handleAutoContinue}
-            className="w-full px-2.5 py-2 text-xs border border-gray-200 rounded-md focus:outline-none focus:border-[#4F46E5] focus:ring-2 focus:ring-indigo-100 resize-y"
+            className="w-full px-2.5 py-2 text-xs border border-border-default rounded-xl bg-white focus:outline-none focus:border-brand-primary focus:ring-4 focus:ring-accent-muted/80 resize-y"
             placeholder={`Enter bullet points, one per line…\n\nPress Enter for a new bullet`}
             rows={Math.max(4, p.descriptionEn.split('\n').length + 1)}
             spellCheck={false}
@@ -164,7 +164,7 @@ export default function AIProjectsForm() {
           </div>
         </SortableContext>
       </DndContext>
-      <button onClick={addProject} className="text-xs text-blue-600 hover:text-blue-800 font-medium">{t.aiProjects.addProject}</button>
+      <button onClick={addProject} className="text-xs text-brand-primary hover:text-brand-secondary font-bold">{t.aiProjects.addProject}</button>
     </div>
   )
 }

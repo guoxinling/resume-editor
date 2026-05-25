@@ -40,27 +40,27 @@ export default function DraftManager({ onClose }: Props) {
   }
 
   return (
-    <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center" onClick={onClose}>
-      <div className="bg-white rounded-xl shadow-2xl w-[420px] max-h-[80vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-between p-4 border-b border-gray-200">
-          <h2 className="text-sm font-bold text-gray-800">{t.toolbar.drafts}</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-lg leading-none">✕</button>
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center px-4" onClick={onClose}>
+      <div className="bg-white rounded-3xl shadow-2xl shadow-slate-900/15 w-[420px] max-h-[80vh] flex flex-col border border-border-default" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between p-4 border-b border-border-default bg-bg-toolbar/90 rounded-t-3xl">
+          <h2 className="text-sm font-bold text-text-primary">历史记录</h2>
+          <button onClick={onClose} className="w-8 h-8 rounded-full text-text-muted hover:bg-bg-hover hover:text-text-primary text-lg leading-none">✕</button>
         </div>
         <div className="flex-1 overflow-y-auto p-4 space-y-2">
           {drafts.length === 0 ? (
-            <p className="text-sm text-gray-400 text-center py-8">{t.toolbar.noDrafts}</p>
+            <p className="text-sm text-text-muted text-center py-8">{t.toolbar.noDrafts}</p>
           ) : (
             drafts.map((d) => (
-              <div key={d.id} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:border-gray-300 transition-colors">
+              <div key={d.id} className="flex items-center justify-between p-3 border border-border-default rounded-2xl bg-bg-hover/45 hover:bg-white hover:shadow-sm transition-all">
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-800 truncate">{d.name}</p>
-                  <p className="text-[11px] text-gray-400">{formatDate(d.updatedAt)}</p>
+                  <p className="text-sm font-semibold text-text-primary truncate">{d.name}</p>
+                  <p className="text-[11px] text-text-muted">{formatDate(d.updatedAt)}</p>
                 </div>
                 <div className="flex gap-1 ml-2">
-                  <button onClick={() => handleLoad(d)} className="px-3 py-1 text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 rounded transition-colors">
+                  <button onClick={() => handleLoad(d)} className="px-3 py-1.5 text-xs bg-accent-muted hover:bg-[#E7D9FA] text-brand-primary rounded-full font-semibold transition-colors">
                     {t.toolbar.load}
                   </button>
-                  <button onClick={() => handleDelete(d)} className="px-3 py-1 text-xs bg-red-50 hover:bg-red-100 text-red-600 rounded transition-colors">
+                  <button onClick={() => handleDelete(d)} className="px-3 py-1.5 text-xs bg-red-50 hover:bg-red-100 text-red-600 rounded-full font-semibold transition-colors">
                     {t.toolbar.delete}
                   </button>
                 </div>

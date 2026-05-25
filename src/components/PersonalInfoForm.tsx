@@ -46,7 +46,7 @@ export default function PersonalInfoForm() {
           const fieldError = errors.get(key)
           return (
             <div key={key} className={key === 'name' || key === 'nameEn' || fullWidth ? 'col-span-2' : ''}>
-              <label className="block text-[11px] text-gray-500 mb-0.5">
+              <label className="block text-[11px] text-text-muted mb-0.5">
                 {label}
                 {required && <span className="text-red-400 ml-0.5">*</span>}
               </label>
@@ -54,8 +54,8 @@ export default function PersonalInfoForm() {
                 type="text"
                 value={inputValue(key)}
                 onChange={(e) => setPersonalInfo(key, e.target.value)}
-                className={`w-full px-2 py-1.5 text-xs border rounded focus:outline-none focus:border-gray-400 transition-colors ${
-                  fieldError ? 'border-red-300 bg-red-50' : 'border-gray-200'
+                className={`w-full px-2.5 py-2 text-xs border rounded-xl bg-white focus:outline-none focus:border-brand-primary focus:ring-4 focus:ring-accent-muted/80 transition-colors ${
+                  fieldError ? 'border-red-300 bg-red-50' : 'border-border-default'
                 }`}
                 placeholder={label}
               />
@@ -68,8 +68,8 @@ export default function PersonalInfoForm() {
       </div>
 
       {/* ── Custom fields ── */}
-      <div className="border-t border-gray-100 pt-2">
-        <p className="text-[10px] text-gray-400 mb-2">自定义字段（如 GitHub、微信等）</p>
+      <div className="border-t border-border-default pt-2">
+        <p className="text-[10px] text-text-muted mb-2">自定义字段（如 GitHub、微信等）</p>
         <div className="space-y-1.5">
           {pi.customFields.map((f, i) => (
             <div key={i} className="flex gap-1 items-center group">
@@ -77,17 +77,17 @@ export default function PersonalInfoForm() {
                 value={f.key}
                 onChange={(e) => updateCustomField(i, 'key', e.target.value)}
                 placeholder="字段名"
-                className="w-[30%] px-2 py-1 text-[11px] border border-gray-200 rounded focus:outline-none focus:border-gray-400"
+                className="w-[30%] px-2.5 py-2 text-[11px] border border-border-default rounded-xl bg-white focus:outline-none focus:border-brand-primary focus:ring-4 focus:ring-accent-muted/80"
               />
               <input
                 value={f.value}
                 onChange={(e) => updateCustomField(i, 'value', e.target.value)}
                 placeholder="值"
-                className="flex-1 px-2 py-1 text-[11px] border border-gray-200 rounded focus:outline-none focus:border-gray-400"
+                className="flex-1 px-2.5 py-2 text-[11px] border border-border-default rounded-xl bg-white focus:outline-none focus:border-brand-primary focus:ring-4 focus:ring-accent-muted/80"
               />
               <button
                 onClick={() => removeCustomField(i)}
-                className="text-gray-300 hover:text-red-500 text-xs leading-none opacity-0 group-hover:opacity-100 transition-opacity shrink-0 px-1"
+                className="text-text-muted/50 hover:text-red-500 text-xs leading-none opacity-0 group-hover:opacity-100 transition-opacity shrink-0 px-1"
               >
                 ✕
               </button>
@@ -96,7 +96,7 @@ export default function PersonalInfoForm() {
         </div>
         <button
           onClick={addCustomField}
-          className="text-[10px] text-blue-600 hover:text-blue-800 mt-1.5 font-medium"
+          className="text-[10px] text-brand-primary hover:text-brand-secondary mt-1.5 font-bold"
         >
           + 添加自定义字段
         </button>

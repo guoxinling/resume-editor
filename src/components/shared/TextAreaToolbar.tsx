@@ -35,14 +35,14 @@ export function MiniToolbar({ textareaId }: { textareaId: string }) {
     el.setSelectionRange(lineStart + prefix.length, lineStart + prefix.length)
   }
 
-  const btn = "h-6 px-2 rounded text-[10px] font-medium text-gray-500 hover:text-[#4F46E5] hover:bg-indigo-50 transition-colors select-none"
+  const btn = "h-6 px-2 rounded-lg text-[10px] font-semibold text-text-muted bg-white border border-transparent hover:text-brand-primary hover:bg-accent-muted/50 hover:border-brand-primary/10 transition-colors select-none"
 
   return (
     <div className="flex items-center gap-0.5 mb-1.5">
       <button type="button" onClick={() => insert(['**', '**'])} className={btn} title="加粗">
         <strong>B</strong>
       </button>
-      <span className="w-px h-3 bg-gray-200" />
+      <span className="w-px h-3 bg-border-default" />
       <button type="button" onClick={() => insertBol('• ')} className={btn} title="项目符号">
         • List
       </button>
@@ -58,7 +58,7 @@ export function MiniToolbar({ textareaId }: { textareaId: string }) {
 
 /* ── AI Polish Button (standardized style) ── */
 
-export const AI_BTN_CLASS = "px-2.5 py-0.5 text-[11px] rounded-md border border-[#7C3AED]/30 text-[#7C3AED] bg-white hover:bg-[#7C3AED]/[0.08] hover:border-[#7C3AED] inline-flex items-center gap-1 transition-colors shrink-0 whitespace-nowrap"
+export const AI_BTN_CLASS = "h-6 px-2.5 text-[11px] rounded-full border border-transparent text-brand-primary bg-accent-muted hover:bg-[#E7D9FA] inline-flex items-center gap-1 transition-colors shrink-0 whitespace-nowrap font-semibold"
 
 export function AIPolishButton({ onClick, label = 'AI 润色' }: { onClick: () => void; label?: string }) {
   return (
@@ -135,4 +135,4 @@ export function handleAutoContinue(e: React.KeyboardEvent<HTMLTextAreaElement>) 
 
 /* ── Standard textarea class (resizable + focus ring) ── */
 
-export const TEXTAREA_CLASS = "w-full px-2.5 py-2 text-xs border border-gray-200 rounded-md focus:outline-none focus:border-[#4F46E5] focus:ring-2 focus:ring-indigo-100 resize-y"
+export const TEXTAREA_CLASS = "w-full px-2.5 py-2 text-xs border border-border-default rounded-xl bg-white focus:outline-none focus:border-brand-primary focus:ring-4 focus:ring-accent-muted/80 resize-y"

@@ -1,4 +1,7 @@
 import type { ChatMessage } from '../types/ai'
+import { useAuthStore } from '../store/authStore'
+
+export type AIFeature = 'wizard' | 'polish' | 'adapt' | 'interview' | 'translate' | 'import_parse'
 
 interface StreamCallbacks {
   onToken: (token: string) => void
@@ -8,17 +11,27 @@ interface StreamCallbacks {
 
 export async function streamChat(
   messages: ChatMessage[],
+  feature: AIFeature,
   callbacks: StreamCallbacks,
   abortSignal?: AbortSignal,
 ): Promise<void> {
   try {
+    const token = await useAuthStore.getState().getAccessToken()
+    if (!token) {
+      useAuthStore.getState().openAuthModal()
+      callbacks.onError('请先登录后使用 AI 功能')
+      return
+    }
+
     const response = await fetch('/api/chat', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({
         messages,
+        feature,
         stream: true,
       }),
       signal: abortSignal,
@@ -27,6 +40,10 @@ export async function streamChat(
     if (!response.ok) {
       if (response.status === 401) callbacks.onError('AI 服务鉴权失败，请稍后重试')
       else if (response.status === 429) callbacks.onError('请求频率过高，请稍后再试')
+      else if (response.status === 402) {
+        useAuthStore.getState().openCreditModal()
+        callbacks.onError('点数不足，请先充值')
+      }
       else callbacks.onError('AI 服务暂时不可用，请稍后重试')
       return
     }
@@ -53,6 +70,7 @@ export async function streamChat(
         if (!trimmed || !trimmed.startsWith('data: ')) continue
         const data = trimmed.slice(6)
         if (data === '[DONE]') {
+          useAuthStore.getState().refreshCredits().catch(() => {})
           callbacks.onDone()
           return
         }
@@ -63,6 +81,7 @@ export async function streamChat(
         } catch { /* skip malformed chunks */ }
       }
     }
+    useAuthStore.getState().refreshCredits().catch(() => {})
     callbacks.onDone()
   } catch (err: any) {
     if (err.name === 'AbortError') {
@@ -74,24 +93,37 @@ export async function streamChat(
 }
 
 /** Non-streaming chat — used for adapt / interview results */
-export async function chatComplete(messages: ChatMessage[]): Promise<string> {
+export async function chatComplete(messages: ChatMessage[], feature: AIFeature): Promise<string> {
+  const token = await useAuthStore.getState().getAccessToken()
+  if (!token) {
+    useAuthStore.getState().openAuthModal()
+    throw new Error('请先登录后使用 AI 功能')
+  }
+
   const response = await fetch('/api/chat', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
     },
     body: JSON.stringify({
       messages,
+      feature,
       stream: false,
     }),
   })
 
   if (!response.ok) {
     if (response.status === 401) throw new Error('AI 服务鉴权失败')
+    if (response.status === 402) {
+      useAuthStore.getState().openCreditModal()
+      throw new Error('点数不足，请先充值')
+    }
     if (response.status === 429) throw new Error('请求频率过高')
     throw new Error('AI 服务暂时不可用，请稍后重试')
   }
 
   const data = await response.json()
+  useAuthStore.getState().refreshCredits().catch(() => {})
   return data.choices?.[0]?.message?.content || ''
 }

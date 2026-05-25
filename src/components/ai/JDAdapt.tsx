@@ -46,7 +46,7 @@ export default function JDAdapt() {
     try {
       const resumeText = buildResumeText()
       const messages = buildAdaptMessages(jdText, resumeText)
-      const raw = await chatComplete(messages)
+      const raw = await chatComplete(messages, 'adapt')
       // Parse JSON from AI response (strip possible markdown backticks)
       const json = raw.replace(/```json\s*|```/g, '').trim()
       const result = JSON.parse(json) as AdaptResult

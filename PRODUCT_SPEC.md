@@ -36,6 +36,22 @@
 - **PNG 导出**：html2canvas 2x 高清截图
 - **导出前验证**：姓名+电话/邮箱必填校验
 
+### 🔐 账号与商业化
+- **Supabase Auth**：邮箱注册/登录，JWT token 鉴权
+- **点数系统**：新用户注册送 20 点，按功能差异化扣费
+- **支付**：ZPay 聚合支付（支付宝/微信），3 档套餐（¥9.9/19.9/39.9）
+- **后端鉴权**：Service Role Key 验证 token → 扣点 → AI 调用 → 失败退款
+- **点数扣费标准**：
+
+| Feature | 扣点 | 说明 |
+|---------|------|------|
+| wizard | 1 点 | AI 对话式创建简历 |
+| polish | 1 点 | AI 经历润色 |
+| adapt | 3 点 | 岗位适配分析 |
+| interview | 3 点 | 10 题面试预测 |
+| translate | 3 点 | 中英全文翻译 |
+| import_parse | 5 点 | PDF/图片导入解析 |
+
 ### 🏗️ 技术栈
 - React 18 + TypeScript + Vite
 - Zustand 状态管理
@@ -43,6 +59,8 @@
 - Dexie.js (IndexedDB)
 - @react-pdf/renderer (PDF)
 - html2canvas (PNG)
+- Supabase (Auth + PostgreSQL)
+- ZPay 聚合支付
 
 ### 🎨 设计系统
 - 完整 Design Token 定义（colors/typography/spacing）

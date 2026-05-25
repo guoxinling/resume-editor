@@ -68,6 +68,7 @@ export default function ExperiencePolish() {
 
     await streamChat(
       buildPolishMessages(text, polishMode),
+      'polish',
       {
         onToken: (token) => {
           accumulated += token

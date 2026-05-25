@@ -1,3 +1,6 @@
+import { getAuthenticatedUser, sendApiError } from './_lib/supabase'
+import { refundCredits, spendCredits, type CreditFeature } from './_lib/credits'
+
 export default async function handler(req: any, res: any) {
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST')
@@ -14,12 +17,24 @@ export default async function handler(req: any, res: any) {
     return
   }
 
+  let charge: { amount: number; refId: string; feature: CreditFeature } | null = null
+  let userId: string | null = null
+
   try {
-    const { messages, stream = false } = req.body || {}
+    const user = await getAuthenticatedUser(req)
+    userId = user.id
+
+    const { messages, stream = false, feature } = req.body || {}
     if (!Array.isArray(messages)) {
       res.status(400).json({ error: 'Invalid messages' })
       return
     }
+
+    const spent = await spendCredits(user.id, feature, {
+      stream: Boolean(stream),
+      messageCount: messages.length,
+    })
+    charge = { amount: spent.amount, refId: spent.refId, feature }
 
     const upstream = await fetch(`${baseURL}/chat/completions`, {
       method: 'POST',
@@ -36,6 +51,8 @@ export default async function handler(req: any, res: any) {
 
     if (!upstream.ok) {
       const text = await upstream.text().catch(() => '')
+      await refundCredits(user.id, charge.amount, charge.feature, charge.refId)
+      charge = null
       res.status(upstream.status).json({
         error: text || `AI 服务请求失败 (${upstream.status})`,
       })
@@ -67,6 +84,9 @@ export default async function handler(req: any, res: any) {
     const data = await upstream.json()
     res.status(200).json(data)
   } catch (error: any) {
-    res.status(500).json({ error: error?.message || 'AI 服务暂时不可用，请稍后重试' })
+    if (charge && userId) {
+      await refundCredits(userId, charge.amount, charge.feature, charge.refId).catch(() => {})
+    }
+    sendApiError(res, error, 'AI 服务暂时不可用，请稍后重试')
   }
 }

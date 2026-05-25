@@ -32,13 +32,13 @@ function SortableSkillCard({ sk, i }: { sk: ReturnType<typeof useResumeStore.get
     <div
       ref={setNodeRef}
       style={style}
-      className={`grid grid-cols-2 gap-2 p-3 border border-gray-200 rounded-lg hover:shadow-sm hover:border-gray-300 transition-all relative group sortable-item ${isDragging ? 'dragging' : ''}`}
+      className={`grid grid-cols-2 gap-2 p-3 border border-border-default rounded-2xl bg-bg-hover/60 hover:shadow-sm hover:bg-white transition-all relative group sortable-item ${isDragging ? 'dragging' : ''}`}
     >
       <div className="col-span-2 flex items-center justify-between">
-        <button {...attributes} {...listeners} className="drag-handle text-gray-300 hover:text-gray-500 text-sm px-0.5 select-none" title="拖拽排序">
+        <button {...attributes} {...listeners} className="drag-handle text-text-muted/50 hover:text-text-secondary text-sm px-0.5 select-none" title="拖拽排序">
           ⠿
         </button>
-        <button onClick={() => removeSkill(i)} className="text-gray-300 hover:text-red-500 text-sm leading-none opacity-0 group-hover:opacity-100 transition-opacity" title={t.skills.removeSkill}>
+        <button onClick={() => removeSkill(i)} className="text-text-muted/50 hover:text-red-500 text-sm leading-none opacity-0 group-hover:opacity-100 transition-opacity" title={t.skills.removeSkill}>
           ✕
         </button>
       </div>
@@ -46,24 +46,24 @@ function SortableSkillCard({ sk, i }: { sk: ReturnType<typeof useResumeStore.get
       {lang === 'zh' && (
         <>
           <div>
-            <label className="block text-[10px] text-gray-400 mb-0.5">{t.skills.category}</label>
-            <input value={sk.category} onChange={(e) => updateSkill(i, 'category', e.target.value)} className="w-full px-2 py-1 text-xs border border-gray-200 rounded focus:outline-none focus:border-gray-400" placeholder={t.skills.category} />
+            <label className="block text-[10px] text-text-muted mb-0.5">{t.skills.category}</label>
+            <input value={sk.category} onChange={(e) => updateSkill(i, 'category', e.target.value)} className="w-full px-2.5 py-2 text-xs border border-border-default rounded-xl bg-white focus:outline-none focus:border-brand-primary focus:ring-4 focus:ring-accent-muted/80" placeholder={t.skills.category} />
           </div>
           <div className="col-span-2">
-            <label className="block text-[10px] text-gray-400 mb-0.5">{t.skills.items}</label>
-            <input value={sk.items} onChange={(e) => updateSkill(i, 'items', e.target.value)} className="w-full px-2 py-1 text-xs border border-gray-200 rounded focus:outline-none focus:border-gray-400" placeholder={t.skills.items} />
+            <label className="block text-[10px] text-text-muted mb-0.5">{t.skills.items}</label>
+            <input value={sk.items} onChange={(e) => updateSkill(i, 'items', e.target.value)} className="w-full px-2.5 py-2 text-xs border border-border-default rounded-xl bg-white focus:outline-none focus:border-brand-primary focus:ring-4 focus:ring-accent-muted/80" placeholder={t.skills.items} />
           </div>
         </>
       )}
       {lang === 'en' && (
         <>
           <div>
-            <label className="block text-[10px] text-gray-400 mb-0.5">{t.skills.categoryEn}</label>
-            <input value={sk.categoryEn} onChange={(e) => updateSkill(i, 'categoryEn', e.target.value)} className="w-full px-2 py-1 text-xs border border-gray-200 rounded focus:outline-none focus:border-gray-400" placeholder={t.skills.categoryEn} />
+            <label className="block text-[10px] text-text-muted mb-0.5">{t.skills.categoryEn}</label>
+            <input value={sk.categoryEn} onChange={(e) => updateSkill(i, 'categoryEn', e.target.value)} className="w-full px-2.5 py-2 text-xs border border-border-default rounded-xl bg-white focus:outline-none focus:border-brand-primary focus:ring-4 focus:ring-accent-muted/80" placeholder={t.skills.categoryEn} />
           </div>
           <div className="col-span-2">
-            <label className="block text-[10px] text-gray-400 mb-0.5">{t.skills.itemsEn}</label>
-            <input value={sk.itemsEn} onChange={(e) => updateSkill(i, 'itemsEn', e.target.value)} className="w-full px-2 py-1 text-xs border border-gray-200 rounded focus:outline-none focus:border-gray-400" placeholder={t.skills.itemsEn} />
+            <label className="block text-[10px] text-text-muted mb-0.5">{t.skills.itemsEn}</label>
+            <input value={sk.itemsEn} onChange={(e) => updateSkill(i, 'itemsEn', e.target.value)} className="w-full px-2.5 py-2 text-xs border border-border-default rounded-xl bg-white focus:outline-none focus:border-brand-primary focus:ring-4 focus:ring-accent-muted/80" placeholder={t.skills.itemsEn} />
           </div>
         </>
       )}
@@ -101,7 +101,7 @@ export default function SkillsForm() {
           </div>
         </SortableContext>
       </DndContext>
-      <button onClick={addSkill} className="text-xs text-blue-600 hover:text-blue-800 font-medium">
+      <button onClick={addSkill} className="text-xs text-brand-primary hover:text-brand-secondary font-bold">
         {t.skills.addSkill}
       </button>
     </div>

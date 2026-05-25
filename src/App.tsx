@@ -6,10 +6,13 @@ import PreviewPanel from './components/PreviewPanel'
 import DraftManager from './components/DraftManager'
 import AIPanel from './components/ai/AIPanel'
 import LandingPage from './components/LandingPage'
+import AuthModal from './components/auth/AuthModal'
+import CreditModal from './components/auth/CreditModal'
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useAutoSave } from './utils/autoSave'
 import { loadDraft } from './utils/storage'
 import type { ResumeData } from './types/resume'
+import { useAuthStore } from './store/authStore'
 
 const AUTO_SAVE_DRAFT_ID = 'auto-save'
 const LANDING_KEY = 'resume-has-visited'
@@ -90,6 +93,10 @@ export default function App() {
   const [landingImporting, setLandingImporting] = useState(false)
   const [landingImportProgress, setLandingImportProgress] = useState<LandingImportProgress | null>(null)
   const loadData = useResumeStore((s) => s.loadData)
+  const initAuth = useAuthStore((s) => s.initAuth)
+  const refreshCredits = useAuthStore((s) => s.refreshCredits)
+  const openCreditModal = useAuthStore((s) => s.openCreditModal)
+  const aiPanelOpen = useAIStore((s) => s.isOpen)
 
   // Landing page
   const [showLanding, setShowLanding] = useState(() => {
@@ -167,6 +174,22 @@ export default function App() {
 
   useAutoSave()
 
+  useEffect(() => {
+    initAuth().catch((err) => console.error('Auth init failed:', err))
+  }, [initAuth])
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('payment') === 'success') {
+      refreshCredits().catch(() => {})
+      openCreditModal()
+      params.delete('payment')
+      params.delete('order_id')
+      const next = `${window.location.pathname}${params.toString() ? `?${params.toString()}` : ''}${window.location.hash}`
+      window.history.replaceState(null, '', next)
+    }
+  }, [openCreditModal, refreshCredits])
+
   // Detect screen size to auto-show/hide editor
   useEffect(() => {
     const check = () => {
@@ -208,12 +231,12 @@ export default function App() {
 
   if (loadError) {
     return (
-      <div className="h-screen flex items-center justify-center bg-gray-100">
-        <div className="text-center p-8 bg-white rounded-xl shadow-lg">
+      <div className="h-screen flex items-center justify-center bg-bg-page">
+        <div className="text-center p-8 bg-white rounded-3xl shadow-xl shadow-slate-900/10 border border-border-default">
           <p className="text-gray-500 text-sm mb-4">{loadError}</p>
           <button
             onClick={() => { useResumeStore.getState().reset(); setLoadError(null) }}
-            className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm hover:bg-indigo-700"
+            className="px-4 py-2 bg-brand-primary text-white rounded-full text-sm hover:brightness-110"
           >
             重置数据
           </button>
@@ -224,17 +247,21 @@ export default function App() {
 
   if (showLanding) {
     return (
-      <LandingPage
-        onImportClick={handleLandingImport}
-        onDraftContinue={handleDraftContinue}
-        onWizardClick={handleLandingWizard}
-      />
+      <>
+        <LandingPage
+          onImportClick={handleLandingImport}
+          onDraftContinue={handleDraftContinue}
+          onWizardClick={handleLandingWizard}
+        />
+        <AuthModal />
+        <CreditModal />
+      </>
     )
   }
 
   return (
-    <div className="h-screen flex items-center justify-center bg-gray-100 lg:p-3">
-      <div className="flex flex-col lg:rounded-2xl bg-white lg:shadow-lg lg:shadow-gray-200/40 overflow-hidden w-full max-w-[1440px] h-full lg:max-h-[calc(100vh-24px)]">
+    <div className="h-screen flex items-center justify-center bg-bg-page lg:p-3">
+      <div className="relative flex flex-col lg:rounded-[24px] bg-white lg:shadow-2xl lg:shadow-slate-900/10 overflow-hidden w-full max-w-[1440px] h-full lg:max-h-[calc(100vh-24px)] border border-border-default/70">
         <Toolbar
           onOpenDrafts={() => setShowDrafts(true)}
           showEditor={showEditor}
@@ -248,8 +275,17 @@ export default function App() {
         {/* ── Editor + Preview (responsive) ── */}
         <div className="flex-1 flex overflow-hidden relative">
           {/* Desktop sidebar editor — hidden by default on mobile */}
-          <div className={`hidden lg:flex ${showEditor ? 'lg:flex' : 'lg:hidden'}`}>
-            <EditorPanel />
+          <div
+            className={`hidden lg:flex overflow-hidden transition-[width,opacity,transform] duration-300 ease-out ${
+              showEditor && !aiPanelOpen
+                ? 'lg:w-[420px] xl:w-[480px] opacity-100 translate-x-0'
+                : 'lg:w-0 opacity-0 -translate-x-6 pointer-events-none'
+            }`}
+            aria-hidden={aiPanelOpen || !showEditor}
+          >
+            <div className="w-[420px] shrink-0 xl:w-[480px]">
+              <EditorPanel />
+            </div>
           </div>
 
           {/* Preview (always visible, takes remaining space) */}
@@ -257,15 +293,17 @@ export default function App() {
             <PreviewPanel />
           </div>
 
+          <AIPanel />
+
           {/* Mobile bottom-sheet editor */}
           <div className={`lg:hidden fixed inset-0 z-30 transition-transform duration-300 ${showEditor ? 'translate-y-0' : 'translate-y-full'}`}>
             {/* Backdrop */}
-            <div className="absolute inset-0 bg-black/30" onClick={() => setShowEditor(false)} />
+            <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={() => setShowEditor(false)} />
             {/* Sheet */}
-            <div className="absolute bottom-0 left-0 right-0 h-[85vh] bg-white rounded-t-2xl shadow-2xl overflow-hidden flex flex-col">
+            <div className="absolute bottom-0 left-0 right-0 h-[85vh] bg-white rounded-t-[24px] shadow-2xl overflow-hidden flex flex-col border-t border-border-default">
               {/* Drag handle */}
               <div className="flex justify-center pt-2 pb-1 shrink-0">
-                <div className="w-10 h-1 bg-gray-300 rounded-full" />
+                <div className="w-10 h-1 bg-border-default rounded-full" />
               </div>
               <div className="flex-1 overflow-y-auto">
                 <EditorPanel />
@@ -273,19 +311,21 @@ export default function App() {
             </div>
           </div>
         </div>
+
       </div>
 
       {/* Floating editor toggle (mobile) */}
       <button
         onClick={() => setShowEditor(!showEditor)}
-        className="lg:hidden fixed bottom-4 right-4 z-40 w-12 h-12 bg-indigo-600 text-white rounded-full shadow-lg flex items-center justify-center text-lg hover:bg-indigo-700 transition-colors active:scale-95"
+        className="lg:hidden fixed bottom-4 right-4 z-40 w-12 h-12 bg-brand-primary text-white rounded-full shadow-lg shadow-violet-900/20 flex items-center justify-center text-lg hover:brightness-110 transition-colors active:scale-95"
         title={showEditor ? '关闭编辑器' : '打开编辑器'}
       >
         {showEditor ? '✕' : '✎'}
       </button>
 
       {showDrafts && <DraftManager onClose={() => setShowDrafts(false)} />}
-      <AIPanel />
+      <AuthModal />
+      <CreditModal />
       {landingImporting && landingImportProgress && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 px-4 backdrop-blur-sm">
           <div className="w-full max-w-[380px] rounded-2xl bg-white p-6 text-center shadow-2xl">
@@ -300,7 +340,7 @@ export default function App() {
                 className={`h-full rounded-full transition-all duration-300 ${
                   landingImportProgress.message.startsWith('导入失败')
                     ? 'bg-red-500'
-                    : 'bg-gradient-to-r from-[#4F46E5] to-[#7C3AED]'
+                    : 'bg-gradient-to-r from-brand-primary to-brand-secondary'
                 }`}
                 style={{ width: `${Math.min(Math.max(landingImportProgress.progress, 0), 100)}%` }}
               />

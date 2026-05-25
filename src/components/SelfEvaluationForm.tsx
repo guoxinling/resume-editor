@@ -23,7 +23,7 @@ export default function SelfEvaluationForm() {
       {lang === 'zh' && (
         <div>
           <div className="flex items-center justify-between mb-1">
-            <label className="text-[10px] text-gray-400">中文自我评价</label>
+            <label className="text-[10px] text-text-muted">中文自我评价</label>
             <AIPolishButton onClick={() => handleAIPolish(data.selfEvaluation, 'selfEvaluation')} />
           </div>
           <MiniToolbar textareaId="selfeval-zh" />
@@ -32,7 +32,7 @@ export default function SelfEvaluationForm() {
             value={data.selfEvaluation}
             onChange={(e) => setSelfEvaluation(e.target.value)}
             onKeyDown={handleAutoContinue}
-            className="w-full px-2.5 py-2 text-xs border border-gray-200 rounded-md focus:outline-none focus:border-[#4F46E5] focus:ring-2 focus:ring-indigo-100 resize-y min-h-[100px]"
+            className="w-full px-2.5 py-2 text-xs border border-border-default rounded-xl bg-white focus:outline-none focus:border-brand-primary focus:ring-4 focus:ring-accent-muted/80 resize-y min-h-[100px]"
             placeholder="简要描述你的个人特点、职业规划和优势…"
           />
         </div>
@@ -40,7 +40,7 @@ export default function SelfEvaluationForm() {
       {lang === 'en' && (
         <div>
           <div className="flex items-center justify-between mb-1">
-            <label className="text-[10px] text-gray-400">English Self Evaluation</label>
+            <label className="text-[10px] text-text-muted">English Self Evaluation</label>
             <AIPolishButton onClick={() => handleAIPolish(data.selfEvaluationEn, 'selfEvaluationEn')} label="AI Polish" />
           </div>
           <MiniToolbar textareaId="selfeval-en" />
@@ -49,7 +49,7 @@ export default function SelfEvaluationForm() {
             value={data.selfEvaluationEn}
             onChange={(e) => setSelfEvaluationEn(e.target.value)}
             onKeyDown={handleAutoContinue}
-            className="w-full px-2.5 py-2 text-xs border border-gray-200 rounded-md focus:outline-none focus:border-[#4F46E5] focus:ring-2 focus:ring-indigo-100 resize-y min-h-[100px]"
+            className="w-full px-2.5 py-2 text-xs border border-border-default rounded-xl bg-white focus:outline-none focus:border-brand-primary focus:ring-4 focus:ring-accent-muted/80 resize-y min-h-[100px]"
             placeholder="Briefly describe your strengths, career goals..."
           />
         </div>

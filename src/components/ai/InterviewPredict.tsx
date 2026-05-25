@@ -47,7 +47,7 @@ export default function InterviewPredict() {
     try {
       const resumeText = buildResumeText()
       const messages = buildInterviewMessages(resumeText)
-      const raw = await chatComplete(messages)
+      const raw = await chatComplete(messages, 'interview')
       const json = raw.replace(/```json\s*|```/g, '').trim()
       const questions = JSON.parse(json) as InterviewQuestion[]
       setInterviewQuestions(questions)

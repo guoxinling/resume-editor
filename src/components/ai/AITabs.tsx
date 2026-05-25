@@ -13,17 +13,17 @@ export default function AITabs() {
   const setActiveTab = useAIStore((s) => s.setActiveTab)
 
   return (
-    <div className="flex gap-1 px-5 py-3">
+    <div className="grid grid-cols-2 gap-2 px-5 py-3 bg-white">
       {tabs.map((tab) => (
         <button
           key={tab.key}
           onClick={() => setActiveTab(tab.key)}
           className={`
-            flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-lg text-xs font-medium
+            flex items-center justify-center gap-1.5 px-2 py-2 rounded-full text-xs font-semibold
             transition-all duration-200 border
             ${activeTab === tab.key
-              ? 'bg-white text-[#4F46E5] border-gray-200 shadow-sm font-semibold'
-              : 'text-gray-500 border-transparent hover:text-gray-700 hover:bg-gray-100'
+              ? 'bg-accent-muted text-brand-primary border-transparent shadow-sm'
+              : 'text-text-secondary border-transparent bg-bg-hover/70 hover:text-text-primary hover:bg-bg-hover'
             }
           `}
         >

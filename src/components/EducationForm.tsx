@@ -39,13 +39,13 @@ function SortableEduCard({ e, index }: { e: ReturnType<typeof useResumeStore.get
     <div
       ref={setNodeRef}
       style={style}
-      className={`p-3 border border-gray-200 rounded-lg space-y-2 hover:shadow-sm hover:border-gray-300 transition-all relative group sortable-item ${isDragging ? 'dragging' : ''}`}
+      className={`p-3 border border-border-default rounded-2xl bg-bg-hover/60 space-y-2 hover:shadow-sm hover:bg-white transition-all relative group sortable-item ${isDragging ? 'dragging' : ''}`}
     >
       <div className="flex items-center justify-between">
-        <button {...attributes} {...listeners} className="drag-handle text-gray-300 hover:text-gray-500 text-sm px-0.5 select-none" title="拖拽排序">
+        <button {...attributes} {...listeners} className="drag-handle text-text-muted/50 hover:text-text-secondary text-sm px-0.5 select-none" title="拖拽排序">
           ⠿
         </button>
-        <button onClick={() => removeEducation(e.id)} className="text-gray-300 hover:text-red-500 text-sm leading-none opacity-0 group-hover:opacity-100 transition-opacity" title={t.education.removeEducation}>
+        <button onClick={() => removeEducation(e.id)} className="text-text-muted/50 hover:text-red-500 text-sm leading-none opacity-0 group-hover:opacity-100 transition-opacity" title={t.education.removeEducation}>
           ✕
         </button>
       </div>
@@ -55,11 +55,11 @@ function SortableEduCard({ e, index }: { e: ReturnType<typeof useResumeStore.get
           ['school', 'schoolEn', 'degree', 'degreeEn', 'major', 'majorEn', 'dates', 'datesEn'] as const
         ).filter((f) => shouldShowField(f, lang)) as EduField[]).map((f) => (
           <div key={f} className={f === 'school' || f === 'schoolEn' ? 'col-span-2' : ''}>
-            <label className="block text-[10px] text-gray-400 mb-0.5">{t.education[f]}</label>
+            <label className="block text-[10px] text-text-muted mb-0.5">{t.education[f]}</label>
             <input
               value={e[f]}
               onChange={(ev) => updateEducation(e.id, f, ev.target.value)}
-              className="w-full px-2 py-1 text-xs border border-gray-200 rounded focus:outline-none focus:border-gray-400"
+              className="w-full px-2.5 py-2 text-xs border border-border-default rounded-xl bg-white focus:outline-none focus:border-brand-primary focus:ring-4 focus:ring-accent-muted/80"
               placeholder={t.education[f]}
             />
           </div>
@@ -68,26 +68,26 @@ function SortableEduCard({ e, index }: { e: ReturnType<typeof useResumeStore.get
 
       {lang === 'zh' && (
         <div>
-          <label className="block text-[10px] text-gray-400 mb-1">中文亮点</label>
+          <label className="block text-[10px] text-text-muted mb-1">中文亮点</label>
           {e.highlights.map((h, i) => (
             <div key={i} className="flex gap-1 mb-1">
-              <input value={h} onChange={(ev) => updateEduHighlight(e.id, i, ev.target.value, 'zh')} className="flex-1 px-2 py-1 text-xs border border-gray-200 rounded focus:outline-none focus:border-gray-400" placeholder="亮点" />
+              <input value={h} onChange={(ev) => updateEduHighlight(e.id, i, ev.target.value, 'zh')} className="flex-1 px-2.5 py-2 text-xs border border-border-default rounded-xl bg-white focus:outline-none focus:border-brand-primary focus:ring-4 focus:ring-accent-muted/80" placeholder="亮点" />
               {e.highlights.length > 1 && <button onClick={() => removeEduHighlight(e.id, i, 'zh')} className="text-gray-400 hover:text-red-500 text-xs px-1">✕</button>}
             </div>
           ))}
-          <button onClick={() => addEduHighlight(e.id, 'zh')} className="text-[10px] text-blue-600 hover:text-blue-800 mt-0.5">{t.education.addHighlight}</button>
+          <button onClick={() => addEduHighlight(e.id, 'zh')} className="text-[10px] text-brand-primary hover:text-brand-secondary mt-0.5 font-bold">{t.education.addHighlight}</button>
         </div>
       )}
       {lang === 'en' && (
         <div>
-          <label className="block text-[10px] text-gray-400 mb-1">English Highlights</label>
+          <label className="block text-[10px] text-text-muted mb-1">English Highlights</label>
           {e.highlightsEn.map((h, i) => (
             <div key={i} className="flex gap-1 mb-1">
-              <input value={h} onChange={(ev) => updateEduHighlight(e.id, i, ev.target.value, 'en')} className="flex-1 px-2 py-1 text-xs border border-gray-200 rounded focus:outline-none focus:border-gray-400" placeholder="Highlight" />
+              <input value={h} onChange={(ev) => updateEduHighlight(e.id, i, ev.target.value, 'en')} className="flex-1 px-2.5 py-2 text-xs border border-border-default rounded-xl bg-white focus:outline-none focus:border-brand-primary focus:ring-4 focus:ring-accent-muted/80" placeholder="Highlight" />
               {e.highlightsEn.length > 1 && <button onClick={() => removeEduHighlight(e.id, i, 'en')} className="text-gray-400 hover:text-red-500 text-xs px-1">✕</button>}
             </div>
           ))}
-          <button onClick={() => addEduHighlight(e.id, 'en')} className="text-[10px] text-blue-600 hover:text-blue-800 mt-0.5">{t.education.addHighlight}</button>
+          <button onClick={() => addEduHighlight(e.id, 'en')} className="text-[10px] text-brand-primary hover:text-brand-secondary mt-0.5 font-bold">{t.education.addHighlight}</button>
         </div>
       )}
     </div>
@@ -124,7 +124,7 @@ export default function EducationForm() {
           </div>
         </SortableContext>
       </DndContext>
-      <button onClick={addEducation} className="text-xs text-blue-600 hover:text-blue-800 font-medium">{t.education.addEducation}</button>
+      <button onClick={addEducation} className="text-xs text-brand-primary hover:text-brand-secondary font-bold">{t.education.addEducation}</button>
     </div>
   )
 }

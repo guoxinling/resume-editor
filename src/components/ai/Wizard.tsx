@@ -167,6 +167,7 @@ export default function Wizard() {
 
     await streamChat(
       msgs,
+      'wizard',
       {
         onToken: (token: string) => {
           fullText += token
