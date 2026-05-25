@@ -9,6 +9,21 @@ interface StreamCallbacks {
   onError: (error: string) => void
 }
 
+async function readErrorMessage(response: Response, fallback: string): Promise<string> {
+  try {
+    const text = await response.text()
+    if (!text) return fallback
+    try {
+      const data = JSON.parse(text)
+      return data?.error || data?.message || fallback
+    } catch {
+      return text.slice(0, 240)
+    }
+  } catch {
+    return fallback
+  }
+}
+
 export async function streamChat(
   messages: ChatMessage[],
   feature: AIFeature,
@@ -44,7 +59,7 @@ export async function streamChat(
         useAuthStore.getState().openCreditModal()
         callbacks.onError('点数不足，请先充值')
       }
-      else callbacks.onError('AI 服务暂时不可用，请稍后重试')
+      else callbacks.onError(await readErrorMessage(response, 'AI 服务暂时不可用，请稍后重试'))
       return
     }
 
@@ -120,7 +135,7 @@ export async function chatComplete(messages: ChatMessage[], feature: AIFeature):
       throw new Error('点数不足，请先充值')
     }
     if (response.status === 429) throw new Error('请求频率过高')
-    throw new Error('AI 服务暂时不可用，请稍后重试')
+    throw new Error(await readErrorMessage(response, 'AI 服务暂时不可用，请稍后重试'))
   }
 
   const data = await response.json()

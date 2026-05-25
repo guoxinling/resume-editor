@@ -41,6 +41,13 @@ export default async function handler(req: any, res: any) {
 
     if (ledgerError) throw ledgerError
 
+    const { data: allLedger, error: allLedgerError } = await supabase
+      .from('credit_ledger')
+      .select('delta')
+      .eq('user_id', user.id)
+
+    if (allLedgerError) throw allLedgerError
+
     const { data: positiveLedger, error: positiveLedgerError } = await supabase
       .from('credit_ledger')
       .select('delta')
@@ -49,6 +56,7 @@ export default async function handler(req: any, res: any) {
 
     if (positiveLedgerError) throw positiveLedgerError
 
+    let ledgerBalance = (allLedger || []).reduce((sum: number, item: { delta: number }) => sum + Number(item.delta || 0), 0)
     let positiveTotal = (positiveLedger || []).reduce((sum: number, item: { delta: number }) => sum + Number(item.delta || 0), 0)
 
     if (positiveTotal <= 0 && Number(account?.balance || 0) <= 0) {
@@ -62,7 +70,22 @@ export default async function handler(req: any, res: any) {
       })
       if (backfillError && !backfillError.message.includes('duplicate key')) throw backfillError
       account = { balance: Number(backfilledBalance || 20) }
+      ledgerBalance = Number(backfilledBalance || 20)
       positiveTotal = 20
+    }
+
+    const correctedBalance = Math.max(0, ledgerBalance)
+    if (Number(account?.balance || 0) !== correctedBalance) {
+      const { error: updateError } = await supabase
+        .from('credit_accounts')
+        .upsert({
+          user_id: user.id,
+          balance: correctedBalance,
+          updated_at: new Date().toISOString(),
+        }, { onConflict: 'user_id' })
+
+      if (updateError) throw updateError
+      account = { balance: correctedBalance }
     }
 
     const totalCredits = Math.max(20, positiveTotal)
