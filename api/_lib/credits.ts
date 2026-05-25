@@ -1,5 +1,5 @@
 import { randomUUID } from 'crypto'
-import { getServiceSupabase } from './supabase'
+import { getServiceSupabase } from './supabase.ts'
 
 export type CreditFeature =
   | 'wizard'

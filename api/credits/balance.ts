@@ -1,4 +1,4 @@
-import { getAuthenticatedUser, getServiceSupabase, sendApiError } from '../_lib/supabase'
+import { getAuthenticatedUser, getServiceSupabase, sendApiError } from '../_lib/supabase.ts'
 
 export default async function handler(req: any, res: any) {
   if (req.method !== 'GET') {

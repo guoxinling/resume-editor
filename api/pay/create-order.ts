@@ -1,7 +1,7 @@
 import { randomUUID } from 'crypto'
-import { CREDIT_PACKAGES, type CreditPackageId } from '../_lib/credits'
-import { getAuthenticatedUser, getServiceSupabase, sendApiError } from '../_lib/supabase'
-import { createZpaySign, getZpayConfig, toQuery } from '../_lib/zpay'
+import { CREDIT_PACKAGES, type CreditPackageId } from '../_lib/credits.ts'
+import { getAuthenticatedUser, getServiceSupabase, sendApiError } from '../_lib/supabase.ts'
+import { createZpaySign, getZpayConfig, toQuery } from '../_lib/zpay.ts'
 
 const PAY_TYPES = new Set(['alipay', 'wxpay'])
 

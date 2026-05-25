@@ -1,5 +1,5 @@
-import { getServiceSupabase } from '../_lib/supabase'
-import { getZpayConfig, verifyZpaySign } from '../_lib/zpay'
+import { getServiceSupabase } from '../_lib/supabase.ts'
+import { getZpayConfig, verifyZpaySign } from '../_lib/zpay.ts'
 
 function collectParams(req: any): Record<string, string> {
   return {
