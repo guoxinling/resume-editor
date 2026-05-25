@@ -1,15 +1,7 @@
 import { randomUUID } from 'crypto'
-import { getServiceSupabase } from './supabase.ts'
+import { getServiceSupabase } from './supabase.js'
 
-export type CreditFeature =
-  | 'wizard'
-  | 'polish'
-  | 'adapt'
-  | 'interview'
-  | 'translate'
-  | 'import_parse'
-
-export const FEATURE_COSTS: Record<CreditFeature, number> = {
+export const FEATURE_COSTS = {
   wizard: 1,
   polish: 1,
   adapt: 3,
@@ -22,20 +14,18 @@ export const CREDIT_PACKAGES = {
   starter: { id: 'starter', name: '入门包', amountCents: 990, credits: 100 },
   plus: { id: 'plus', name: '进阶包', amountCents: 1990, credits: 250 },
   pro: { id: 'pro', name: '专业包', amountCents: 3990, credits: 600 },
-} as const
-
-export type CreditPackageId = keyof typeof CREDIT_PACKAGES
-
-export function getFeatureCost(feature: unknown): number {
-  if (typeof feature !== 'string' || !(feature in FEATURE_COSTS)) {
-    const error = new Error('Invalid AI feature')
-    ;(error as any).status = 400
-    throw error
-  }
-  return FEATURE_COSTS[feature as CreditFeature]
 }
 
-export async function getCreditBalance(userId: string): Promise<number> {
+export function getFeatureCost(feature) {
+  if (typeof feature !== 'string' || !(feature in FEATURE_COSTS)) {
+    const error = new Error('Invalid AI feature')
+    error.status = 400
+    throw error
+  }
+  return FEATURE_COSTS[feature]
+}
+
+export async function getCreditBalance(userId) {
   const supabase = getServiceSupabase()
   const { data, error } = await supabase
     .from('credit_accounts')
@@ -47,7 +37,7 @@ export async function getCreditBalance(userId: string): Promise<number> {
   return Number(data?.balance || 0)
 }
 
-export async function spendCredits(userId: string, feature: CreditFeature, metadata: Record<string, any> = {}) {
+export async function spendCredits(userId, feature, metadata = {}) {
   const amount = getFeatureCost(feature)
   const refId = `ai:${feature}:${randomUUID()}`
   const supabase = getServiceSupabase()
@@ -62,14 +52,14 @@ export async function spendCredits(userId: string, feature: CreditFeature, metad
 
   if (error) {
     const err = new Error(error.message.includes('insufficient_credits') ? '点数不足，请先充值' : error.message)
-    ;(err as any).status = error.message.includes('insufficient_credits') ? 402 : 500
+    err.status = error.message.includes('insufficient_credits') ? 402 : 500
     throw err
   }
 
   return { amount, refId, balance: Number(data || 0) }
 }
 
-export async function refundCredits(userId: string, amount: number, feature: CreditFeature, refId: string, reason = 'ai_refund') {
+export async function refundCredits(userId, amount, feature, refId, reason = 'ai_refund') {
   const supabase = getServiceSupabase()
   await supabase.rpc('grant_credits', {
     p_user_id: userId,
@@ -80,3 +70,4 @@ export async function refundCredits(userId: string, amount: number, feature: Cre
     p_metadata: { originalRefId: refId },
   })
 }
+

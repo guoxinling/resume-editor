@@ -1,5 +1,5 @@
-import { getAuthenticatedUser, sendApiError } from './_lib/supabase.ts'
-import { refundCredits, spendCredits, type CreditFeature } from './_lib/credits.ts'
+import { getAuthenticatedUser, sendApiError } from './_lib/supabase.js'
+import { refundCredits, spendCredits } from './_lib/credits.js'
 
 export default async function handler(req: any, res: any) {
   if (req.method !== 'POST') {
@@ -17,7 +17,7 @@ export default async function handler(req: any, res: any) {
     return
   }
 
-  let charge: { amount: number; refId: string; feature: CreditFeature } | null = null
+  let charge: { amount: number; refId: string; feature: string } | null = null
   let userId: string | null = null
 
   try {

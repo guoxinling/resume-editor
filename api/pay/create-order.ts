@@ -1,7 +1,7 @@
 import { randomUUID } from 'crypto'
-import { CREDIT_PACKAGES, type CreditPackageId } from '../_lib/credits.ts'
-import { getAuthenticatedUser, getServiceSupabase, sendApiError } from '../_lib/supabase.ts'
-import { createZpaySign, getZpayConfig, toQuery } from '../_lib/zpay.ts'
+import { CREDIT_PACKAGES } from '../_lib/credits.js'
+import { getAuthenticatedUser, getServiceSupabase, sendApiError } from '../_lib/supabase.js'
+import { createZpaySign, getZpayConfig, toQuery } from '../_lib/zpay.js'
 
 const PAY_TYPES = new Set(['alipay', 'wxpay'])
 
@@ -15,7 +15,7 @@ export default async function handler(req: any, res: any) {
   try {
     const user = await getAuthenticatedUser(req)
     const { packageId, payType = 'alipay' } = req.body || {}
-    const pack = CREDIT_PACKAGES[packageId as CreditPackageId]
+    const pack = CREDIT_PACKAGES[packageId as keyof typeof CREDIT_PACKAGES]
 
     if (!pack) {
       res.status(400).json({ error: 'Invalid credit package' })

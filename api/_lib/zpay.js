@@ -1,7 +1,5 @@
 import { createHash } from 'crypto'
 
-export type ZpayParams = Record<string, string | number | undefined | null>
-
 export function getZpayConfig() {
   const pid = process.env.ZPAY_PID
   const key = process.env.ZPAY_KEY
@@ -15,7 +13,7 @@ export function getZpayConfig() {
   return { pid, key, baseURL, appBaseURL }
 }
 
-export function createZpaySign(params: ZpayParams, key: string): string {
+export function createZpaySign(params, key) {
   const payload = Object.entries(params)
     .filter(([k, v]) => k !== 'sign' && k !== 'sign_type' && v !== undefined && v !== null && String(v) !== '')
     .sort(([a], [b]) => a.localeCompare(b))
@@ -25,14 +23,15 @@ export function createZpaySign(params: ZpayParams, key: string): string {
   return createHash('md5').update(`${payload}${key}`).digest('hex')
 }
 
-export function verifyZpaySign(params: ZpayParams, key: string): boolean {
+export function verifyZpaySign(params, key) {
   const expected = createZpaySign(params, key)
   return String(params.sign || '').toLowerCase() === expected.toLowerCase()
 }
 
-export function toQuery(params: ZpayParams): string {
+export function toQuery(params) {
   return Object.entries(params)
     .filter(([, v]) => v !== undefined && v !== null)
     .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(String(v))}`)
     .join('&')
 }
+
