@@ -11,6 +11,13 @@ function useT() {
   return { lang, T: ({ zh, en }: { zh: string; en: string }) => <T zh={zh} en={en} lang={lang} /> }
 }
 
+const INVALID_PREVIEW_VALUE_RE = /^(未知|\(未知\)|未填|未填写|待补充|待填写|暂无|无|n\/?a|null|undefined|-|—)$/i
+
+const cleanPreviewText = (value: string) => {
+  const text = value.replace(/\s+/g, ' ').trim()
+  return INVALID_PREVIEW_VALUE_RE.test(text) ? '' : text
+}
+
 export default function ResumePreview() {
   const data = useResumeStore((s) => s.data)
   const sectionOrder = useResumeStore((s) => s.sectionOrder)
@@ -19,7 +26,7 @@ export default function ResumePreview() {
 
   const summary = lang === 'zh' ? data.summary : data.summaryEn
 
-  const display = (zh: string, en: string) => (lang === 'zh' ? zh : en)
+  const display = (zh: string, en: string) => cleanPreviewText(lang === 'zh' ? zh : en)
 
   const nameDisplay = display(pi.name, pi.nameEn || pi.name)
   const locationDisplay = display(pi.location, pi.locationEn || pi.location)
@@ -53,19 +60,19 @@ export default function ResumePreview() {
   const sectionHasContent = (key: string): boolean => {
     switch (key) {
       case 'summary':
-        return !!summary
+        return !!cleanPreviewText(summary)
       case 'workExperience':
-        return data.workExperience.some((w) => w.company || w.companyEn)
+        return data.workExperience.some((w) => display(w.company, w.companyEn))
       case 'aiProjects':
-        return data.aiProjects.some((p) => p.name || p.nameEn)
+        return data.aiProjects.some((p) => display(p.name, p.nameEn))
       case 'education':
-        return data.education.some((e) => e.school || e.schoolEn)
+        return data.education.some((e) => display(e.school, e.schoolEn))
       case 'skills':
-        return data.skills.some((s) => s.category || s.categoryEn)
+        return data.skills.some((s) => display(s.category, s.categoryEn))
       case 'languages':
-        return data.languages.length > 0 || data.languagesEn.length > 0
+        return (lang === 'zh' ? data.languages : data.languagesEn).some(cleanPreviewText)
       case 'selfEvaluation':
-        return !!(lang === 'zh' ? data.selfEvaluation : data.selfEvaluationEn)
+        return !!display(data.selfEvaluation, data.selfEvaluationEn)
       default:
         if (key.startsWith('custom_')) {
           const cs = data.customSections.find((cs) => cs.id === key)
@@ -221,7 +228,7 @@ export default function ResumePreview() {
 
         {key === 'languages' && (
           <p className="text-body leading-relaxed text-text-secondary">
-            {display(data.languages.join(' / '), data.languagesEn.join(' / '))}
+            {(lang === 'zh' ? data.languages : data.languagesEn).map(cleanPreviewText).filter(Boolean).join(' / ')}
           </p>
         )}
 
