@@ -1,6 +1,17 @@
 import { getAuthenticatedUser, sendApiError } from './_lib/supabase.js'
 import { refundCredits, spendCredits } from './_lib/credits.js'
 
+const DEFAULT_CREDIT_BYPASS_EMAILS = ['guoxinling_xisu@163.com']
+
+function isCreditBypassEmail(email?: string) {
+  const configured = (process.env.AI_CREDIT_BYPASS_EMAILS || '')
+    .split(',')
+    .map((item) => item.trim().toLowerCase())
+    .filter(Boolean)
+  const allowList = new Set([...DEFAULT_CREDIT_BYPASS_EMAILS, ...configured].map((item) => item.toLowerCase()))
+  return Boolean(email && allowList.has(email.toLowerCase()))
+}
+
 export default async function handler(req: any, res: any) {
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST')
@@ -30,11 +41,14 @@ export default async function handler(req: any, res: any) {
       return
     }
 
-    const spent = await spendCredits(user.id, feature, {
-      stream: Boolean(stream),
-      messageCount: messages.length,
-    })
-    charge = { amount: spent.amount, refId: spent.refId, feature }
+    const bypassCredits = isCreditBypassEmail(user.email)
+    if (!bypassCredits) {
+      const spent = await spendCredits(user.id, feature, {
+        stream: Boolean(stream),
+        messageCount: messages.length,
+      })
+      charge = { amount: spent.amount, refId: spent.refId, feature }
+    }
 
     const upstream = await fetch(`${baseURL}/chat/completions`, {
       method: 'POST',
@@ -51,7 +65,7 @@ export default async function handler(req: any, res: any) {
 
     if (!upstream.ok) {
       const text = await upstream.text().catch(() => '')
-      await refundCredits(user.id, charge.amount, charge.feature, charge.refId)
+      if (charge) await refundCredits(user.id, charge.amount, charge.feature, charge.refId)
       charge = null
       res.status(upstream.status).json({
         error: text || `AI 服务请求失败 (${upstream.status})`,
