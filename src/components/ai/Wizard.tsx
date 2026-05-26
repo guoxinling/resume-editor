@@ -10,6 +10,24 @@ interface ChatMessage {
   step?: number
 }
 
+interface WizardAction {
+  type: 'replaceWorkBullets' | 'deleteWorkBullet' | 'deleteWorkEntry' | 'replaceProjectDescription' | 'deleteProjectEntry'
+  company?: string
+  role?: string
+  projectName?: string
+  contains?: string
+  bullets?: string[]
+  description?: string
+}
+
+interface ParsedWizardResponse {
+  reply: string
+  step: number
+  totalSteps: number
+  extracted: Record<string, any>
+  actions: WizardAction[]
+}
+
 /** Loading stages for the initial scan animation */
 const SCAN_STAGES = [
   { icon: '🔍', text: '正在扫描你的简历…' },
@@ -19,9 +37,9 @@ const SCAN_STAGES = [
 
 /** Typing indicator phrases that rotate during AI response */
 const TYPING_PHRASES = [
-  'AI 正在思考…',
-  '整理回复中…',
-  '马上就好…',
+  '正在提取关键信息…',
+  '正在更新左侧简历…',
+  '正在整理成更适合投递的表达…',
 ]
 
 const INVALID_VALUE_RE = /^(未知|\(未知\)|未填|未填写|待补充|待填写|暂无|无|n\/?a|null|undefined|-|—)$/i
@@ -122,6 +140,30 @@ const mergeLanguageList = (values: unknown[]): string[] => {
   return [...merged, ...fallback]
 }
 
+const normalizeYearMonth = (year: number, month: number) => `${year}.${String(month).padStart(2, '0')}`
+
+const inferEducationDates = (dates: unknown, degree: unknown): string => {
+  const raw = cleanValue(dates)
+  if (!raw) return ''
+
+  const degreeText = cleanValue(degree)
+  const gradMatch = raw.match(/(19|20)\d{2}/)
+  const gradYear = gradMatch ? Number(gradMatch[0]) : null
+  const isGraduationOnly = /毕业/.test(raw) || /^(19|20)\d{2}$/.test(raw)
+  const isBachelor = /本科|学士|bachelor/i.test(degreeText)
+
+  if (gradYear && isGraduationOnly && isBachelor) {
+    return `${normalizeYearMonth(gradYear - 4, 9)} - ${normalizeYearMonth(gradYear, 6)}`
+  }
+
+  return raw
+    .replace(/年\s*/g, '.')
+    .replace(/月/g, '')
+    .replace(/\s*(到|至|—|–|~|～)\s*/g, ' - ')
+    .replace(/\.(\d)(?=\s|$| - )/g, '.0$1')
+    .trim()
+}
+
 export default function Wizard() {
   const { setPersonalInfo, setSummary, setSelfEvaluation, addWork, updateWork, removeWork, addProject, updateProject, removeProject, addEducation, updateEducation, removeEducation, addSkill, updateSkill, addLanguage, updateLanguage, removeLanguage, addCustomSection } = useResumeStore()
 
@@ -131,7 +173,6 @@ export default function Wizard() {
   const [error, setError] = useState<string | null>(null)
   const [currentStep, setCurrentStep] = useState(0)
   const [totalSteps, setTotalSteps] = useState(7)
-  const [finished, setFinished] = useState(false)
   const [started, setStarted] = useState(false)
   const [streamingText, setStreamingText] = useState('')
 
@@ -264,7 +305,7 @@ export default function Wizard() {
 
   const streamAndParse = async (
     msgs: AIMessage[],
-    onParsed: (parsed: { reply: string; step: number; totalSteps: number; extracted: Record<string, any> }) => void,
+    onParsed: (parsed: ParsedWizardResponse) => void,
   ) => {
     setStreamingText('')
     let fullText = ''
@@ -286,7 +327,7 @@ export default function Wizard() {
             const parsed = parseResponse(fullText)
             onParsed(parsed)
           } catch {
-            onParsed({ reply: fullText, step: 0, totalSteps: 7, extracted: {} })
+            onParsed({ reply: fullText, step: 0, totalSteps: 7, extracted: {}, actions: [] })
           }
         },
         onError: (errMsg: string) => {
@@ -300,19 +341,19 @@ export default function Wizard() {
 
   const handleStartConversation = async () => {
     setStarted(true)
-    setLoading(true)
-    setScanStage(0)
-    const snapshot = buildSnapshot()
-    await streamAndParse(buildWizardMessages(JSON.stringify(snapshot, null, 2), [], ''), (parsed) => {
-      setMessages([{ role: 'assistant', content: parsed.reply, step: 1 }])
-      setCurrentStep(1)
-      setTotalSteps(parsed.totalSteps || 7)
-    })
-    setLoading(false)
+    setError(null)
+    setStreamingText('')
+    setMessages([{
+      role: 'assistant',
+      content: '你好，我是简历鸭的 AI 简历顾问。我可以帮你从零梳理经历，也可以把已有内容精简、润色、删除或改成更适合投递的表达。\n\n你可以直接把个人信息、目标岗位、工作经历或想修改的内容发给我，我们先从你最想投递的岗位开始：你这份简历准备投什么岗位？',
+      step: 1,
+    }])
+    setCurrentStep(1)
+    setTotalSteps(7)
     focusInput()
   }
 
-  const parseResponse = (raw: string): { reply: string; step: number; totalSteps: number; extracted: Record<string, any> } => {
+  const parseResponse = (raw: string): ParsedWizardResponse => {
     const cleaned = raw.replace(/```json\s*|```/g, '').trim()
     const start = cleaned.indexOf('{')
     const end = cleaned.lastIndexOf('}')
@@ -323,11 +364,12 @@ export default function Wizard() {
       step: parsed.step || 0,
       totalSteps: parsed.totalSteps || 7,
       extracted: parsed.extracted || {},
+      actions: Array.isArray(parsed.actions) ? parsed.actions : [],
     }
   }
 
   /** Smart merge: find existing entry by name match, update instead of duplicating */
-  const applyExtracted = (extracted: Record<string, any>) => {
+  const applyExtracted = (extracted: Record<string, any>, actions: WizardAction[] = []) => {
     const pi = useResumeStore.getState().data.personalInfo
     const setPersonalIfUseful = (field: keyof typeof pi, value: unknown) => {
       const cleaned = cleanValue(value)
@@ -378,6 +420,30 @@ export default function Wizard() {
       return result
     }
 
+    const findProjectForMerge = (p: Record<string, any>) => {
+      const projectName = cleanValue(p.projectName ?? p.name)
+      const roleName = cleanValue(p.role)
+      const all = useResumeStore.getState().data.aiProjects
+
+      if (projectName) {
+        const projectKey = comparable(projectName)
+        const match = all.find((pr) => {
+          const key = comparable(pr.name)
+          return key && (key === projectKey || key.includes(projectKey) || projectKey.includes(key))
+        })
+        if (match) return match
+      }
+
+      if (roleName) {
+        const roleKey = comparable(roleName)
+        const match = all.find((pr) => comparable(pr.direction) === roleKey)
+        if (match) return match
+      }
+
+      if (all.length === 1) return all[0]
+      return undefined
+    }
+
     // ── Work experience: match by company name, update existing ──
     if (Array.isArray(extracted.workExperience)) {
       for (const w of extracted.workExperience) {
@@ -423,17 +489,19 @@ export default function Wizard() {
         const schoolName = cleanValue(e.school)
         const degree = cleanValue(e.degree)
         const major = cleanValue(e.major)
-        const dates = cleanValue(e.dates)
-        if (!schoolName && !degree && !major && !dates) continue
+        const rawDates = cleanValue(e.dates)
+        if (!schoolName && !degree && !major && !rawDates) continue
         const existing = useResumeStore.getState().data.education.find(
           (ed) => comparable(ed.school) === comparable(schoolName)
         )
         if (existing) {
+          const dates = inferEducationDates(rawDates, degree || existing.degree)
           if (shouldUpdate(existing.degree, degree)) updateEducation(existing.id, 'degree', degree)
           if (shouldUpdate(existing.major, major)) updateEducation(existing.id, 'major', major)
           if (shouldUpdate(existing.dates, dates)) updateEducation(existing.id, 'dates', dates)
         } else {
           if (!schoolName) continue
+          const dates = inferEducationDates(rawDates, degree)
           addEducation()
           const edu = useResumeStore.getState().data.education
           const lastEdu = edu[edu.length - 1]
@@ -483,6 +551,45 @@ export default function Wizard() {
       stateAfterPrj.data.aiProjects
         .filter(pr => !cleanValue(pr.name) && !cleanValue(pr.direction))
         .forEach(pr => removeProject(pr.id))
+    }
+
+    // Editing actions — used when user asks to shorten, delete or rewrite existing content.
+    if (Array.isArray(actions) && actions.length > 0) {
+      for (const action of actions) {
+        const type = cleanValue(action.type)
+        if (!type) continue
+
+        if (type === 'replaceWorkBullets') {
+          const existing = findWorkForMerge({ company: action.company, role: action.role })
+          const bullets = cleanList(action.bullets)
+          if (existing && bullets.length > 0) updateWork(existing.id, 'bullets', bullets)
+        }
+
+        if (type === 'deleteWorkBullet') {
+          const existing = findWorkForMerge({ company: action.company, role: action.role })
+          const contains = comparable(action.contains)
+          if (existing && contains) {
+            const nextBullets = cleanList(existing.bullets).filter((bullet) => !comparable(bullet).includes(contains))
+            updateWork(existing.id, 'bullets', nextBullets)
+          }
+        }
+
+        if (type === 'deleteWorkEntry') {
+          const existing = findWorkForMerge({ company: action.company, role: action.role })
+          if (existing) removeWork(existing.id)
+        }
+
+        if (type === 'replaceProjectDescription') {
+          const existing = findProjectForMerge({ projectName: action.projectName, role: action.role })
+          const description = cleanValue(action.description)
+          if (existing && description) updateProject(existing.id, 'description', description)
+        }
+
+        if (type === 'deleteProjectEntry') {
+          const existing = findProjectForMerge({ projectName: action.projectName, role: action.role })
+          if (existing) removeProject(existing.id)
+        }
+      }
     }
 
     // Skills — match by category, update existing
@@ -565,7 +672,7 @@ export default function Wizard() {
 
   const handleSend = async (overrideText?: string, options?: { appendUser?: boolean }) => {
     const text = (overrideText ?? input).trim()
-    if (!text || loading || finished) return
+    if (!text || loading) return
     const appendUser = options?.appendUser !== false
     if (!overrideText) setInput('')
 
@@ -592,18 +699,17 @@ export default function Wizard() {
     )
 
     await streamAndParse(msgs, (parsed) => {
-      if (parsed.extracted && Object.keys(parsed.extracted).length > 0) {
-        applyExtracted(parsed.extracted)
+      if (
+        (parsed.extracted && Object.keys(parsed.extracted).length > 0) ||
+        (parsed.actions && parsed.actions.length > 0)
+      ) {
+        applyExtracted(parsed.extracted || {}, parsed.actions || [])
       }
 
       const assistantMsg: ChatMessage = { role: 'assistant', content: parsed.reply, step: parsed.step }
       setMessages([...newMessages, assistantMsg])
       setCurrentStep(parsed.step)
       if (parsed.totalSteps) setTotalSteps(parsed.totalSteps)
-
-      if (parsed.step >= parsed.totalSteps) {
-        setFinished(true)
-      }
     })
 
     setLoading(false)
@@ -629,7 +735,6 @@ export default function Wizard() {
   const handleRestart = () => {
     setMessages([])
     setStarted(false)
-    setFinished(false)
     setCurrentStep(0)
     setTotalSteps(7)
     setError(null)
@@ -647,13 +752,10 @@ export default function Wizard() {
               {started ? '简历顾问' : '简历向导'}
             </span>
           </div>
-          {finished && (
-            <button
-              onClick={handleRestart}
-              className="text-[11px] text-gray-400 hover:text-[#4F46E5] px-2 py-1 rounded hover:bg-gray-50 transition-colors"
-            >
-              重新开始
-            </button>
+          {started && (
+            <span className="text-[11px] text-gray-400">
+              可继续补充、精简或删除内容
+            </span>
           )}
         </div>
       </div>
@@ -777,40 +879,26 @@ export default function Wizard() {
       {/* Input area */}
       {started && (
       <div className="px-5 py-3 border-t border-gray-100">
-        {finished ? (
-          <div className="text-center py-3">
-            <div className="text-2xl mb-1">🎉</div>
-            <p className="text-[13px] font-semibold text-gray-800">简历初稿已完成！</p>
-            <p className="text-[11px] text-gray-400 mt-1">你可以在左侧编辑器里调整细节，或点击「经历润色」让 AI 帮你精修每段经历。</p>
-            <button
-              onClick={handleRestart}
-              className="mt-3 text-[12px] text-[#4F46E5] hover:underline"
-            >
-              重新开始对话
-            </button>
-          </div>
-        ) : (
-          <div className="flex gap-2 items-end">
-            <textarea
-              ref={inputRef}
-              value={input}
-              onChange={(e) => { setInput(e.target.value); autoResize() }}
-              onKeyDown={handleKeyDown}
-              placeholder={loading ? 'AI 正在回复…' : '输入你的回答…（Shift+Enter 换行）'}
-              disabled={loading}
-              rows={1}
-              className="flex-1 px-3 py-2 rounded-lg border border-gray-200 text-[13px] placeholder:text-gray-400 focus:outline-none focus:border-[#7C3AED]/50 focus:ring-1 focus:ring-[#7C3AED]/20 disabled:bg-gray-50 disabled:text-gray-400 transition-colors resize-none"
-              autoFocus
-            />
-            <button
-              onClick={() => handleSend()}
-              disabled={loading || !input.trim()}
-              className="shrink-0 h-9 px-4 rounded-lg bg-gradient-to-r from-[#4F46E5] to-[#7C3AED] text-white text-[13px] font-medium disabled:opacity-40 disabled:cursor-not-allowed hover:shadow-lg hover:shadow-indigo-500/20 active:scale-[0.97] transition-all"
-            >
-              发送
-            </button>
-          </div>
-        )}
+        <div className="flex gap-2 items-end">
+          <textarea
+            ref={inputRef}
+            value={input}
+            onChange={(e) => { setInput(e.target.value); autoResize() }}
+            onKeyDown={handleKeyDown}
+            placeholder={loading ? 'AI 正在处理…' : '输入你的回答或修改要求…（Shift+Enter 换行）'}
+            disabled={loading}
+            rows={1}
+            className="flex-1 px-3 py-2 rounded-lg border border-gray-200 text-[13px] placeholder:text-gray-400 focus:outline-none focus:border-[#7C3AED]/50 focus:ring-1 focus:ring-[#7C3AED]/20 disabled:bg-gray-50 disabled:text-gray-400 transition-colors resize-none"
+            autoFocus
+          />
+          <button
+            onClick={() => handleSend()}
+            disabled={loading || !input.trim()}
+            className="shrink-0 h-9 px-4 rounded-lg bg-gradient-to-r from-[#4F46E5] to-[#7C3AED] text-white text-[13px] font-medium disabled:opacity-40 disabled:cursor-not-allowed hover:shadow-lg hover:shadow-indigo-500/20 active:scale-[0.97] transition-all"
+          >
+            发送
+          </button>
+        </div>
       </div>
       )}
     </div>
