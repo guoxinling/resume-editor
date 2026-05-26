@@ -304,7 +304,11 @@ export default function Toolbar({ onOpenDrafts, showEditor, onToggleEditor, onGo
         className="flex items-center gap-2 rounded-2xl px-1.5 py-1 transition-colors hover:bg-white/70"
         title="返回首页"
       >
-        <span className="w-8 h-8 rounded-xl bg-gradient-to-br from-brand-primary to-brand-secondary flex items-center justify-center text-white text-[14px] shadow-md shadow-violet-900/10">鸭</span>
+        <img
+          src="/icon-192.png"
+          alt="简历鸭"
+          className="h-8 w-8 rounded-xl shadow-md shadow-violet-900/10"
+        />
         <div className="flex items-baseline gap-1.5">
           <h1 className="text-[13px] font-semibold text-text-primary">简历鸭</h1>
           <span className="text-[11px] text-text-muted hidden sm:inline">· {lang === 'zh' ? 'Resume Editor' : '简历编辑器'}</span>

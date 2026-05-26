@@ -165,9 +165,11 @@ export default function LandingPage({ onImportClick, onDraftContinue, onWizardCl
       <header className="sticky top-0 z-30 border-b border-[#CAC4D0]/60 bg-[#FFFBFE]/86 backdrop-blur-xl">
         <nav className="mx-auto flex h-[72px] w-[min(1180px,calc(100%-32px))] items-center justify-between gap-3">
           <button type="button" onClick={onWizardClick} className="inline-flex min-w-max items-center gap-3">
-            <span className="grid h-10 w-10 place-items-center rounded-[14px] bg-[#6750A4] text-xl text-white shadow-[0_8px_18px_rgba(103,80,164,0.24)]">
-              鸭
-            </span>
+            <img
+              src="/icon-192.png"
+              alt="简历鸭"
+              className="h-10 w-10 rounded-[14px] shadow-[0_8px_18px_rgba(103,80,164,0.18)]"
+            />
             <span className="text-base font-black tracking-normal">简历鸭</span>
           </button>
 
