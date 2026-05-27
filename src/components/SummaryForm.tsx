@@ -2,7 +2,7 @@ import { useResumeStore } from '../store/resumeStore'
 import { useAIStore } from '../store/aiStore'
 import { zh } from '../i18n/zh'
 import { en } from '../i18n/en'
-import { MiniToolbar, AIPolishButton, handleAutoContinue } from './shared/TextAreaToolbar'
+import { MiniToolbar, AIPolishButton, TEXTAREA_CLASS, handleAutoContinue } from './shared/TextAreaToolbar'
 
 export default function SummaryForm() {
   const { data, setSummary, setSummaryEn } = useResumeStore()
@@ -33,7 +33,7 @@ export default function SummaryForm() {
             onKeyDown={handleAutoContinue}
             placeholder={t.summary.placeholder}
             rows={4}
-            className="w-full px-2.5 py-2 text-xs border border-border-default rounded-xl bg-white focus:outline-none focus:border-brand-primary focus:ring-4 focus:ring-accent-muted/80 resize-y"
+            className={TEXTAREA_CLASS}
           />
         </div>
       )}
@@ -51,7 +51,7 @@ export default function SummaryForm() {
             onKeyDown={handleAutoContinue}
             placeholder={t.summary.placeholder}
             rows={4}
-            className="w-full px-2.5 py-2 text-xs border border-border-default rounded-xl bg-white focus:outline-none focus:border-brand-primary focus:ring-4 focus:ring-accent-muted/80 resize-y"
+            className={TEXTAREA_CLASS}
           />
         </div>
       )}

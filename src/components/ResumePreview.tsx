@@ -37,7 +37,6 @@ export default function ResumePreview() {
   const contentRef = useRef<HTMLDivElement>(null)
   const [pageBreaks, setPageBreaks] = useState<number[]>([])
 
-  const A4_PRINTABLE_HEIGHT = 1000
   const A4_PAGE_HEIGHT = 1122.5
 
   useEffect(() => {
@@ -47,7 +46,7 @@ export default function ResumePreview() {
     const observer = new ResizeObserver(() => {
       const totalHeight = el.scrollHeight
       const breaks: number[] = []
-      for (let h = A4_PRINTABLE_HEIGHT; h < totalHeight; h += A4_PRINTABLE_HEIGHT) {
+      for (let h = A4_PAGE_HEIGHT; h < totalHeight; h += A4_PAGE_HEIGHT) {
         breaks.push(h)
       }
       setPageBreaks(breaks)
@@ -310,23 +309,21 @@ export default function ResumePreview() {
           {sectionOrder.filter((k) => k !== 'personalInfo').map(renderSection)}
 
           {/* Page break indicators */}
-          {pageBreaks.length > 0 && (
-            <div className="page-break-indicator absolute left-0 right-0 pointer-events-none" style={{ top: 0 }}>
-              {pageBreaks.map((y, i) => (
-                <div
-                  key={i}
-                  className="absolute left-0 right-0 flex items-center gap-2"
-                  style={{ top: y - 12 }}
-                >
-                  <div className="flex-1 border-t-2 border-dashed border-gray-300" />
-                  <span className="text-[10px] font-medium text-gray-400 bg-white/80 px-2 py-0.5 rounded-full shrink-0">
-                    第 {i + 2} 页
-                  </span>
-                  <div className="flex-1 border-t-2 border-dashed border-gray-300" />
+          <div className="page-break-indicator absolute left-0 right-0 pointer-events-none" style={{ top: 0 }}>
+            {pageBreaks.map((y, i) => (
+              <div
+                key={i}
+                className="absolute left-0 right-0 h-16 -translate-y-1/2 bg-[#F3F1F4] shadow-[inset_0_16px_20px_rgba(15,23,42,0.05),inset_0_-16px_20px_rgba(15,23,42,0.05)]"
+                style={{ top: y }}
+              >
+                <div className="absolute left-0 right-0 top-0 h-px bg-slate-200/80" />
+                <div className="absolute left-0 right-0 bottom-0 h-px bg-white/95" />
+                <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/80 px-3 py-1 text-[10px] font-semibold text-slate-400 shadow-sm">
+                  第 {i + 2} 页
                 </div>
-              ))}
-            </div>
-          )}
+              </div>
+            ))}
+          </div>
 
           {Array.from({ length: Math.max(1, pageBreaks.length + 1) }).map((_, index) => (
             <div

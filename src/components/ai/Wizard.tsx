@@ -885,11 +885,6 @@ export default function Wizard() {
               {started ? '简历顾问' : '简历向导'}
             </span>
           </div>
-          {started && (
-            <span className="text-[11px] text-gray-400">
-              可继续补充、精简或删除内容
-            </span>
-          )}
         </div>
       </div>
 
