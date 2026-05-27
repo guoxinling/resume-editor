@@ -8,6 +8,7 @@ interface ChatMessage {
   role: 'user' | 'assistant'
   content: string
   step?: number
+  quickReplies?: string[]
 }
 
 interface WizardAction {
@@ -26,6 +27,7 @@ interface ParsedWizardResponse {
   totalSteps: number
   extracted: Record<string, any>
   actions: WizardAction[]
+  quickReplies: string[]
 }
 
 /** Loading stages for the initial scan animation */
@@ -162,6 +164,47 @@ const inferEducationDates = (dates: unknown, degree: unknown): string => {
     .replace(/\s*(到|至|—|–|~|～)\s*/g, ' - ')
     .replace(/\.(\d)(?=\s|$| - )/g, '.0$1')
     .trim()
+}
+
+const parseWorkEndTime = (dates: unknown): number => {
+  const text = cleanValue(dates)
+  if (!text) return 0
+  if (/至今|现在|目前|current|present|now/i.test(text)) return Number.MAX_SAFE_INTEGER
+
+  const matches = Array.from(text.matchAll(/((?:19|20)\d{2})(?:\s*[年./-]\s*(\d{1,2}))?/g))
+  if (matches.length === 0) return 0
+
+  const last = matches[matches.length - 1]
+  const year = Number(last[1])
+  const month = last[2] ? Number(last[2]) : 12
+  return year * 12 + Math.min(Math.max(month, 1), 12)
+}
+
+const sortWorkExperienceByDateDesc = () => {
+  const state = useResumeStore.getState()
+  const current = state.data.workExperience
+  const sorted = [...current].sort((a, b) => {
+    const byDate = parseWorkEndTime(b.dates) - parseWorkEndTime(a.dates)
+    if (byDate !== 0) return byDate
+    return current.findIndex((w) => w.id === a.id) - current.findIndex((w) => w.id === b.id)
+  })
+
+  if (sorted.every((item, index) => item.id === current[index]?.id)) return
+  state.loadData({ ...state.data, workExperience: sorted })
+}
+
+const uniqueQuickReplies = (replies: unknown[]): string[] => {
+  const seen = new Set<string>()
+  return replies
+    .map(cleanValue)
+    .filter(Boolean)
+    .filter((reply) => {
+      const key = comparable(reply)
+      if (!key || seen.has(key)) return false
+      seen.add(key)
+      return true
+    })
+    .slice(0, 4)
 }
 
 export default function Wizard() {
@@ -303,6 +346,53 @@ export default function Wizard() {
     }
   }, [])
 
+  const buildOpeningMessage = useCallback((): ChatMessage => {
+    const snapshot = buildSnapshot()
+    const personalInfo = snapshot.personalInfo
+    const modules = snapshot.summary.modulesList
+    const jobObjective = cleanValue(personalInfo.jobObjective)
+    const workCount = snapshot.workExperience.filter((w) => cleanValue(w.company) || cleanValue(w.role)).length
+    const hasBasicInfo = Boolean(cleanValue(personalInfo.name) || cleanValue(personalInfo.phone) || cleanValue(personalInfo.email))
+    const hasAnyContent = hasBasicInfo || workCount > 0 || modules.length > 0
+    const recommendedNextFocus = cleanValue(snapshot.summary.recommendedNextFocus)
+
+    if (!hasAnyContent) {
+      return {
+        role: 'assistant',
+        step: 1,
+        content: '你好，我是简历鸭的 AI 简历顾问。我可以带你从零梳理经历，也可以把已有内容改成更适合投递的简历表达。\n\n你可以先告诉我目标岗位，也可以直接把个人信息和经历一口气发给我。',
+        quickReplies: ['我是第一次写简历', '我已有经历要优化', '先填写目标岗位'],
+      }
+    }
+
+    if (workCount > 0 || jobObjective) {
+      const moduleText = modules.length > 0 ? modules.join('、') : '部分基础信息'
+      const targetText = jobObjective ? `目标岗位是「${jobObjective}」` : '目标岗位还没有明确'
+      const focusText = recommendedNextFocus
+        ? `我建议先${recommendedNextFocus.replace(/^继续/, '继续')}`
+        : '我可以先帮你精简工作经历、强化目标岗位匹配，或删除冗余内容'
+
+      return {
+        role: 'assistant',
+        step: 1,
+        content: `我看到了你已经填写了${moduleText}，${targetText}。\n\n${focusText}。你想先处理哪一块？`,
+        quickReplies: uniqueQuickReplies([
+          jobObjective ? `强化${jobObjective}匹配度` : '先明确目标岗位',
+          workCount > 0 ? '帮我精简工作经历' : '继续补充工作经历',
+          '删除冗余内容',
+          '继续补充信息',
+        ]),
+      }
+    }
+
+    return {
+      role: 'assistant',
+      step: 1,
+      content: `我看到了你已经填写了${modules.join('、') || '一些基础信息'}。\n\n接下来可以先明确目标岗位，再围绕岗位补充经历和亮点。你想先做哪一步？`,
+      quickReplies: ['先明确目标岗位', '继续补充工作经历', '补充教育背景', '帮我整理成简历表达'],
+    }
+  }, [buildSnapshot])
+
   const streamAndParse = async (
     msgs: AIMessage[],
     onParsed: (parsed: ParsedWizardResponse) => void,
@@ -327,7 +417,7 @@ export default function Wizard() {
             const parsed = parseResponse(fullText)
             onParsed(parsed)
           } catch {
-            onParsed({ reply: fullText, step: 0, totalSteps: 7, extracted: {}, actions: [] })
+            onParsed({ reply: fullText, step: 0, totalSteps: 7, extracted: {}, actions: [], quickReplies: [] })
           }
         },
         onError: (errMsg: string) => {
@@ -343,11 +433,7 @@ export default function Wizard() {
     setStarted(true)
     setError(null)
     setStreamingText('')
-    setMessages([{
-      role: 'assistant',
-      content: '你好，我是简历鸭的 AI 简历顾问。我可以帮你从零梳理经历，也可以把已有内容精简、润色、删除或改成更适合投递的表达。\n\n你可以直接把个人信息、目标岗位、工作经历或想修改的内容发给我，我们先从你最想投递的岗位开始：你这份简历准备投什么岗位？',
-      step: 1,
-    }])
+    setMessages([buildOpeningMessage()])
     setCurrentStep(1)
     setTotalSteps(7)
     focusInput()
@@ -365,11 +451,13 @@ export default function Wizard() {
       totalSteps: parsed.totalSteps || 7,
       extracted: parsed.extracted || {},
       actions: Array.isArray(parsed.actions) ? parsed.actions : [],
+      quickReplies: uniqueQuickReplies(parsed.quickReplies || []),
     }
   }
 
   /** Smart merge: find existing entry by name match, update instead of duplicating */
   const applyExtracted = (extracted: Record<string, any>, actions: WizardAction[] = []) => {
+    let workTouched = false
     const pi = useResumeStore.getState().data.personalInfo
     const setPersonalIfUseful = (field: keyof typeof pi, value: unknown) => {
       const cleaned = cleanValue(value)
@@ -452,6 +540,7 @@ export default function Wizard() {
         const dates = cleanValue(w.dates)
         const bullets = cleanList(w.bullets)
         if (!companyName && !roleName && !dates && bullets.length === 0) continue
+        workTouched = true
 
         const existing = findWorkForMerge(w)
         if (existing) {
@@ -562,7 +651,10 @@ export default function Wizard() {
         if (type === 'replaceWorkBullets') {
           const existing = findWorkForMerge({ company: action.company, role: action.role })
           const bullets = cleanList(action.bullets)
-          if (existing && bullets.length > 0) updateWork(existing.id, 'bullets', bullets)
+          if (existing && bullets.length > 0) {
+            updateWork(existing.id, 'bullets', bullets)
+            workTouched = true
+          }
         }
 
         if (type === 'deleteWorkBullet') {
@@ -571,12 +663,16 @@ export default function Wizard() {
           if (existing && contains) {
             const nextBullets = cleanList(existing.bullets).filter((bullet) => !comparable(bullet).includes(contains))
             updateWork(existing.id, 'bullets', nextBullets)
+            workTouched = true
           }
         }
 
         if (type === 'deleteWorkEntry') {
           const existing = findWorkForMerge({ company: action.company, role: action.role })
-          if (existing) removeWork(existing.id)
+          if (existing) {
+            removeWork(existing.id)
+            workTouched = true
+          }
         }
 
         if (type === 'replaceProjectDescription') {
@@ -668,6 +764,7 @@ export default function Wizard() {
     const summary = cleanValue(extracted.summary)
     if (selfEvaluation) setSelfEvaluation(selfEvaluation)
     if (summary) setSummary(summary)
+    if (workTouched) sortWorkExperienceByDateDesc()
   }
 
   const handleSend = async (overrideText?: string, options?: { appendUser?: boolean }) => {
@@ -706,7 +803,12 @@ export default function Wizard() {
         applyExtracted(parsed.extracted || {}, parsed.actions || [])
       }
 
-      const assistantMsg: ChatMessage = { role: 'assistant', content: parsed.reply, step: parsed.step }
+      const assistantMsg: ChatMessage = {
+        role: 'assistant',
+        content: parsed.reply,
+        step: parsed.step,
+        quickReplies: parsed.quickReplies,
+      }
       setMessages([...newMessages, assistantMsg])
       setCurrentStep(parsed.step)
       if (parsed.totalSteps) setTotalSteps(parsed.totalSteps)
@@ -714,6 +816,11 @@ export default function Wizard() {
 
     setLoading(false)
     focusInput()
+  }
+
+  const handleQuickReply = (reply: string) => {
+    if (loading) return
+    handleSend(reply)
   }
 
   const retryLastMessage = () => {
@@ -828,16 +935,33 @@ export default function Wizard() {
 
         {/* Messages */}
         {messages.map((msg, i) => (
-          <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-            <div
-              className={`max-w-[85%] rounded-2xl px-4 py-3 text-[13px] leading-relaxed ${
-                msg.role === 'user'
-                  ? 'bg-gradient-to-br from-[#4F46E5] to-[#7C3AED] text-white rounded-br-md'
-                  : 'bg-gray-50 text-gray-700 rounded-bl-md'
-              }`}
-            >
-              <div className="whitespace-pre-wrap">{msg.content}</div>
+          <div key={i} className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
+            <div className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} w-full`}>
+              <div
+                className={`max-w-[85%] rounded-2xl px-4 py-3 text-[13px] leading-relaxed ${
+                  msg.role === 'user'
+                    ? 'bg-gradient-to-br from-[#4F46E5] to-[#7C3AED] text-white rounded-br-md'
+                    : 'bg-gray-50 text-gray-700 rounded-bl-md'
+                }`}
+              >
+                <div className="whitespace-pre-wrap">{msg.content}</div>
+              </div>
             </div>
+            {msg.role === 'assistant' && msg.quickReplies && msg.quickReplies.length > 0 && (
+              <div className="mt-2 flex max-w-[85%] flex-wrap gap-2">
+                {msg.quickReplies.map((reply) => (
+                  <button
+                    key={reply}
+                    type="button"
+                    onClick={() => handleQuickReply(reply)}
+                    disabled={loading}
+                    className="rounded-full border border-[#7C3AED]/15 bg-[#F4EEFF] px-3 py-1.5 text-[12px] font-medium text-[#5B35D5] transition-all hover:border-[#7C3AED]/30 hover:bg-[#ECE1FF] disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {reply}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         ))}
 
