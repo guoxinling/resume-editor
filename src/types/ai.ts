@@ -15,11 +15,25 @@ export interface AdaptSuggestion {
   area: string
   detail: string
 }
+export type AdaptPatchModule = 'summary' | 'workExperience' | 'skills'
+export interface AdaptPatch {
+  module: AdaptPatchModule
+  title: string
+  targetIndex?: number
+  company?: string
+  role?: string
+  category?: string
+  current?: string
+  replacement?: string
+  newBullets?: string[]
+  reason?: string
+}
 export interface AdaptResult {
   score: number
   matches: AdaptMatch[]
   missing: AdaptMiss[]
   suggestions: AdaptSuggestion[]
+  patches?: AdaptPatch[]
 }
 
 // ── 面试预测 ──

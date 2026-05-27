@@ -3,7 +3,7 @@ import { useAIStore } from '../../store/aiStore'
 import { useResumeStore } from '../../store/resumeStore'
 import { chatComplete } from '../../services/aiClient'
 import { buildAdaptMessages } from '../../services/prompts'
-import type { AdaptResult } from '../../types/ai'
+import type { AdaptPatch, AdaptResult } from '../../types/ai'
 import OCRCROCRUpload from './OCROCRUpload'
 
 export default function JDAdapt() {
@@ -13,7 +13,13 @@ export default function JDAdapt() {
   } = useAIStore()
 
   const resumeData = useResumeStore((s) => s.data)
+  const setSummary = useResumeStore((s) => s.setSummary)
+  const updateWork = useResumeStore((s) => s.updateWork)
+  const updateSkill = useResumeStore((s) => s.updateSkill)
+  const addSkill = useResumeStore((s) => s.addSkill)
   const [showOCR, setShowOCR] = useState(false)
+  const [appliedPatches, setAppliedPatches] = useState<Set<number>>(() => new Set())
+  const [skippedPatches, setSkippedPatches] = useState<Set<number>>(() => new Set())
 
   const buildResumeText = useCallback(() => {
     const lang = resumeData.lang
@@ -23,17 +29,17 @@ export default function JDAdapt() {
     if (pi.jobObjective) parts.push(`求职意向: ${lang === 'zh' ? pi.jobObjective : pi.jobObjectiveEn}`)
     if (resumeData.summary) parts.push(`概述: ${resumeData.summary}`)
     if (resumeData.selfEvaluation) parts.push(`自我评价: ${lang === 'zh' ? resumeData.selfEvaluation : resumeData.selfEvaluationEn}`)
-    resumeData.workExperience.forEach((w) => {
+    resumeData.workExperience.forEach((w, i) => {
       const c = lang === 'zh' ? w.company : w.companyEn || w.company
       const r = lang === 'zh' ? w.role : w.roleEn || w.role
       const b = (lang === 'zh' ? w.bullets : w.bulletsEn || w.bullets).join('；')
-      if (c || r) parts.push(`工作经历: ${c} - ${r}: ${b}`)
+      if (c || r) parts.push(`工作经历[${i}]: ${c} - ${r}: ${b}`)
     })
     resumeData.aiProjects.forEach((p) => {
       parts.push(`项目: ${lang === 'zh' ? p.name : p.nameEn || p.name}: ${lang === 'zh' ? p.description : p.descriptionEn || p.description}`)
     })
-    resumeData.skills.forEach((s) => {
-      parts.push(`技能: ${lang === 'zh' ? s.category : s.categoryEn || s.category}: ${lang === 'zh' ? s.items : s.itemsEn || s.items}`)
+    resumeData.skills.forEach((s, i) => {
+      parts.push(`技能[${i}]: ${lang === 'zh' ? s.category : s.categoryEn || s.category}: ${lang === 'zh' ? s.items : s.itemsEn || s.items}`)
     })
     return parts.join('\n')
   }, [resumeData])
@@ -43,6 +49,8 @@ export default function JDAdapt() {
     setAdaptLoading(true)
     setAdaptError(null)
     setAdaptResult(null)
+    setAppliedPatches(new Set())
+    setSkippedPatches(new Set())
     try {
       const resumeText = buildResumeText()
       const messages = buildAdaptMessages(jdText, resumeText)
@@ -57,6 +65,77 @@ export default function JDAdapt() {
       setAdaptLoading(false)
     }
   }, [jdText, buildResumeText, setAdaptLoading, setAdaptError, setAdaptResult])
+
+  const splitPatchLines = (value: string) =>
+    value
+      .split(/\n|；|;/)
+      .map((line) => line.replace(/^[•\-–—]\s*/, '').trim())
+      .filter(Boolean)
+
+  const resolveWorkId = (patch: AdaptPatch) => {
+    if (typeof patch.targetIndex === 'number' && resumeData.workExperience[patch.targetIndex]) {
+      return resumeData.workExperience[patch.targetIndex].id
+    }
+    const company = patch.company?.trim()
+    const role = patch.role?.trim()
+    const match = resumeData.workExperience.find((work) => {
+      const companyHit = company && work.company.includes(company)
+      const roleHit = role && work.role.includes(role)
+      return companyHit || roleHit
+    })
+    return match?.id
+  }
+
+  const applyPatch = (patch: AdaptPatch, index: number) => {
+    if (appliedPatches.has(index) || skippedPatches.has(index)) return
+
+    if (patch.module === 'summary' && patch.replacement?.trim()) {
+      setSummary(patch.replacement.trim())
+    }
+
+    if (patch.module === 'workExperience') {
+      const workId = resolveWorkId(patch)
+      const bullets = patch.newBullets?.length
+        ? patch.newBullets.map((item) => item.trim()).filter(Boolean)
+        : splitPatchLines(patch.replacement || '')
+      if (workId && bullets.length > 0) {
+        updateWork(workId, 'bullets', bullets)
+      }
+    }
+
+    if (patch.module === 'skills' && patch.replacement?.trim()) {
+      const nextValue = patch.replacement.trim()
+      if (typeof patch.targetIndex === 'number' && resumeData.skills[patch.targetIndex]) {
+        updateSkill(patch.targetIndex, 'items', nextValue)
+      } else {
+        const category = patch.category?.trim()
+        const matchIndex = category
+          ? resumeData.skills.findIndex((skill) => skill.category.includes(category))
+          : -1
+        if (matchIndex >= 0) {
+          updateSkill(matchIndex, 'items', nextValue)
+        } else {
+          addSkill()
+          const nextIndex = useResumeStore.getState().data.skills.length - 1
+          updateSkill(nextIndex, 'category', category || '岗位关键词')
+          updateSkill(nextIndex, 'items', nextValue)
+        }
+      }
+    }
+
+    setAppliedPatches((prev) => new Set(prev).add(index))
+  }
+
+  const skipPatch = (index: number) => {
+    if (appliedPatches.has(index)) return
+    setSkippedPatches((prev) => new Set(prev).add(index))
+  }
+
+  const moduleLabel = (module: AdaptPatch['module']) => {
+    if (module === 'summary') return '个人概述'
+    if (module === 'workExperience') return '工作经历'
+    return '技能'
+  }
 
   const btnPrimary = "h-[34px] px-4 rounded-md text-xs font-semibold bg-gradient-to-r from-[#4F46E5] to-[#7C3AED] text-white inline-flex items-center gap-1.5 hover:shadow-lg hover:shadow-indigo-500/20 active:scale-[0.98] transition-all"
   const btnSecondary = "h-[34px] px-4 rounded-md text-xs font-medium bg-white border border-gray-200 text-gray-800 inline-flex items-center gap-1.5 hover:border-[#4F46E5] hover:text-[#4F46E5] hover:bg-indigo-50 transition-all"
@@ -178,11 +257,62 @@ export default function JDAdapt() {
           )}
 
           {/* One-click adjust button */}
-          <div className="flex gap-2 pt-1">
-            <button className={`${btnSecondary} font-semibold !text-[#4F46E5] !border-[#4F46E5]`}>
-              🔄 一键调整简历
-            </button>
-          </div>
+          {adaptResult.patches && adaptResult.patches.length > 0 && (
+            <div>
+              <h4 className="text-xs font-semibold text-gray-700 mb-1.5 flex items-center gap-1">
+                🔄 <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-indigo-50 text-[#4F46E5]">逐条应用</span>
+                可写入简历的调整
+              </h4>
+              <div className="space-y-2">
+                {adaptResult.patches.map((patch, i) => {
+                  const applied = appliedPatches.has(i)
+                  const skipped = skippedPatches.has(i)
+                  return (
+                    <div key={i} className="rounded-lg border border-gray-200 bg-white p-3 text-xs text-gray-600 shadow-sm">
+                      <div className="mb-1 flex items-center justify-between gap-2">
+                        <div className="font-semibold text-gray-800">
+                          <span className="mr-1 rounded bg-indigo-50 px-1.5 py-0.5 text-[10px] text-[#4F46E5]">{moduleLabel(patch.module)}</span>
+                          {patch.title}
+                        </div>
+                        {(applied || skipped) && (
+                          <span className={`shrink-0 text-[10px] font-semibold ${applied ? 'text-green-600' : 'text-gray-400'}`}>
+                            {applied ? '已应用' : '已跳过'}
+                          </span>
+                        )}
+                      </div>
+                      {patch.reason && <p className="mb-2 leading-relaxed text-gray-500">{patch.reason}</p>}
+                      {patch.current && (
+                        <p className="mb-1 line-clamp-2 text-gray-400">
+                          原：{patch.current}
+                        </p>
+                      )}
+                      <p className="leading-relaxed text-gray-700">
+                        新：{patch.newBullets?.length ? patch.newBullets.join('；') : patch.replacement}
+                      </p>
+                      <div className="mt-2 flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => applyPatch(patch, i)}
+                          disabled={applied || skipped}
+                          className={`${btnSecondary} h-8 !text-[#4F46E5] !border-[#4F46E5] disabled:cursor-not-allowed disabled:opacity-50`}
+                        >
+                          应用到简历
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => skipPatch(i)}
+                          disabled={applied || skipped}
+                          className="h-8 rounded-md border border-gray-200 bg-white px-3 text-xs font-medium text-gray-500 transition-all hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          跳过
+                        </button>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

@@ -38,6 +38,7 @@ export default function ResumePreview() {
   const [pageBreaks, setPageBreaks] = useState<number[]>([])
 
   const A4_PRINTABLE_HEIGHT = 1000
+  const A4_PAGE_HEIGHT = 1122.5
 
   useEffect(() => {
     const el = contentRef.current
@@ -253,7 +254,7 @@ export default function ResumePreview() {
         style={{ width: 793.7, minHeight: '100%' }}
       >
         {/* A4 Page */}
-        <div id="resume-preview" className="bg-white shadow-md mx-auto" style={{ width: 793.7, minHeight: 1122.5, padding: '48px 64px' }}>
+        <div id="resume-preview" className="relative bg-white shadow-md mx-auto overflow-hidden" style={{ width: 793.7, minHeight: A4_PAGE_HEIGHT, padding: '48px 64px' }}>
           {/* ── Header (always first, not in sectionOrder) ── */}
           {(nameDisplay || hasContact || pi.photo) && (
             <div className="">
@@ -326,6 +327,16 @@ export default function ResumePreview() {
               ))}
             </div>
           )}
+
+          {Array.from({ length: Math.max(1, pageBreaks.length + 1) }).map((_, index) => (
+            <div
+              key={index}
+              className="pointer-events-none absolute select-none text-[10px] font-medium tracking-[0.18em] text-[#7C6F8F]/35"
+              style={{ right: 64, top: (index + 1) * A4_PAGE_HEIGHT - 34 }}
+            >
+              简历鸭 · jianliya
+            </div>
+          ))}
         </div>
       </div>
     </div>
