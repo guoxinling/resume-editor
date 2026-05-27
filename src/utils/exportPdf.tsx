@@ -1,5 +1,6 @@
 import React from 'react'
 import { Document, Page, Text, View, StyleSheet, Font, Image, pdf } from '@react-pdf/renderer'
+import html2canvas from 'html2canvas'
 import type { ResumeData, Lang } from '../types/resume'
 import { useResumeStore } from '../store/resumeStore'
 
@@ -164,6 +165,14 @@ const styles = StyleSheet.create({
     fontSize: 10,
     color: '#475569',
     lineHeight: 1.5,
+  },
+  screenshotPage: {
+    padding: 0,
+    backgroundColor: '#ffffff',
+  },
+  screenshotImage: {
+    width: PAGE_W,
+    height: 841.89,
   },
 
 })
@@ -373,4 +382,78 @@ export async function downloadPdf(data: ResumeData, lang: Lang, filename?: strin
   a.download = filename || 'resume.pdf'
   a.click()
   URL.revokeObjectURL(url)
+}
+
+function ScreenshotPDF({ pages }: { pages: string[] }) {
+  return (
+    <Document>
+      {pages.map((src, index) => (
+        <Page key={index} size="A4" style={styles.screenshotPage}>
+          <Image src={src} style={styles.screenshotImage} />
+        </Page>
+      ))}
+    </Document>
+  )
+}
+
+function withPdfExtension(filename?: string) {
+  const name = filename?.trim() || 'resume'
+  return /\.pdf$/i.test(name) ? name : `${name}.pdf`
+}
+
+export async function downloadPdfFromPreview(element: HTMLElement, filename?: string): Promise<void> {
+  const style = document.createElement('style')
+  style.id = '_export-pdf-preview-capture'
+  style.textContent = `
+    .page-break-indicator { visibility: hidden !important; }
+    #resume-preview { box-shadow: none !important; }
+  `
+  document.head.appendChild(style)
+
+  try {
+    await new Promise((resolve) => requestAnimationFrame(resolve))
+
+    const canvas = await html2canvas(element, {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: '#ffffff',
+      windowWidth: element.scrollWidth,
+      windowHeight: element.scrollHeight,
+    })
+
+    const pageHeight = Math.round(canvas.width * (841.89 / PAGE_W))
+    const pages: string[] = []
+
+    for (let y = 0; y < canvas.height; y += pageHeight) {
+      const pageCanvas = document.createElement('canvas')
+      pageCanvas.width = canvas.width
+      pageCanvas.height = pageHeight
+      const ctx = pageCanvas.getContext('2d')
+      if (!ctx) continue
+      ctx.fillStyle = '#ffffff'
+      ctx.fillRect(0, 0, pageCanvas.width, pageCanvas.height)
+      ctx.drawImage(
+        canvas,
+        0,
+        y,
+        canvas.width,
+        Math.min(pageHeight, canvas.height - y),
+        0,
+        0,
+        canvas.width,
+        Math.min(pageHeight, canvas.height - y),
+      )
+      pages.push(pageCanvas.toDataURL('image/png'))
+    }
+
+    const blob = await pdf(<ScreenshotPDF pages={pages} />).toBlob()
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = withPdfExtension(filename)
+    a.click()
+    URL.revokeObjectURL(url)
+  } finally {
+    document.getElementById('_export-pdf-preview-capture')?.remove()
+  }
 }

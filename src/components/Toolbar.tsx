@@ -3,7 +3,7 @@ import { useResumeStore } from '../store/resumeStore'
 import { useAIStore } from '../store/aiStore'
 import { zh } from '../i18n/zh'
 import { en } from '../i18n/en'
-import { downloadPdf } from '../utils/exportPdf'
+import { downloadPdfFromPreview } from '../utils/exportPdf'
 import { exportPng } from '../utils/exportImage'
 import { saveDraft } from '../utils/storage'
 import { parseMarkdownResume } from '../utils/markdownParser'
@@ -191,7 +191,12 @@ export default function Toolbar({ onOpenDrafts, showEditor, onToggleEditor, onGo
     }
     setExportingPdf(true)
     try {
-      await downloadPdf(data, lang, data.personalInfo.name || 'resume')
+      const el = document.getElementById('resume-preview')
+      if (!el) {
+        alert(t.noData)
+        return
+      }
+      await downloadPdfFromPreview(el, data.personalInfo.name || 'resume')
     } catch (err: any) {
       alert('PDF 导出失败: ' + (err?.message || String(err)))
     } finally {

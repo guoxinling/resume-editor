@@ -253,7 +253,7 @@ export default function ResumePreview() {
         style={{ width: 793.7, minHeight: '100%' }}
       >
         {/* A4 Page */}
-        <div className="bg-white shadow-md mx-auto" style={{ width: 793.7, minHeight: 1122.5, padding: '48px 64px' }}>
+        <div id="resume-preview" className="bg-white shadow-md mx-auto" style={{ width: 793.7, minHeight: 1122.5, padding: '48px 64px' }}>
           {/* ── Header (always first, not in sectionOrder) ── */}
           {(nameDisplay || hasContact || pi.photo) && (
             <div className="">

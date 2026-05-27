@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import { useResumeStore } from '../../store/resumeStore'
 import { streamChat } from '../../services/aiClient'
 import { buildWizardMessages } from '../../services/prompts'
+import { parseMarkdownResume } from '../../utils/markdownParser'
 import type { ChatMessage as AIMessage } from '../../types/ai'
 
 interface ChatMessage {
@@ -207,8 +208,11 @@ const uniqueQuickReplies = (replies: unknown[]): string[] => {
     .slice(0, 4)
 }
 
+const shouldOpenResumeImport = (text: string) =>
+  /导入|上传|附件|已有(简历|经历).*优化|我已有(简历|经历)/.test(text)
+
 export default function Wizard() {
-  const { setPersonalInfo, setSummary, setSelfEvaluation, addWork, updateWork, removeWork, addProject, updateProject, removeProject, addEducation, updateEducation, removeEducation, addSkill, updateSkill, addLanguage, updateLanguage, removeLanguage, addCustomSection } = useResumeStore()
+  const { setPersonalInfo, setSummary, setSelfEvaluation, addWork, updateWork, removeWork, addProject, updateProject, removeProject, addEducation, updateEducation, removeEducation, addSkill, updateSkill, addLanguage, updateLanguage, removeLanguage, addCustomSection, loadData } = useResumeStore()
 
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [input, setInput] = useState('')
@@ -218,6 +222,8 @@ export default function Wizard() {
   const [totalSteps, setTotalSteps] = useState(7)
   const [started, setStarted] = useState(false)
   const [streamingText, setStreamingText] = useState('')
+  const [importing, setImporting] = useState(false)
+  const [importStatus, setImportStatus] = useState('')
 
   // Loading animation state
   const [scanStage, setScanStage] = useState(0)
@@ -227,6 +233,7 @@ export default function Wizard() {
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const abortRef = useRef<AbortController | null>(null)
 
   const scrollToBottom = useCallback(() => {
@@ -361,7 +368,7 @@ export default function Wizard() {
         role: 'assistant',
         step: 1,
         content: '你好，我是简历鸭的 AI 简历顾问。我可以带你从零梳理经历，也可以把已有内容改成更适合投递的简历表达。\n\n你可以先告诉我目标岗位，也可以直接把个人信息和经历一口气发给我。',
-        quickReplies: ['我是第一次写简历', '我已有经历要优化', '先填写目标岗位'],
+        quickReplies: ['我是第一次写简历', '导入已有简历', '先填写目标岗位'],
       }
     }
 
@@ -820,7 +827,56 @@ export default function Wizard() {
 
   const handleQuickReply = (reply: string) => {
     if (loading) return
+    if (shouldOpenResumeImport(reply)) {
+      fileInputRef.current?.click()
+      return
+    }
     handleSend(reply)
+  }
+
+  const handleImportResume = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file || importing) return
+    event.target.value = ''
+
+    setStarted(true)
+    setImporting(true)
+    setImportStatus('正在读取简历文件…')
+    setError(null)
+
+    try {
+      const ext = file.name.split('.').pop()?.toLowerCase() || ''
+      if (ext === 'md' || ext === 'txt') {
+        const text = await file.text()
+        const parsed = parseMarkdownResume(text)
+        if (!parsed) throw new Error('暂时没有识别出有效的简历结构')
+        loadData(parsed)
+      } else {
+        const { importResumeFromFile } = await import('../../services/resumeImport')
+        const parsed = await importResumeFromFile(file, (progress) => {
+          setImportStatus(progress.message)
+        })
+        loadData(parsed)
+      }
+
+      setMessages((prev) => [
+        ...prev,
+        { role: 'user', content: `已导入简历：${file.name}` },
+        {
+          role: 'assistant',
+          content: '我已经读取并写入这份简历了。你可以继续告诉我想优化的方向，也可以先让我从整体上检查表达、结构和岗位匹配度。',
+          step: 1,
+          quickReplies: ['帮我整体优化', '精简到一页', '强化目标岗位匹配', '删除冗余内容'],
+        },
+      ])
+      setCurrentStep(1)
+      focusInput()
+    } catch (err: any) {
+      setError(err?.message || '导入失败，请换一个文件再试')
+    } finally {
+      setImporting(false)
+      setImportStatus('')
+    }
   }
 
   const retryLastMessage = () => {
@@ -1004,20 +1060,36 @@ export default function Wizard() {
       {started && (
       <div className="px-5 py-3 border-t border-gray-100">
         <div className="flex gap-2 items-end">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".md,.txt,.pdf,.jpg,.jpeg,.png,.webp"
+            onChange={handleImportResume}
+            className="hidden"
+          />
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={loading || importing}
+            className="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-gray-200 bg-white text-[15px] text-[#5B35D5] transition-colors hover:border-[#7C3AED]/40 hover:bg-[#F4EEFF] disabled:cursor-not-allowed disabled:opacity-50"
+            title="导入已有简历"
+          >
+            +
+          </button>
           <textarea
             ref={inputRef}
             value={input}
             onChange={(e) => { setInput(e.target.value); autoResize() }}
             onKeyDown={handleKeyDown}
-            placeholder={loading ? 'AI 正在处理…' : '输入你的回答或修改要求…（Shift+Enter 换行）'}
-            disabled={loading}
+            placeholder={importing ? importStatus || '正在导入…' : loading ? 'AI 正在处理…' : '输入你的回答或修改要求…（Shift+Enter 换行）'}
+            disabled={loading || importing}
             rows={1}
             className="flex-1 px-3 py-2 rounded-lg border border-gray-200 text-[13px] placeholder:text-gray-400 focus:outline-none focus:border-[#7C3AED]/50 focus:ring-1 focus:ring-[#7C3AED]/20 disabled:bg-gray-50 disabled:text-gray-400 transition-colors resize-none"
             autoFocus
           />
           <button
             onClick={() => handleSend()}
-            disabled={loading || !input.trim()}
+            disabled={loading || importing || !input.trim()}
             className="shrink-0 h-9 px-4 rounded-lg bg-gradient-to-r from-[#4F46E5] to-[#7C3AED] text-white text-[13px] font-medium disabled:opacity-40 disabled:cursor-not-allowed hover:shadow-lg hover:shadow-indigo-500/20 active:scale-[0.97] transition-all"
           >
             发送
