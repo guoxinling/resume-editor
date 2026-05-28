@@ -211,6 +211,28 @@ const uniqueQuickReplies = (replies: unknown[]): string[] => {
 const shouldOpenResumeImport = (text: string) =>
   /导入|上传|附件|已有(简历|经历).*优化|我已有(简历|经历)/.test(text)
 
+const stripCodeFence = (text: string) =>
+  text.replace(/```(?:json)?\s*|```/gi, '').trim()
+
+const extractTaggedBlock = (raw: string, tag: 'reply' | 'data'): string => {
+  const startTag = `<${tag}>`
+  const endTag = `</${tag}>`
+  const start = raw.indexOf(startTag)
+  if (start < 0) return ''
+  const contentStart = start + startTag.length
+  const end = raw.indexOf(endTag, contentStart)
+  return (end >= 0 ? raw.slice(contentStart, end) : raw.slice(contentStart)).trim()
+}
+
+const extractStreamingReply = (raw: string): string => {
+  const tagged = extractTaggedBlock(raw, 'reply')
+  if (tagged) return tagged
+
+  const dataStart = raw.indexOf('<data>')
+  const beforeData = dataStart >= 0 ? raw.slice(0, dataStart) : raw
+  return beforeData.replace(/<\/?reply>/g, '').trim()
+}
+
 export default function Wizard() {
   const { setPersonalInfo, setSummary, setSelfEvaluation, addWork, updateWork, removeWork, addProject, updateProject, removeProject, addEducation, updateEducation, removeEducation, addSkill, updateSkill, addLanguage, updateLanguage, removeLanguage, addCustomSection } = useResumeStore()
 
@@ -421,6 +443,7 @@ export default function Wizard() {
   ) => {
     setStreamingText('')
     let fullText = ''
+    let latestReply = ''
     const controller = new AbortController()
     abortRef.current = controller
 
@@ -430,16 +453,17 @@ export default function Wizard() {
       {
         onToken: (token: string) => {
           fullText += token
-          // Don't show raw JSON to user — just track internally
-          setStreamingText(fullText)
+          latestReply = extractStreamingReply(fullText)
+          if (latestReply) setStreamingText(latestReply)
         },
         onDone: () => {
           setStreamingText('')
           try {
             const parsed = parseResponse(fullText)
+            if (!parsed.reply && latestReply) parsed.reply = latestReply
             onParsed(parsed)
           } catch {
-            onParsed({ reply: fullText, step: 0, totalSteps: 7, extracted: {}, actions: [], quickReplies: [] })
+            onParsed({ reply: latestReply || stripCodeFence(fullText), step: 0, totalSteps: 7, extracted: {}, actions: [], quickReplies: [] })
           }
         },
         onError: (errMsg: string) => {
@@ -462,7 +486,44 @@ export default function Wizard() {
   }
 
   const parseResponse = (raw: string): ParsedWizardResponse => {
-    const cleaned = raw.replace(/```json\s*|```/g, '').trim()
+    const cleaned = stripCodeFence(raw)
+    const taggedReply = extractTaggedBlock(cleaned, 'reply')
+    const taggedData = extractTaggedBlock(cleaned, 'data')
+
+    if (taggedReply || taggedData) {
+      if (!taggedData) {
+        return {
+          reply: taggedReply || cleaned,
+          step: currentStep || 0,
+          totalSteps,
+          extracted: {},
+          actions: [],
+          quickReplies: [],
+        }
+      }
+
+      try {
+        const parsed = JSON.parse(taggedData)
+        return {
+          reply: taggedReply || parsed.reply || '',
+          step: parsed.step || currentStep || 0,
+          totalSteps: parsed.totalSteps || totalSteps || 7,
+          extracted: parsed.extracted || {},
+          actions: Array.isArray(parsed.actions) ? parsed.actions : [],
+          quickReplies: uniqueQuickReplies(parsed.quickReplies || []),
+        }
+      } catch {
+        return {
+          reply: taggedReply || cleaned,
+          step: currentStep || 0,
+          totalSteps,
+          extracted: {},
+          actions: [],
+          quickReplies: [],
+        }
+      }
+    }
+
     const start = cleaned.indexOf('{')
     const end = cleaned.lastIndexOf('}')
     const json = start >= 0 && end > start ? cleaned.slice(start, end + 1) : cleaned
@@ -986,8 +1047,16 @@ export default function Wizard() {
           </div>
         ))}
 
+        {loading && started && streamingText && (
+          <div className="flex justify-start">
+            <div className="max-w-[85%] rounded-2xl rounded-bl-md bg-gray-50 px-4 py-3 text-[13px] leading-relaxed text-gray-700">
+              <div className="whitespace-pre-wrap">{streamingText}</div>
+            </div>
+          </div>
+        )}
+
         {/* Typing indicator — during AI response (conversation started) */}
-        {loading && started && (
+        {loading && started && !streamingText && (
           <div className="flex justify-start">
             <div className="bg-gray-50 rounded-2xl rounded-bl-md px-4 py-3">
               <div className="flex items-center gap-2">

@@ -2,6 +2,18 @@ import { getAuthenticatedUser, sendApiError } from './_lib/supabase.js'
 import { refundCredits, spendCredits } from './_lib/credits.js'
 
 const DEFAULT_CREDIT_BYPASS_EMAILS = ['guoxinling_xisu@163.com']
+const FAST_FEATURES = new Set(['wizard', 'polish', 'translate'])
+
+function selectModelForFeature(feature: unknown) {
+  if (typeof feature === 'string' && FAST_FEATURES.has(feature)) {
+    return process.env.DEEPSEEK_FAST_MODEL || 'deepseek-v4-flash'
+  }
+  return process.env.DEEPSEEK_MODEL || 'deepseek-v4-pro'
+}
+
+function shouldDisableThinking(feature: unknown) {
+  return typeof feature === 'string' && FAST_FEATURES.has(feature)
+}
 
 function isCreditBypassEmail(email?: string) {
   const configured = (process.env.AI_CREDIT_BYPASS_EMAILS || '')
@@ -21,7 +33,6 @@ export default async function handler(req: any, res: any) {
 
   const apiKey = process.env.DEEPSEEK_API_KEY
   const baseURL = process.env.DEEPSEEK_BASE_URL || 'https://api.deepseek.com/v1'
-  const model = process.env.DEEPSEEK_MODEL || 'deepseek-chat'
 
   if (!apiKey) {
     res.status(500).json({ error: 'AI 服务暂时不可用，请稍后重试' })
@@ -41,6 +52,17 @@ export default async function handler(req: any, res: any) {
       return
     }
 
+    const model = selectModelForFeature(feature)
+    const requestBody: Record<string, any> = {
+      model,
+      messages,
+      stream,
+    }
+
+    if (shouldDisableThinking(feature)) {
+      requestBody.thinking = { type: 'disabled' }
+    }
+
     const bypassCredits = isCreditBypassEmail(user.email)
     if (!bypassCredits) {
       const spent = await spendCredits(user.id, feature, {
@@ -56,11 +78,7 @@ export default async function handler(req: any, res: any) {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${apiKey}`,
       },
-      body: JSON.stringify({
-        model,
-        messages,
-        stream,
-      }),
+      body: JSON.stringify(requestBody),
     })
 
     if (!upstream.ok) {
