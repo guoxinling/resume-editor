@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState } from 'react'
+import { useRef, useEffect, useLayoutEffect, useState } from 'react'
 import { useResumeStore } from '../store/resumeStore'
 import type { Lang } from '../types/resume'
 
@@ -36,8 +36,11 @@ export default function ResumePreview() {
 
   const contentRef = useRef<HTMLDivElement>(null)
   const [pageBreaks, setPageBreaks] = useState<number[]>([])
+  const [sectionSpacers, setSectionSpacers] = useState<Record<string, number>>({})
 
   const A4_PAGE_HEIGHT = 1122.5
+  const PAGE_GAP_HEIGHT = 64
+  const PAGE_BREAK_GUARD = 140
 
   useEffect(() => {
     const el = contentRef.current
@@ -55,6 +58,45 @@ export default function ResumePreview() {
     observer.observe(el)
     return () => observer.disconnect()
   }, [data, sectionOrder])
+
+  useLayoutEffect(() => {
+    const el = contentRef.current
+    if (!el) return
+
+    const frame = requestAnimationFrame(() => {
+      const pageRect = el.getBoundingClientRect()
+      const nextSpacers: Record<string, number> = {}
+      const sections = Array.from(el.querySelectorAll<HTMLElement>('[data-preview-section]'))
+
+      sections.forEach((section) => {
+        const key = section.dataset.previewSection
+        const body = section.querySelector<HTMLElement>('[data-preview-section-body]')
+        if (!key || !body) return
+
+        const rect = body.getBoundingClientRect()
+        const top = rect.top - pageRect.top
+        const bottom = rect.bottom - pageRect.top
+        const nextBreak = Math.ceil(Math.max(top, 1) / A4_PAGE_HEIGHT) * A4_PAGE_HEIGHT
+
+        const startsNearBreak = top >= nextBreak - PAGE_BREAK_GUARD && top < nextBreak + PAGE_GAP_HEIGHT
+        const crossesBreakNearTop = top > nextBreak - PAGE_BREAK_GUARD && bottom > nextBreak
+        if (startsNearBreak || crossesBreakNearTop) {
+          nextSpacers[key] = Math.ceil(nextBreak + PAGE_GAP_HEIGHT - top)
+        }
+      })
+
+      setSectionSpacers((prev) => {
+        const prevKeys = Object.keys(prev)
+        const nextKeys = Object.keys(nextSpacers)
+        const same =
+          prevKeys.length === nextKeys.length &&
+          nextKeys.every((key) => prev[key] === nextSpacers[key])
+        return same ? prev : nextSpacers
+      })
+    })
+
+    return () => cancelAnimationFrame(frame)
+  })
 
   /** Check if a section has content to render */
   const sectionHasContent = (key: string): boolean => {
@@ -306,7 +348,19 @@ export default function ResumePreview() {
           )}
 
           {/* ── Sections driven by editor sectionOrder ── */}
-          {sectionOrder.filter((k) => k !== 'personalInfo').map(renderSection)}
+          {sectionOrder.filter((k) => k !== 'personalInfo').map((key) => (
+            <div key={key} data-preview-section={key}>
+              {sectionSpacers[key] > 0 && (
+                <div
+                  className="page-break-spacer"
+                  style={{ height: sectionSpacers[key] }}
+                />
+              )}
+              <div data-preview-section-body>
+                {renderSection(key)}
+              </div>
+            </div>
+          ))}
 
           {/* Page break indicators */}
           <div className="page-break-indicator absolute left-0 right-0 pointer-events-none" style={{ top: 0 }}>
