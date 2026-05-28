@@ -22,12 +22,21 @@ interface WizardAction {
   description?: string
 }
 
+interface WizardPatch {
+  op: 'set' | 'append' | 'replace' | 'remove' | 'hideSection'
+  path?: string
+  targetText?: string
+  value?: unknown
+  reason?: string
+}
+
 interface ParsedWizardResponse {
   reply: string
   step: number
   totalSteps: number
   extracted: Record<string, any>
   actions: WizardAction[]
+  patches: WizardPatch[]
   quickReplies: string[]
 }
 
@@ -211,6 +220,118 @@ const uniqueQuickReplies = (replies: unknown[]): string[] => {
 const shouldOpenResumeImport = (text: string) =>
   /导入|上传|附件|已有(简历|经历).*优化|我已有(简历|经历)/.test(text)
 
+const SECTION_ALIASES: Record<string, string> = {
+  personalinfo: 'personalInfo',
+  personal: 'personalInfo',
+  个人信息: 'personalInfo',
+  summary: 'summary',
+  个人概述: 'summary',
+  概述: 'summary',
+  workexperience: 'workExperience',
+  work: 'workExperience',
+  工作经历: 'workExperience',
+  aiprojects: 'aiProjects',
+  projects: 'aiProjects',
+  项目经历: 'aiProjects',
+  education: 'education',
+  教育背景: 'education',
+  教育经历: 'education',
+  skills: 'skills',
+  专业技能: 'skills',
+  技能: 'skills',
+  languages: 'languages',
+  语言能力: 'languages',
+  语言: 'languages',
+  selfevaluation: 'selfEvaluation',
+  自我评价: 'selfEvaluation',
+  customsections: 'customSections',
+  自定义模块: 'customSections',
+}
+
+const normalizeSectionKey = (value: unknown) => {
+  const text = cleanValue(value)
+  if (!text) return ''
+  const key = text.toLowerCase().replace(/[\s._-]/g, '')
+  return SECTION_ALIASES[key] || SECTION_ALIASES[text] || text
+}
+
+const pathToParts = (path: unknown): Array<string | number> => {
+  const text = cleanValue(path)
+  if (!text) return []
+  const normalized = text.replace(/\[(\d+)\]/g, '.$1')
+  return normalized
+    .split('.')
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .map((part, index) => {
+      if (/^\d+$/.test(part)) return Number(part)
+      return index === 0 ? normalizeSectionKey(part) : part
+    })
+}
+
+const splitTextItems = (value: unknown): string[] => {
+  if (Array.isArray(value)) return cleanList(value)
+  const text = cleanValue(value)
+  if (!text) return []
+  return text
+    .split(/\n|[、,，;；/|｜]/)
+    .map((item) => cleanValue(item.replace(/^[•\-–—]\s*/, '')))
+    .filter(Boolean)
+}
+
+const joinSkillItems = (items: string[]) => items.map(cleanValue).filter(Boolean).join('、')
+
+const appendTextItem = (current: string, value: unknown) => {
+  const existing = splitTextItems(current)
+  const incoming = splitTextItems(value)
+  for (const item of incoming) {
+    if (!existing.some((currentItem) => comparable(currentItem) === comparable(item))) existing.push(item)
+  }
+  return joinSkillItems(existing)
+}
+
+const replaceTextTarget = (current: string, targetText: unknown, value: unknown) => {
+  const target = cleanValue(targetText)
+  const replacement = cleanValue(value)
+  if (!target) return replacement || current
+  return current.includes(target)
+    ? current.replace(target, replacement)
+    : comparable(current).includes(comparable(target))
+      ? replacement || current
+      : current
+}
+
+const removeTextTarget = (current: string, targetText: unknown) => {
+  const target = cleanValue(targetText)
+  if (!target) return ''
+  const parts = splitTextItems(current)
+  if (parts.length > 1) {
+    return joinSkillItems(parts.filter((item) => !comparable(item).includes(comparable(target))))
+  }
+  return current.includes(target) ? cleanValue(current.replace(target, '')) : current
+}
+
+const patchValueToList = (value: unknown) => {
+  if (Array.isArray(value)) return cleanList(value)
+  const text = cleanValue(value)
+  if (!text) return []
+  return text
+    .split('\n')
+    .map((line) => cleanValue(line.replace(/^[•\-–—]\s*/, '')))
+    .filter(Boolean)
+}
+
+const patchQuickReplies = (parsed: ParsedWizardResponse): string[] => {
+  if (parsed.quickReplies.length > 0) return parsed.quickReplies
+  const changed =
+    (parsed.patches && parsed.patches.length > 0) ||
+    (parsed.actions && parsed.actions.length > 0) ||
+    (parsed.extracted && Object.keys(parsed.extracted).length > 0)
+  if (changed) return ['继续优化', '看看整体效果', '先这样']
+  if (/哪|什么|是否|吗|？|\?/.test(parsed.reply)) return ['我补充一下', '跳过这项', '换个模块']
+  return ['继续优化', '看看整体效果']
+}
+
 const stripCodeFence = (text: string) =>
   text.replace(/```(?:json)?\s*|```/gi, '').trim()
 
@@ -234,7 +355,7 @@ const extractStreamingReply = (raw: string): string => {
 }
 
 export default function Wizard() {
-  const { setPersonalInfo, setSummary, setSelfEvaluation, addWork, updateWork, removeWork, addProject, updateProject, removeProject, addEducation, updateEducation, removeEducation, addSkill, updateSkill, addLanguage, updateLanguage, removeLanguage, addCustomSection } = useResumeStore()
+  const { setPersonalInfo, setSummary, setSelfEvaluation, addWork, updateWork, removeWork, addProject, updateProject, removeProject, addEducation, updateEducation, removeEducation, addSkill, updateSkill, addLanguage, updateLanguage, removeLanguage, addCustomSection, hideSection } = useResumeStore()
 
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [input, setInput] = useState('')
@@ -359,31 +480,36 @@ export default function Wizard() {
         age: cleanValue(d.personalInfo.age),
         jobObjective: cleanValue(d.personalInfo.jobObjective),
       },
-      workExperience: d.workExperience.map(w => ({
+      workExperience: d.workExperience.map((w, index) => ({
+        index,
         company: cleanValue(w.company),
         role: cleanValue(w.role),
         dates: cleanValue(w.dates),
         bullets: cleanList(w.bullets).slice(0, 5),
       })),
-      education: d.education.map(e => ({
+      education: d.education.map((e, index) => ({
+        index,
         school: cleanValue(e.school),
         degree: cleanValue(e.degree),
         major: cleanValue(e.major),
         dates: cleanValue(e.dates),
       })),
-      projects: d.aiProjects.map(p => ({
+      projects: d.aiProjects.map((p, index) => ({
+        index,
         name: cleanValue(p.name),
         role: cleanValue(p.direction),
         dates: cleanValue((p as any).dates),
         description: cleanValue(p.description).slice(0, 200),
       })),
-      skills: d.skills.map(s => ({
+      skills: d.skills.map((s, index) => ({
+        index,
         category: cleanValue(s.category),
         items: cleanValue(s.items).slice(0, 100),
       })),
-      languages: mergeLanguageList(d.languages),
+      languages: mergeLanguageList(d.languages).map((value, index) => ({ index, value })),
       selfEvaluation: cleanValue(d.selfEvaluation).slice(0, 200),
-      customSections: d.customSections.map(s => ({
+      customSections: d.customSections.map((s, index) => ({
+        index,
         label: cleanValue(s.label),
         content: cleanValue(s.content).slice(0, 150),
       })),
@@ -463,7 +589,7 @@ export default function Wizard() {
             if (!parsed.reply && latestReply) parsed.reply = latestReply
             onParsed(parsed)
           } catch {
-            onParsed({ reply: latestReply || stripCodeFence(fullText), step: 0, totalSteps: 7, extracted: {}, actions: [], quickReplies: [] })
+            onParsed({ reply: latestReply || stripCodeFence(fullText), step: 0, totalSteps: 7, extracted: {}, actions: [], patches: [], quickReplies: [] })
           }
         },
         onError: (errMsg: string) => {
@@ -498,6 +624,7 @@ export default function Wizard() {
           totalSteps,
           extracted: {},
           actions: [],
+          patches: [],
           quickReplies: [],
         }
       }
@@ -510,6 +637,7 @@ export default function Wizard() {
           totalSteps: parsed.totalSteps || totalSteps || 7,
           extracted: parsed.extracted || {},
           actions: Array.isArray(parsed.actions) ? parsed.actions : [],
+          patches: Array.isArray(parsed.patches) ? parsed.patches : [],
           quickReplies: uniqueQuickReplies(parsed.quickReplies || []),
         }
       } catch {
@@ -519,6 +647,7 @@ export default function Wizard() {
           totalSteps,
           extracted: {},
           actions: [],
+          patches: [],
           quickReplies: [],
         }
       }
@@ -534,8 +663,193 @@ export default function Wizard() {
       totalSteps: parsed.totalSteps || 7,
       extracted: parsed.extracted || {},
       actions: Array.isArray(parsed.actions) ? parsed.actions : [],
+      patches: Array.isArray(parsed.patches) ? parsed.patches : [],
       quickReplies: uniqueQuickReplies(parsed.quickReplies || []),
     }
+  }
+
+  const patchString = (current: string, patch: WizardPatch) => {
+    const value = cleanValue(patch.value)
+    if (patch.op === 'set') return value
+    if (patch.op === 'append') return appendTextItem(current, value)
+    if (patch.op === 'replace') return replaceTextTarget(current, patch.targetText, value)
+    if (patch.op === 'remove') return removeTextTarget(current, patch.targetText)
+    return current
+  }
+
+  const patchStringList = (current: string[], patch: WizardPatch) => {
+    if (patch.op === 'set') return patchValueToList(patch.value)
+    if (patch.op === 'append') {
+      const next = cleanList(current)
+      for (const item of patchValueToList(patch.value)) {
+        if (!next.some((existing) => comparable(existing) === comparable(item))) next.push(item)
+      }
+      return next
+    }
+    if (patch.op === 'replace') {
+      const target = comparable(patch.targetText)
+      const value = cleanValue(patch.value)
+      return cleanList(current).map((item) => {
+        if (!target || !comparable(item).includes(target)) return item
+        return item.includes(cleanValue(patch.targetText))
+          ? cleanValue(item.replace(cleanValue(patch.targetText), value))
+          : value || item
+      }).filter(Boolean)
+    }
+    if (patch.op === 'remove') {
+      const target = comparable(patch.targetText)
+      if (!target) return []
+      return cleanList(current)
+        .map((item) => item.includes(cleanValue(patch.targetText)) ? cleanValue(item.replace(cleanValue(patch.targetText), '')) : item)
+        .filter((item) => item && !comparable(item).includes(target))
+    }
+    return current
+  }
+
+  const applyPatch = (patch: WizardPatch): boolean => {
+    const parts = pathToParts(patch.path || patch.value)
+    const root = typeof parts[0] === 'string' ? parts[0] : ''
+    if (!root) return false
+
+    if (patch.op === 'hideSection') {
+      const section = normalizeSectionKey(patch.value || patch.path || root)
+      if (section) {
+        hideSection(section)
+        return true
+      }
+      return false
+    }
+
+    const state = useResumeStore.getState()
+
+    if (root === 'personalInfo') {
+      const field = typeof parts[1] === 'string' ? parts[1] : ''
+      const allowed = new Set(['name', 'phone', 'email', 'location', 'portfolio', 'age', 'jobObjective', 'nameEn', 'locationEn', 'jobObjectiveEn'])
+      if (!allowed.has(field)) return false
+      const current = cleanValue((state.data.personalInfo as any)[field])
+      setPersonalInfo(field, patchString(current, patch))
+      return true
+    }
+
+    if (root === 'summary') {
+      setSummary(patchString(state.data.summary, patch))
+      return true
+    }
+
+    if (root === 'selfEvaluation') {
+      setSelfEvaluation(patchString(state.data.selfEvaluation, patch))
+      return true
+    }
+
+    if (root === 'workExperience') {
+      const index = typeof parts[1] === 'number' ? parts[1] : -1
+      const field = typeof parts[2] === 'string' ? parts[2] : ''
+      const entry = state.data.workExperience[index]
+      if (!entry || !['company', 'role', 'dates', 'bullets'].includes(field)) return false
+      if (field === 'bullets') {
+        updateWork(entry.id, 'bullets', patchStringList(entry.bullets, patch))
+      } else {
+        updateWork(entry.id, field, patchString(cleanValue((entry as any)[field]), patch))
+      }
+      return true
+    }
+
+    if (root === 'aiProjects') {
+      const index = typeof parts[1] === 'number' ? parts[1] : -1
+      const field = typeof parts[2] === 'string' ? parts[2] : ''
+      const project = state.data.aiProjects[index]
+      if (!project || !['name', 'direction', 'dates', 'description'].includes(field)) return false
+      updateProject(project.id, field, patchString(cleanValue((project as any)[field]), patch))
+      return true
+    }
+
+    if (root === 'education') {
+      const index = typeof parts[1] === 'number' ? parts[1] : -1
+      const field = typeof parts[2] === 'string' ? parts[2] : ''
+      const education = state.data.education[index]
+      if (!education || !['school', 'degree', 'major', 'dates', 'highlights'].includes(field)) return false
+      if (field === 'highlights') {
+        updateEducation(education.id, 'highlights', patchStringList(education.highlights, patch) as any)
+      } else {
+        updateEducation(education.id, field, patchString(cleanValue((education as any)[field]), patch))
+      }
+      return true
+    }
+
+    if (root === 'skills') {
+      let index = typeof parts[1] === 'number' ? parts[1] : -1
+      const field = typeof parts[2] === 'string' ? parts[2] : typeof parts[1] === 'string' ? parts[1] : 'items'
+      if (!['category', 'items'].includes(field)) return false
+      if (index < 0 && patch.op === 'append') {
+        index = state.data.skills.findIndex((skill) => comparable(skill.category) === comparable('专业技能') || comparable(skill.category) === comparable('技能'))
+        if (index < 0) {
+          addSkill()
+          const nextSkills = useResumeStore.getState().data.skills
+          index = nextSkills.length - 1
+          updateSkill(index, 'category', '专业技能')
+        }
+      }
+      const skill = useResumeStore.getState().data.skills[index]
+      if (!skill) return false
+      updateSkill(index, field, patchString(cleanValue((skill as any)[field]), patch))
+      return true
+    }
+
+    if (root === 'languages') {
+      const index = typeof parts[1] === 'number' ? parts[1] : -1
+      if (index >= 0) {
+        const current = state.data.languages[index]
+        if (current === undefined) return false
+        if (patch.op === 'remove') {
+          const next = patchString(current, patch)
+          if (next) updateLanguage(index, next)
+          else removeLanguage(index)
+        } else {
+          updateLanguage(index, patchString(current, patch))
+        }
+        return true
+      }
+      if (patch.op === 'append') {
+        for (const item of patchValueToList(patch.value)) {
+          if (!state.data.languages.some((lang) => comparable(lang) === comparable(item))) {
+            addLanguage()
+            updateLanguage(useResumeStore.getState().data.languages.length - 1, item)
+          }
+        }
+        return true
+      }
+      return false
+    }
+
+    if (root === 'customSections') {
+      const index = typeof parts[1] === 'number' ? parts[1] : -1
+      const field = typeof parts[2] === 'string' ? parts[2] : ''
+      const section = state.data.customSections[index]
+      if (!section || !['label', 'content'].includes(field)) return false
+      useResumeStore.getState().updateCustomSection(section.id, field as 'label' | 'content', patchString(cleanValue((section as any)[field]), patch))
+      return true
+    }
+
+    if (root === 'sectionOrder' && patch.op === 'remove') {
+      const section = normalizeSectionKey(patch.targetText || patch.value)
+      if (section) {
+        hideSection(section)
+        return true
+      }
+    }
+
+    return false
+  }
+
+  const applyPatches = (patches: WizardPatch[]) => {
+    let workTouched = false
+    for (const patch of patches) {
+      const applied = applyPatch(patch)
+      const root = pathToParts(patch.path || patch.value)[0]
+      if (applied && root === 'workExperience') workTouched = true
+    }
+    if (workTouched) sortWorkExperienceByDateDesc()
+    return patches.length > 0
   }
 
   /** Smart merge: find existing entry by name match, update instead of duplicating */
@@ -544,7 +858,7 @@ export default function Wizard() {
     const pi = useResumeStore.getState().data.personalInfo
     const setPersonalIfUseful = (field: keyof typeof pi, value: unknown) => {
       const cleaned = cleanValue(value)
-      if (cleaned && shouldUpdate(pi[field], cleaned)) setPersonalInfo(field, cleaned)
+      if (cleaned && cleanValue(pi[field]) !== cleaned) setPersonalInfo(field, cleaned)
     }
 
     setPersonalIfUseful('name', extracted.name)
@@ -879,6 +1193,10 @@ export default function Wizard() {
     )
 
     await streamAndParse(msgs, (parsed) => {
+      if (parsed.patches && parsed.patches.length > 0) {
+        applyPatches(parsed.patches)
+      }
+
       if (
         (parsed.extracted && Object.keys(parsed.extracted).length > 0) ||
         (parsed.actions && parsed.actions.length > 0)
@@ -890,7 +1208,7 @@ export default function Wizard() {
         role: 'assistant',
         content: parsed.reply,
         step: parsed.step,
-        quickReplies: parsed.quickReplies,
+        quickReplies: patchQuickReplies(parsed),
       }
       setMessages([...newMessages, assistantMsg])
       setCurrentStep(parsed.step)

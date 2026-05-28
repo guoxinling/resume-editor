@@ -6,31 +6,43 @@ import type { ResumeData } from '../types/resume'
 import AppModal from '../components/shared/AppModal'
 import AppProgressOverlay from '../components/shared/AppProgressOverlay'
 
+const hasText = (value: unknown) => String(value ?? '').trim().length > 0
+
 export function hasResumeContent(data: ResumeData): boolean {
   return !!(
-    data.personalInfo.name ||
-    data.personalInfo.nameEn ||
-    data.personalInfo.phone ||
-    data.personalInfo.email ||
-    data.personalInfo.location ||
-    data.personalInfo.locationEn ||
-    data.personalInfo.portfolio ||
-    data.personalInfo.age ||
-    data.personalInfo.photo ||
-    data.personalInfo.jobObjective ||
-    data.personalInfo.jobObjectiveEn ||
-    data.personalInfo.customFields.length > 0 ||
-    data.summary ||
-    data.summaryEn ||
-    data.workExperience.length > 0 ||
-    data.aiProjects.length > 0 ||
-    data.education.length > 0 ||
-    data.skills.length > 0 ||
-    data.languages.length > 0 ||
-    data.languagesEn.length > 0 ||
-    data.selfEvaluation ||
-    data.selfEvaluationEn ||
-    data.customSections.length > 0
+    hasText(data.personalInfo.name) ||
+    hasText(data.personalInfo.nameEn) ||
+    hasText(data.personalInfo.phone) ||
+    hasText(data.personalInfo.email) ||
+    hasText(data.personalInfo.location) ||
+    hasText(data.personalInfo.locationEn) ||
+    hasText(data.personalInfo.portfolio) ||
+    hasText(data.personalInfo.age) ||
+    hasText(data.personalInfo.photo) ||
+    hasText(data.personalInfo.jobObjective) ||
+    hasText(data.personalInfo.jobObjectiveEn) ||
+    data.personalInfo.customFields.some((field) => hasText(field.key) || hasText(field.value)) ||
+    hasText(data.summary) ||
+    hasText(data.summaryEn) ||
+    data.workExperience.some((item) =>
+      hasText(item.company) || hasText(item.companyEn) || hasText(item.role) || hasText(item.roleEn) ||
+      hasText(item.dates) || hasText(item.datesEn) || item.bullets.some(hasText) || item.bulletsEn.some(hasText)
+    ) ||
+    data.aiProjects.some((item) =>
+      hasText(item.name) || hasText(item.nameEn) || hasText(item.direction) || hasText(item.directionEn) ||
+      hasText(item.dates) || hasText(item.datesEn) || hasText(item.description) || hasText(item.descriptionEn)
+    ) ||
+    data.education.some((item) =>
+      hasText(item.school) || hasText(item.schoolEn) || hasText(item.degree) || hasText(item.degreeEn) ||
+      hasText(item.major) || hasText(item.majorEn) || hasText(item.dates) || hasText(item.datesEn) ||
+      item.highlights.some(hasText) || item.highlightsEn.some(hasText)
+    ) ||
+    data.skills.some((item) => hasText(item.category) || hasText(item.categoryEn) || hasText(item.items) || hasText(item.itemsEn)) ||
+    data.languages.some(hasText) ||
+    data.languagesEn.some(hasText) ||
+    hasText(data.selfEvaluation) ||
+    hasText(data.selfEvaluationEn) ||
+    data.customSections.some((item) => hasText(item.label) || hasText(item.labelEn) || hasText(item.content) || hasText(item.contentEn))
   )
 }
 
