@@ -1,4 +1,4 @@
-import { useRef, useEffect, useLayoutEffect, useState } from 'react'
+import { useRef, useEffect, useState } from 'react'
 import { useResumeStore } from '../store/resumeStore'
 import type { Lang } from '../types/resume'
 
@@ -36,11 +36,8 @@ export default function ResumePreview() {
 
   const contentRef = useRef<HTMLDivElement>(null)
   const [pageBreaks, setPageBreaks] = useState<number[]>([])
-  const [sectionSpacers, setSectionSpacers] = useState<Record<string, number>>({})
 
   const A4_PAGE_HEIGHT = 1122.5
-  const PAGE_GAP_HEIGHT = 64
-  const PAGE_BREAK_GUARD = 140
 
   useEffect(() => {
     const el = contentRef.current
@@ -58,45 +55,6 @@ export default function ResumePreview() {
     observer.observe(el)
     return () => observer.disconnect()
   }, [data, sectionOrder])
-
-  useLayoutEffect(() => {
-    const el = contentRef.current
-    if (!el) return
-
-    const frame = requestAnimationFrame(() => {
-      const pageRect = el.getBoundingClientRect()
-      const nextSpacers: Record<string, number> = {}
-      const sections = Array.from(el.querySelectorAll<HTMLElement>('[data-preview-section]'))
-
-      sections.forEach((section) => {
-        const key = section.dataset.previewSection
-        const body = section.querySelector<HTMLElement>('[data-preview-section-body]')
-        if (!key || !body) return
-
-        const rect = body.getBoundingClientRect()
-        const top = rect.top - pageRect.top
-        const bottom = rect.bottom - pageRect.top
-        const nextBreak = Math.ceil(Math.max(top, 1) / A4_PAGE_HEIGHT) * A4_PAGE_HEIGHT
-
-        const startsNearBreak = top >= nextBreak - PAGE_BREAK_GUARD && top < nextBreak + PAGE_GAP_HEIGHT
-        const crossesBreakNearTop = top > nextBreak - PAGE_BREAK_GUARD && bottom > nextBreak
-        if (startsNearBreak || crossesBreakNearTop) {
-          nextSpacers[key] = Math.ceil(nextBreak + PAGE_GAP_HEIGHT - top)
-        }
-      })
-
-      setSectionSpacers((prev) => {
-        const prevKeys = Object.keys(prev)
-        const nextKeys = Object.keys(nextSpacers)
-        const same =
-          prevKeys.length === nextKeys.length &&
-          nextKeys.every((key) => prev[key] === nextSpacers[key])
-        return same ? prev : nextSpacers
-      })
-    })
-
-    return () => cancelAnimationFrame(frame)
-  })
 
   /** Check if a section has content to render */
   const sectionHasContent = (key: string): boolean => {
@@ -348,31 +306,19 @@ export default function ResumePreview() {
           )}
 
           {/* ── Sections driven by editor sectionOrder ── */}
-          {sectionOrder.filter((k) => k !== 'personalInfo').map((key) => (
-            <div key={key} data-preview-section={key}>
-              {sectionSpacers[key] > 0 && (
-                <div
-                  className="page-break-spacer"
-                  style={{ height: sectionSpacers[key] }}
-                />
-              )}
-              <div data-preview-section-body>
-                {renderSection(key)}
-              </div>
-            </div>
-          ))}
+          {sectionOrder.filter((k) => k !== 'personalInfo').map(renderSection)}
 
           {/* Page break indicators */}
           <div className="page-break-indicator absolute left-0 right-0 pointer-events-none" style={{ top: 0 }}>
             {pageBreaks.map((y, i) => (
               <div
                 key={i}
-                className="absolute left-0 right-0 h-16 -translate-y-1/2 bg-[#F3F1F4] shadow-[inset_0_16px_20px_rgba(15,23,42,0.05),inset_0_-16px_20px_rgba(15,23,42,0.05)]"
+                className="absolute left-0 right-0 h-8 -translate-y-1/2"
                 style={{ top: y }}
               >
-                <div className="absolute left-0 right-0 top-0 h-px bg-slate-200/80" />
-                <div className="absolute left-0 right-0 bottom-0 h-px bg-white/95" />
-                <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/80 px-3 py-1 text-[10px] font-semibold text-slate-400 shadow-sm">
+                <div className="absolute left-0 top-1/2 h-px w-12 -translate-y-1/2 bg-slate-200/80" />
+                <div className="absolute right-0 top-1/2 h-px w-12 -translate-y-1/2 bg-slate-200/80" />
+                <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-slate-200/70 bg-white/85 px-3 py-1 text-[10px] font-semibold text-slate-400 shadow-sm">
                   第 {i + 2} 页
                 </div>
               </div>
